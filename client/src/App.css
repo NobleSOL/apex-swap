@@ -91,6 +91,8 @@
 .asset-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .field-group { display: flex; flex-direction: column; gap: 6px; }
 .field-label { color: #b1b6bd; font-size: 12px; }
+.pair-stack { display: flex; flex-direction: column; gap: 10px; }
+.pair-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
 .swap-box input,
 .swap-box select {
