@@ -3,6 +3,14 @@ import "./App.css";
 import logo from "./ApeX-logo.png";
 import { applyBrandTheme } from "./theme";
 
+function SwapIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M7 7h11M7 7l3-3M7 7l3 3M17 17H6m11 0l-3-3m3 3l-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
 export default function App() {
   const [fromAsset, setFromAsset] = useState("USDC");
   const [toAsset, setToAsset] = useState("kUSD");
@@ -51,6 +59,13 @@ export default function App() {
     } catch (err) {
       setStatus(`Request failed: ${err.message}`);
     }
+  };
+
+  const flipDirection = () => {
+    setFromAsset(toAsset);
+    setToAsset(fromAsset);
+    setFromAmount(toAmount);
+    setToAmount(fromAmount);
   };
 
   return (
@@ -107,14 +122,21 @@ export default function App() {
                   </label>
                   <label className="field-group">
                     <span className="field-label">Amount</span>
-                    <input
-                      type="text"
-                      placeholder="0.0"
-                      value={fromAmount}
-                      onChange={(e) => setFromAmount(e.target.value)}
-                    />
+                    <div className="amount-field">
+                      <input
+                        type="text"
+                        placeholder="0.0"
+                        value={fromAmount}
+                        onChange={(e) => setFromAmount(e.target.value)}
+                      />
+                      <button type="button" className="small-action" onClick={() => setFromAmount("MAX")}>Max</button>
+                    </div>
                   </label>
                 </div>
+
+                <button type="button" className="direction-toggle" onClick={flipDirection} aria-label="Switch direction">
+                  <SwapIcon />
+                </button>
 
                 <div className="pair-row">
                   <label className="field-group">
