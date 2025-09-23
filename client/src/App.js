@@ -6,7 +6,8 @@ import { applyBrandTheme } from "./theme";
 export default function App() {
   const [fromAsset, setFromAsset] = useState("USDC");
   const [toAsset, setToAsset] = useState("kUSD");
-  const [amount, setAmount] = useState("");
+  const [fromAmount, setFromAmount] = useState("");
+  const [toAmount, setToAmount] = useState("");
   const [status, setStatus] = useState("");
 
   useEffect(() => {
@@ -35,7 +36,7 @@ export default function App() {
         body: JSON.stringify({
           from: fromAsset,
           to: toAsset,
-          amount,
+          amount: fromAmount,
           wallet: "user-wallet-address",
         }),
       });
@@ -94,34 +95,46 @@ export default function App() {
             <div className="swap-box">
               <h2>Cross-Chain Swap</h2>
 
-              <div className="asset-row">
-                <label className="field-group">
-                  <span className="field-label">From</span>
-                  <select value={fromAsset} onChange={(e) => setFromAsset(e.target.value)}>
-                    <option value="USDC">USDC</option>
-                    <option value="SOL">SOL</option>
-                    <option value="ETH">ETH</option>
-                  </select>
-                </label>
+              <div className="pair-stack">
+                <div className="pair-row">
+                  <label className="field-group">
+                    <span className="field-label">From</span>
+                    <select value={fromAsset} onChange={(e) => setFromAsset(e.target.value)}>
+                      <option value="USDC">USDC</option>
+                      <option value="SOL">SOL</option>
+                      <option value="ETH">ETH</option>
+                    </select>
+                  </label>
+                  <label className="field-group">
+                    <span className="field-label">Amount</span>
+                    <input
+                      type="text"
+                      placeholder="0.0"
+                      value={fromAmount}
+                      onChange={(e) => setFromAmount(e.target.value)}
+                    />
+                  </label>
+                </div>
 
-                <label className="field-group">
-                  <span className="field-label">To</span>
-                  <select value={toAsset} onChange={(e) => setToAsset(e.target.value)}>
-                    <option value="kUSD">kUSD</option>
-                    <option value="BTC">BTC</option>
-                    <option value="SOL">SOL</option>
-                  </select>
-                </label>
-
-                <label className="field-group">
-                  <span className="field-label">Amount</span>
-                  <input
-                    type="text"
-                    placeholder="Enter amount"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                  />
-                </label>
+                <div className="pair-row">
+                  <label className="field-group">
+                    <span className="field-label">To</span>
+                    <select value={toAsset} onChange={(e) => setToAsset(e.target.value)}>
+                      <option value="kUSD">kUSD</option>
+                      <option value="BTC">BTC</option>
+                      <option value="SOL">SOL</option>
+                    </select>
+                  </label>
+                  <label className="field-group">
+                    <span className="field-label">Amount</span>
+                    <input
+                      type="text"
+                      placeholder="0.0"
+                      value={toAmount}
+                      onChange={(e) => setToAmount(e.target.value)}
+                    />
+                  </label>
+                </div>
               </div>
 
               <button onClick={handleSwap}>Swap</button>
