@@ -1,12 +1,29 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "./App.css";
-import logo from "./ApeX-logo.png"; // make sure logo file is here or in /public
+import logo from "./ApeX-logo.png";
+import { applyBrandTheme } from "./theme";
 
 export default function App() {
   const [fromAsset, setFromAsset] = useState("USDC");
   const [toAsset, setToAsset] = useState("kUSD");
   const [amount, setAmount] = useState("");
   const [status, setStatus] = useState("");
+
+  useEffect(() => {
+    applyBrandTheme(logo).catch(() => {
+      /* no-op */
+    });
+  }, []);
+
+  const pools = useMemo(
+    () => [
+      { pair: "USDC / SOL", volume24h: "$1.2M", tvl: "$8.4M" },
+      { pair: "ETH / BTC", volume24h: "$980k", tvl: "$6.1M" },
+      { pair: "kUSD / SOL", volume24h: "$520k", tvl: "$2.7M" },
+      { pair: "USDC / kUSD", volume24h: "$410k", tvl: "$1.9M" },
+    ],
+    []
+  );
 
   const handleSwap = async () => {
     setStatus("Processing swap...");
@@ -19,7 +36,7 @@ export default function App() {
           from: fromAsset,
           to: toAsset,
           amount,
-          wallet: "user-wallet-address", // TODO: replace with connected wallet
+          wallet: "user-wallet-address",
         }),
       });
 
@@ -37,44 +54,101 @@ export default function App() {
 
   return (
     <div className="app">
-      {/* Header */}
-      <header className="header">
-        <img src={logo} alt="ApeX Logo" className="logo" />
-        <h1>ApeX Swap</h1>
-      </header>
+      <div className="site-shell">
+        <nav className="top-nav">
+          <div className="brand-wrap">
+            <img src={logo} alt="ApeX Logo" className="logo" />
+            <span className="brand-name">ApeX</span>
+          </div>
+          <div className="nav-links">
+            <a href="#swap" className="nav-link">Swap</a>
+            <a href="#pools" className="nav-link">Pools</a>
+            <a href="#stats" className="nav-link">Stats</a>
+          </div>
+        </nav>
 
-      {/* Swap Box */}
-      <div className="swap-box">
-        <h2>Cross-Chain Swap</h2>
+        <header className="hero-banner" id="stats">
+          <h1 className="hero-title">Trade digital assets seamlessly</h1>
+          <p className="hero-subtitle">Low slippage. Deep liquidity. Multi-chain.</p>
+          <div className="stats-strip">
+            <div className="stat-item">
+              <div className="stat-label">24h Volume</div>
+              <div className="stat-value">$0</div>
+            </div>
+            <div className="stat-item">
+              <div className="stat-label">Total TVL</div>
+              <div className="stat-value">$0</div>
+            </div>
+            <div className="stat-item">
+              <div className="stat-label">Markets</div>
+              <div className="stat-value">0</div>
+            </div>
+          </div>
+        </header>
 
-        <label>
-          From:
-          <select value={fromAsset} onChange={(e) => setFromAsset(e.target.value)}>
-            <option value="USDC">USDC</option>
-            <option value="SOL">SOL</option>
-            <option value="ETH">ETH</option>
-          </select>
-        </label>
+        <main className="content-container">
+          <section className="swap-section" id="swap">
+            <div className="swap-box">
+              <h2>Cross-Chain Swap</h2>
 
-        <label>
-          To:
-          <select value={toAsset} onChange={(e) => setToAsset(e.target.value)}>
-            <option value="kUSD">kUSD</option>
-            <option value="BTC">BTC</option>
-            <option value="SOL">SOL</option>
-          </select>
-        </label>
+              <label>
+                From:
+                <select value={fromAsset} onChange={(e) => setFromAsset(e.target.value)}>
+                  <option value="USDC">USDC</option>
+                  <option value="SOL">SOL</option>
+                  <option value="ETH">ETH</option>
+                </select>
+              </label>
 
-        <input
-          type="text"
-          placeholder="Enter amount"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-        />
+              <label>
+                To:
+                <select value={toAsset} onChange={(e) => setToAsset(e.target.value)}>
+                  <option value="kUSD">kUSD</option>
+                  <option value="BTC">BTC</option>
+                  <option value="SOL">SOL</option>
+                </select>
+              </label>
 
-        <button onClick={handleSwap}>Swap</button>
+              <input
+                type="text"
+                placeholder="Enter amount"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+              />
 
-        {status && <p className="status">{status}</p>}
+              <button onClick={handleSwap}>Swap</button>
+
+              {status && <p className="status">{status}</p>}
+            </div>
+          </section>
+
+          <section className="pools-section" id="pools">
+            <h3 className="section-title">Top Pools</h3>
+            <div className="pools-grid">
+              {pools.map((p) => (
+                <div key={p.pair} className="pool-card">
+                  <div className="pool-pair">{p.pair}</div>
+                  <div className="pool-metrics">
+                    <span className="metric"><span className="metric-label">24h:</span> {p.volume24h}</span>
+                    <span className="metric"><span className="metric-label">TVL:</span> {p.tvl}</span>
+                  </div>
+                  <button className="pool-cta">Trade</button>
+                </div>
+              ))}
+            </div>
+          </section>
+        </main>
+
+        <footer className="site-footer">
+          <div className="footer-inner">
+            <span>© {new Date().getFullYear()} ApeX</span>
+            <div className="footer-links">
+              <a href="#swap">Swap</a>
+              <a href="#pools">Pools</a>
+              <a href="#stats">Stats</a>
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
   );
