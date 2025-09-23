@@ -60,10 +60,13 @@ export default function App() {
             <img src={logo} alt="ApeX Logo" className="logo" />
             <span className="brand-name">ApeX</span>
           </div>
-          <div className="nav-links">
-            <a href="#swap" className="nav-link">Swap</a>
-            <a href="#pools" className="nav-link">Pools</a>
-            <a href="#stats" className="nav-link">Stats</a>
+          <div className="nav-right">
+            <div className="nav-links">
+              <a href="#swap" className="nav-link">Swap</a>
+              <a href="#pools" className="nav-link">Pools</a>
+              <a href="#stats" className="nav-link">Stats</a>
+            </div>
+            <button className="connect-button">Connect</button>
           </div>
         </nav>
 
@@ -91,30 +94,35 @@ export default function App() {
             <div className="swap-box">
               <h2>Cross-Chain Swap</h2>
 
-              <label>
-                From:
-                <select value={fromAsset} onChange={(e) => setFromAsset(e.target.value)}>
-                  <option value="USDC">USDC</option>
-                  <option value="SOL">SOL</option>
-                  <option value="ETH">ETH</option>
-                </select>
-              </label>
+              <div className="asset-row">
+                <label className="field-group">
+                  <span className="field-label">From</span>
+                  <select value={fromAsset} onChange={(e) => setFromAsset(e.target.value)}>
+                    <option value="USDC">USDC</option>
+                    <option value="SOL">SOL</option>
+                    <option value="ETH">ETH</option>
+                  </select>
+                </label>
 
-              <label>
-                To:
-                <select value={toAsset} onChange={(e) => setToAsset(e.target.value)}>
-                  <option value="kUSD">kUSD</option>
-                  <option value="BTC">BTC</option>
-                  <option value="SOL">SOL</option>
-                </select>
-              </label>
+                <label className="field-group">
+                  <span className="field-label">To</span>
+                  <select value={toAsset} onChange={(e) => setToAsset(e.target.value)}>
+                    <option value="kUSD">kUSD</option>
+                    <option value="BTC">BTC</option>
+                    <option value="SOL">SOL</option>
+                  </select>
+                </label>
+              </div>
 
-              <input
-                type="text"
-                placeholder="Enter amount"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-              />
+              <label className="field-group">
+                <span className="field-label">Amount</span>
+                <input
+                  type="text"
+                  placeholder="Enter amount"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                />
+              </label>
 
               <button onClick={handleSwap}>Swap</button>
 
