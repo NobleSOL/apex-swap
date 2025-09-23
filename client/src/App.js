@@ -112,17 +112,17 @@ export default function App() {
                     <option value="SOL">SOL</option>
                   </select>
                 </label>
-              </div>
 
-              <label className="field-group">
-                <span className="field-label">Amount</span>
-                <input
-                  type="text"
-                  placeholder="Enter amount"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                />
-              </label>
+                <label className="field-group">
+                  <span className="field-label">Amount</span>
+                  <input
+                    type="text"
+                    placeholder="Enter amount"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                  />
+                </label>
+              </div>
 
               <button onClick={handleSwap}>Swap</button>
 
