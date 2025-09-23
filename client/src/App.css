@@ -38,6 +38,9 @@
 .nav-links { display: flex; gap: 14px; }
 .nav-link { color: #cfd3d8; text-decoration: none; font-weight: 500; }
 .nav-link:hover { color: #fff; }
+.nav-right { display: flex; align-items: center; gap: 12px; }
+.connect-button { background: var(--brand-primary, #00ff66); color: #000; border: none; border-radius: 8px; padding: 8px 12px; font-weight: 700; cursor: pointer; }
+.connect-button:hover { background: var(--brand-secondary, #00cc52); }
 
 .logo { width: 40px; height: 40px; border-radius: 8px; }
 
@@ -85,14 +88,20 @@
 
 .swap-box h2 { margin-bottom: 15px; }
 .swap-box label { display: block; margin: 10px 0; text-align: left; }
+.asset-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.field-group { display: flex; flex-direction: column; gap: 6px; }
+.field-label { color: #b1b6bd; font-size: 12px; }
 
 .swap-box input,
 .swap-box select {
   width: 100%;
-  padding: 10px;
+  height: 44px;
+  padding: 10px 12px;
   margin-top: 5px;
   border: none;
   border-radius: 8px;
+  background: #0f0f0f;
+  color: #fff;
 }
 
 button {
@@ -112,9 +121,9 @@ button:hover { background: var(--brand-secondary, #00cc52); }
 .status { margin-top: 15px; font-size: 14px; color: var(--brand-primary, #00ff66); }
 
 /* Pools */
-.pools-section { max-width: 1100px; margin: 0 auto; }
+.pools-section { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 10px; }
 .section-title { margin: 0 0 14px; text-align: left; }
-.pools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+.pools-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
 .pool-card {
   background: #141414;
   border: 1px solid rgba(255,255,255,0.06);
@@ -135,7 +144,12 @@ button:hover { background: var(--brand-secondary, #00cc52); }
 .footer-inner a:hover { color: #fff; }
 
 /* Responsive */
+@media (max-width: 1024px) {
+  .pools-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 @media (max-width: 768px) {
   .stats-strip { grid-template-columns: 1fr; }
   .nav-links { display: none; }
+  .asset-row { grid-template-columns: 1fr; }
+  .pools-grid { grid-template-columns: 1fr; }
 }
