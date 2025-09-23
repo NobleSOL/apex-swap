@@ -130,6 +130,30 @@ button:hover { background: var(--brand-secondary, #00cc52); }
 .small-action { position: absolute; right: 6px; top: 6px; bottom: 6px; background: var(--brand-accent, #5ac8ff); color: #000; border: none; border-radius: 8px; padding: 0 10px; font-weight: 700; cursor: pointer; }
 .small-action:hover { filter: brightness(0.95); }
 
+/* Swap header and token rows */
+.swap-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.swap-title { margin: 0; font-size: 18px; }
+.swap-controls { display: flex; align-items: center; gap: 8px; }
+.icon-button { background: transparent; border: 1px solid rgba(255,255,255,0.08); color: #cfd3d8; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; }
+.icon-button:hover { color: #fff; border-color: rgba(255,255,255,0.16); }
+.slippage-chip { border: 1px solid rgba(255,255,255,0.08); padding: 6px 8px; border-radius: 999px; font-size: 12px; color: #cfd3d8; }
+
+.row-header { text-align: left; color: #c5c7ca; font-size: 12px; font-weight: 600; margin: 6px 2px; }
+.token-col { display: flex; }
+.amount-col { display: flex; }
+.token-select { background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0)); border: 1px solid rgba(255,255,255,0.08); border-radius: 999px; padding: 4px 8px; }
+.amount-col input { text-align: right; font-size: 20px; font-weight: 600; }
+.balance-line { margin-top: 6px; font-size: 12px; color: #8f949a; text-align: right; }
+
+/* Direction toggle row */
+.toggle-row { display: flex; align-items: center; gap: 10px; margin: 2px 0; }
+.hr-line { height: 1px; flex: 1; background: linear-gradient(90deg, rgba(255,255,255,0.0), rgba(255,255,255,0.12), rgba(255,255,255,0.0)); }
+
+/* Submit */
+.submit-row { margin-top: 12px; }
+.primary-cta { width: 100%; background: var(--brand-primary, #00ff66); color: #000; border: none; border-radius: 999px; padding: 12px 18px; font-weight: 700; cursor: pointer; }
+.primary-cta:hover { background: var(--brand-secondary, #00cc52); }
+
 /* Pools */
 .pools-section { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 10px; }
 .section-title { margin: 0 0 14px; text-align: left; }
