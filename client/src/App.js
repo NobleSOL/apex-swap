@@ -108,58 +108,92 @@ export default function App() {
         <main className="content-container">
           <section className="swap-section" id="swap">
             <div className="swap-box">
-              <h2>Cross-Chain Swap</h2>
-
-              <div className="pair-stack">
-                <div className="pair-row">
-                  <label className="field-group">
-                    <span className="field-label">From</span>
-                    <select value={fromAsset} onChange={(e) => setFromAsset(e.target.value)}>
-                      <option value="USDC">USDC</option>
-                      <option value="SOL">SOL</option>
-                      <option value="ETH">ETH</option>
-                    </select>
-                  </label>
-                  <label className="field-group">
-                    <span className="field-label">Amount</span>
-                    <div className="amount-field">
-                      <input
-                        type="text"
-                        placeholder="0.0"
-                        value={fromAmount}
-                        onChange={(e) => setFromAmount(e.target.value)}
-                      />
-                      <button type="button" className="small-action" onClick={() => setFromAmount("MAX")}>Max</button>
-                    </div>
-                  </label>
-                </div>
-
-                <button type="button" className="direction-toggle" onClick={flipDirection} aria-label="Switch direction">
-                  <SwapIcon />
-                </button>
-
-                <div className="pair-row">
-                  <label className="field-group">
-                    <span className="field-label">To</span>
-                    <select value={toAsset} onChange={(e) => setToAsset(e.target.value)}>
-                      <option value="kUSD">kUSD</option>
-                      <option value="BTC">BTC</option>
-                      <option value="SOL">SOL</option>
-                    </select>
-                  </label>
-                  <label className="field-group">
-                    <span className="field-label">Amount</span>
-                    <input
-                      type="text"
-                      placeholder="0.0"
-                      value={toAmount}
-                      onChange={(e) => setToAmount(e.target.value)}
-                    />
-                  </label>
+              <div className="swap-header">
+                <h2 className="swap-title">Swap</h2>
+                <div className="swap-controls">
+                  <button type="button" className="icon-button" aria-label="Settings">⚙</button>
+                  <div className="slippage-chip" aria-label="Slippage">0.5%</div>
                 </div>
               </div>
 
-              <button onClick={handleSwap}>Swap</button>
+              <div className="pair-stack">
+                <div className="row-header">Sell</div>
+                <div className="pair-row">
+                  <div className="token-col">
+                    <label className="field-group">
+                      <span className="field-label">Token</span>
+                      <div className="token-select">
+                        <select value={fromAsset} onChange={(e) => setFromAsset(e.target.value)}>
+                          <option value="USDC">USDC</option>
+                          <option value="SOL">SOL</option>
+                          <option value="ETH">ETH</option>
+                        </select>
+                      </div>
+                    </label>
+                  </div>
+                  <div className="amount-col">
+                    <label className="field-group">
+                      <span className="field-label">Amount</span>
+                      <div className="amount-field">
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          placeholder="0.0"
+                          value={fromAmount}
+                          onChange={(e) => setFromAmount(e.target.value)}
+                        />
+                        <button type="button" className="small-action" onClick={() => setFromAmount("MAX")}>Max</button>
+                      </div>
+                      <div className="balance-line">Balance: 0.00</div>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="toggle-row">
+                  <div className="hr-line" />
+                  <button type="button" className="direction-toggle" onClick={flipDirection} aria-label="Switch direction">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M7 7h11M7 7l3-3M7 7l3 3M17 17H6m11 0l-3-3m3 3l-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
+                  <div className="hr-line" />
+                </div>
+
+                <div className="row-header">Buy</div>
+                <div className="pair-row">
+                  <div className="token-col">
+                    <label className="field-group">
+                      <span className="field-label">Token</span>
+                      <div className="token-select">
+                        <select value={toAsset} onChange={(e) => setToAsset(e.target.value)}>
+                          <option value="kUSD">kUSD</option>
+                          <option value="BTC">BTC</option>
+                          <option value="SOL">SOL</option>
+                        </select>
+                      </div>
+                    </label>
+                  </div>
+                  <div className="amount-col">
+                    <label className="field-group">
+                      <span className="field-label">Amount</span>
+                      <div className="amount-field">
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          placeholder="0.0"
+                          value={toAmount}
+                          onChange={(e) => setToAmount(e.target.value)}
+                        />
+                      </div>
+                      <div className="balance-line">Rate: —</div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div className="submit-row">
+                <button className="primary-cta" onClick={handleSwap}>Swap</button>
+              </div>
 
               {status && <p className="status">{status}</p>}
             </div>
