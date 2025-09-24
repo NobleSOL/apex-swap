@@ -92,7 +92,7 @@
 .field-group { display: flex; flex-direction: column; gap: 6px; }
 .field-label { color: #b1b6bd; font-size: 12px; }
 .pair-stack { display: flex; flex-direction: column; gap: 12px; }
-.pair-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: #141414; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 12px; }
+.pair-row { display: grid; grid-template-columns: 1fr; gap: 8px; background: #141414; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 12px; }
 
 .swap-box input,
 .swap-box select {
