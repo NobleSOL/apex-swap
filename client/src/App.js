@@ -58,10 +58,6 @@ function TokenBadge({ symbol }) {
   );
 }
 
-function TokenBadge({ symbol }) {
-  const src = getTokenIconUrl(symbol);
-  return <img className="token-img" src={src} alt={`${symbol} logo`} onError={(e) => { e.currentTarget.style.display = "none"; }} />;
-}
 
 function TokenIcon({ symbol }) {
   switch (symbol) {
