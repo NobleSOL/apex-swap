@@ -72,7 +72,7 @@
 /* Content */
 .content-container { flex: 1; display: flex; flex-direction: column; gap: 32px; padding: 24px 20px 40px; }
 
-.swap-section { display: flex; justify-content: center; }
+.swap-section { display: flex; justify-content: center; background-repeat: no-repeat; background-position: center; background-size: cover; }
 
 /* Preserve original swap-box look and feel (round and glowing accent) */
 .swap-box {
