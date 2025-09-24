@@ -228,7 +228,6 @@ export default function App() {
             <div className="swap-box">
               <div className="swap-header">
                 <div className="swap-controls">
-                  <button type="button" className="icon-button" aria-label="Settings"><h1 className="icon-glyph">⚙</h1></button>
                   <button type="button" className="slippage-chip" aria-label="Slippage" onClick={() => setSlippageOpen((v) => !v)}>{slippage}%</button>
                 </div>
               </div>
