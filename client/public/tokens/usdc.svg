@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <radialGradient id="usdcGradient" cx="50%" cy="35%" r="75%">
+      <stop offset="0%" stop-color="#2D90FF"/>
+      <stop offset="100%" stop-color="#1A5DD9"/>
+    </radialGradient>
+    <linearGradient id="usdcInnerGlow" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.08"/>
+    </linearGradient>
+  </defs>
+  <circle cx="32" cy="32" r="30" fill="url(#usdcGradient)"/>
+  <circle cx="32" cy="32" r="28" fill="none" stroke="#FFFFFF" stroke-opacity="0.18" stroke-width="2"/>
+  <circle cx="32" cy="32" r="23" fill="none" stroke="url(#usdcInnerGlow)" stroke-width="6"/>
+  <g fill="#FFFFFF">
+    <path d="M40.6 22.4c-2-1.4-4.4-2.2-7.1-2.2-6.7 0-11.8 4.9-11.8 11.8S26.8 43.8 33.5 43.8c2.7 0 5.1-.7 7.1-2.2l-1.5-3.5c-1.6 1.2-3.5 1.9-5.6 1.9-4.5 0-7.7-3.2-7.7-8.1s3.2-8.1 7.7-8.1c2.1 0 4 .6 5.6 1.9l1.5-3.3z"/>
+    <rect x="20.8" y="20.2" width="3.4" height="23.6" rx="1.7" opacity="0.82"/>
+    <rect x="39.8" y="20.2" width="3.4" height="23.6" rx="1.7" opacity="0.82"/>
+  </g>
+</svg>

@@ -1,0 +1,8 @@
+{
+  "name": "@keeta/sdk",
+  "version": "0.0.0-placeholder",
+  "description": "Placeholder Keeta SDK to allow building without private package access.",
+  "main": "index.js",
+  "license": "UNLICENSED",
+  "private": true
+}

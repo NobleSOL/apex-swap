@@ -1,7 +1,6 @@
-// functions/swap.js
 import * as KeetaNet from "@keetanetwork/keetanet-client";
 
-// Example AMM formula (constant product)
+// Constant product AMM formula
 function getOutputAmount(inputAmount, reserveIn, reserveOut) {
   const inputWithFee = inputAmount * 997n; // 0.3% fee
   const numerator = inputWithFee * reserveOut;
@@ -13,22 +12,20 @@ export async function handler(event) {
   try {
     const { from, to, amount, wallet } = JSON.parse(event.body || "{}");
 
-    // Initialize client (TODO: replace with proper signer/auth)
     const client = KeetaNet.UserClient.fromNetwork("test");
 
-    // Example reserves (TODO: fetch real reserves from chain state)
+    // Placeholder reserves (TODO: fetch real balances from chain)
     const reserveIn = 1000000n;
     const reserveOut = 500000n;
 
     const outputAmount = getOutputAmount(BigInt(amount), reserveIn, reserveOut);
 
-    // Build swap transaction
     const builder = client.initBuilder();
 
-    // Send `amount` of token A from user to pool
+    // User sends `amount` of token A to pool
     builder.send("POOL_ADDRESS_" + from, BigInt(amount), from);
 
-    // Send `outputAmount` of token B from pool to user
+    // Pool sends `outputAmount` of token B to user
     builder.send(wallet, outputAmount, to);
 
     await client.computeBuilderBlocks(builder);
@@ -45,4 +42,3 @@ export async function handler(event) {
     };
   }
 }
-
