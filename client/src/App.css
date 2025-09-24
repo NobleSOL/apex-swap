@@ -58,7 +58,7 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 20px clamp(24px, 4vw, 48px);
-  background: linear-gradient(180deg, rgba(6, 10, 20, 0.85), rgba(6, 10, 20, 0.6));
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.6));
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
@@ -90,7 +90,7 @@ body {
   gap: 6px;
   padding: 6px;
   border-radius: 999px;
-  background: rgba(19, 31, 54, 0.8);
+  background: var(--brand-surface-strong);
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
@@ -110,9 +110,9 @@ body {
 
 .nav-pill-item.is-active {
   background: linear-gradient(135deg, var(--brand-primary), var(--brand-accent));
-  color: #04111f;
+  color: #0a0a0a;
   font-weight: 600;
-  box-shadow: 0 10px 30px rgba(90, 200, 255, 0.35);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
 }
 
 .nav-actions {
@@ -142,15 +142,15 @@ body {
   font-weight: 600;
   font-size: 14px;
   background: linear-gradient(135deg, var(--brand-primary), var(--brand-accent));
-  color: #04111f;
+  color: #0a0a0a;
   cursor: pointer;
-  box-shadow: 0 10px 30px rgba(90, 200, 255, 0.35);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .connect-button:hover {
   transform: translateY(-1px);
-  box-shadow: 0 16px 40px rgba(90, 200, 255, 0.45);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
 }
 
 .page {
@@ -220,13 +220,13 @@ body {
 
 .primary-cta {
   background: linear-gradient(135deg, var(--brand-primary), var(--brand-accent));
-  color: #04111f;
-  box-shadow: 0 16px 40px rgba(90, 200, 255, 0.4);
+  color: #0a0a0a;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
 }
 
 .primary-cta:hover {
   transform: translateY(-1px);
-  box-shadow: 0 20px 48px rgba(90, 200, 255, 0.5);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.5);
 }
 
 .primary-cta.full,
@@ -235,7 +235,7 @@ body {
 }
 
 .ghost-cta {
-  background: rgba(13, 20, 36, 0.8);
+  background: var(--brand-surface);
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: var(--text-primary);
 }
@@ -253,7 +253,7 @@ body {
 .metric-card {
   padding: 18px 20px;
   border-radius: 18px;
-  background: rgba(11, 18, 33, 0.85);
+  background: var(--brand-surface-strong);
   border: 1px solid rgba(255, 255, 255, 0.05);
   box-shadow: var(--shadow-soft);
 }
@@ -278,7 +278,7 @@ body {
 }
 
 .swap-card {
-  background: rgba(9, 16, 30, 0.9);
+  background: var(--brand-surface-strong);
   border-radius: 24px;
   padding: 26px;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -318,7 +318,7 @@ body {
 }
 
 .slippage-chip {
-  background: rgba(19, 31, 54, 0.7);
+  background: var(--brand-surface);
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: var(--text-primary);
   border-radius: 12px;
@@ -328,7 +328,7 @@ body {
 }
 
 .slippage-popover {
-  background: rgba(6, 12, 24, 0.95);
+  background: rgba(0, 0, 0, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 16px;
   padding: 14px;
@@ -344,7 +344,7 @@ body {
 
 .slip-btn {
   border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(19, 31, 54, 0.8);
+  background: var(--brand-surface-strong);
   color: var(--text-primary);
   border-radius: 999px;
   padding: 6px 12px;
@@ -360,7 +360,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(19, 31, 54, 0.8);
+  background: var(--brand-surface-strong);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 999px;
   padding: 6px 12px;
@@ -403,7 +403,7 @@ body {
   position: relative;
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(6, 12, 24, 0.7);
+  background: var(--brand-surface);
 }
 
 .amount-field input,
@@ -434,7 +434,7 @@ body {
   background: linear-gradient(135deg, var(--brand-primary), var(--brand-accent));
   border-radius: 12px;
   border: none;
-  color: #04111f;
+  color: #0a0a0a;
   font-size: 12px;
   font-weight: 700;
   padding: 0 14px;
@@ -451,7 +451,7 @@ body {
   width: 46px;
   height: 46px;
   border-radius: 50%;
-  background: rgba(19, 31, 54, 0.8);
+  background: var(--brand-surface-strong);
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: var(--brand-primary);
   display: flex;
@@ -492,7 +492,7 @@ body {
   gap: 10px;
   border-radius: 16px;
   padding: 10px 14px;
-  background: rgba(6, 12, 24, 0.7);
+  background: var(--brand-surface);
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: var(--text-primary);
   font-weight: 600;
@@ -514,7 +514,7 @@ body {
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: rgba(6, 12, 24, 0.7);
+  background: var(--brand-surface);
   border: 1px solid rgba(255, 255, 255, 0.08);
   padding: 4px;
 }
@@ -542,7 +542,7 @@ body {
   top: calc(100% + 8px);
   left: 0;
   min-width: 240px;
-  background: rgba(6, 12, 24, 0.95);
+  background: rgba(0, 0, 0, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 18px;
   padding: 16px;
@@ -554,7 +554,7 @@ body {
   height: 40px;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(3, 6, 15, 0.8);
+  background: rgba(0, 0, 0, 0.8);
   color: var(--text-primary);
   padding: 0 12px;
   margin-bottom: 12px;
@@ -630,7 +630,7 @@ body {
 
 .pool-card,
 .pool-selector-card {
-  background: rgba(9, 16, 30, 0.9);
+  background: var(--brand-surface-strong);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 24px;
   padding: 22px;
@@ -670,7 +670,7 @@ body {
   align-self: flex-start;
   border-radius: 999px;
   padding: 8px 16px;
-  background: rgba(19, 31, 54, 0.7);
+  background: var(--brand-surface);
   color: var(--text-primary);
   font-weight: 600;
   display: inline-flex;
@@ -723,7 +723,7 @@ body {
 
 .pool-selector-card.is-active {
   border-color: var(--brand-primary);
-  box-shadow: 0 16px 40px rgba(90, 200, 255, 0.45);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
 }
 
 .pool-detail {
@@ -755,7 +755,7 @@ body {
   margin-top: auto;
   padding: 32px clamp(24px, 4vw, 48px);
   border-top: 1px solid rgba(255, 255, 255, 0.05);
-  background: rgba(6, 10, 20, 0.9);
+  background: rgba(0, 0, 0, 0.9);
 }
 
 .footer-inner {
