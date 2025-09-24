@@ -149,6 +149,8 @@ export default function App() {
           from: fromAsset,
           to: toAsset,
           amount: fromAmount,
+          slippage,
+          feeBps,
           wallet: "user-wallet-address",
         }),
       });
