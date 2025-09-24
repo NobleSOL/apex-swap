@@ -15,14 +15,47 @@ function SwapIcon() {
 
 function getTokenIconUrl(symbol) {
   const s = String(symbol || "").toLowerCase();
-  const cryptoLogos = {
+  const map = {
     usdc: "https://cryptologos.cc/logos/usd-coin-usdc-logo.svg?v=029",
-    sol: "https://cryptologos.cc/logos/solana-sol-logo.svg?v=029",
-    eth: "https://cryptologos.cc/logos/ethereum-eth-logo.svg?v=029",
+    usdt: "https://cryptologos.cc/logos/tether-usdt-logo.svg?v=029",
+    dai: "https://cryptologos.cc/logos/multi-collateral-dai-dai-logo.svg?v=029",
     btc: "https://cryptologos.cc/logos/bitcoin-btc-logo.svg?v=029",
+    wbtc: "https://cryptologos.cc/logos/wrapped-bitcoin-wbtc-logo.svg?v=029",
+    eth: "https://cryptologos.cc/logos/ethereum-eth-logo.svg?v=029",
+    weth: "https://cryptologos.cc/logos/weth-weth-logo.svg?v=029",
+    sol: "https://cryptologos.cc/logos/solana-sol-logo.svg?v=029",
+    bnb: "https://cryptologos.cc/logos/bnb-bnb-logo.svg?v=029",
+    xrp: "https://cryptologos.cc/logos/xrp-xrp-logo.svg?v=029",
+    ada: "https://cryptologos.cc/logos/cardano-ada-logo.svg?v=029",
+    doge: "https://cryptologos.cc/logos/dogecoin-doge-logo.svg?v=029",
+    matic: "https://cryptologos.cc/logos/polygon-matic-logo.svg?v=029",
+    avax: "https://cryptologos.cc/logos/avalanche-avax-logo.svg?v=029",
+    arb: "https://cryptologos.cc/logos/arbitrum-arb-logo.svg?v=029",
+    op: "https://cryptologos.cc/logos/optimism-ethereum-op-logo.svg?v=029",
+    link: "https://cryptologos.cc/logos/chainlink-link-logo.svg?v=029",
+    ltc: "https://cryptologos.cc/logos/litecoin-ltc-logo.svg?v=029",
+    dot: "https://cryptologos.cc/logos/polkadot-new-dot-logo.svg?v=029",
+    trx: "https://cryptologos.cc/logos/tron-trx-logo.svg?v=029",
+    shib: "https://cryptologos.cc/logos/shiba-inu-shib-logo.svg?v=029",
     kusd: "https://cryptologos.cc/logos/usd-coin-usdc-logo.svg?v=029",
   };
-  return cryptoLogos[s] || `https://cryptologos.cc/logos/${s}-${s}-logo.svg?v=029`;
+  return map[s] || `https://cryptologos.cc/logos/${s}-${s}-logo.svg?v=029`;
+}
+
+function TokenBadge({ symbol }) {
+  const s = String(symbol || "").toLowerCase();
+  const src = getTokenIconUrl(symbol);
+  return (
+    <img
+      className="token-img"
+      src={src}
+      alt={`${symbol} logo`}
+      onError={(e) => {
+        e.currentTarget.onerror = null;
+        e.currentTarget.src = `https://cryptoicons.org/api/icon/${s}/32`;
+      }}
+    />
+  );
 }
 
 function TokenBadge({ symbol }) {
@@ -110,7 +143,9 @@ export default function App() {
   const [status, setStatus] = useState("");
   const [slippage, setSlippage] = useState(0.5);
   const [slippageOpen, setSlippageOpen] = useState(false);
-  const tokenOptions = useMemo(() => ["USDC", "SOL", "ETH", "BTC", "kUSD"], []);
+  const tokenOptions = useMemo(() => [
+    "USDC","USDT","DAI","BTC","WBTC","ETH","WETH","SOL","BNB","XRP","ADA","DOGE","MATIC","AVAX","ARB","OP","LINK","LTC","DOT","TRX","SHIB","kUSD"
+  ], []);
 
   useEffect(() => {
     applyBrandTheme(BRAND_LOGO).catch(() => {
@@ -333,7 +368,15 @@ export default function App() {
             <div className="pools-grid">
               {pools.map((p) => (
                 <div key={p.pair} className="pool-card">
-                  <div className="pool-pair">{p.pair}</div>
+                  <div className="pool-pair">
+                    <span className="pair-icons">
+                      {p.pair.split("/").map((part, i) => {
+                        const sym = part.trim();
+                        return <TokenBadge key={sym + i} symbol={sym} />;
+                      })}
+                    </span>
+                    <span className="pair-label">{p.pair}</span>
+                  </div>
                   <div className="pool-metrics">
                     <span className="metric"><span className="metric-label">24h:</span> {p.volume24h}</span>
                     <span className="metric"><span className="metric-label">TVL:</span> {p.tvl}</span>
