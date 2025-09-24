@@ -93,9 +93,19 @@ export async function applyBrandTheme(imgSrc) {
   }
 
   const pHsl = rgbToHsl(primary.r, primary.g, primary.b);
-  const secondary = hslToRgb((pHsl.h + 0.08) % 1, clamp01(pHsl.s * 0.9), clamp01(pHsl.l * 0.7));
-  const accent = hslToRgb((pHsl.h + 0.5) % 1, clamp01(Math.max(0.5, pHsl.s)), clamp01(0.55));
-  const bg = hslToRgb(pHsl.h, clamp01(pHsl.s * 0.25), 0.08);
+
+  let secondary, accent, bg;
+  if (pHsl.s < 0.12) {
+    // Monochrome (e.g., black/white) logo detected: enforce black/white design system
+    primary = { r: 255, g: 255, b: 255 };
+    secondary = { r: 209, g: 213, b: 219 };
+    accent = { r: 156, g: 163, b: 175 };
+    bg = { r: 10, g: 10, b: 10 };
+  } else {
+    secondary = hslToRgb((pHsl.h + 0.08) % 1, clamp01(pHsl.s * 0.9), clamp01(pHsl.l * 0.7));
+    accent = hslToRgb((pHsl.h + 0.5) % 1, clamp01(Math.max(0.5, pHsl.s)), clamp01(0.55));
+    bg = hslToRgb(pHsl.h, clamp01(pHsl.s * 0.25), 0.08);
+  }
 
   const root = document.documentElement.style;
   root.setProperty("--brand-primary", toHex(primary));
