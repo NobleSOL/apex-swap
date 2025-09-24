@@ -35,12 +35,14 @@
 .brand-wrap { display: flex; align-items: center; gap: 10px; }
 .brand-name { font-weight: 700; letter-spacing: 0.4px; }
 
-.nav-links { display: flex; gap: 14px; }
-.nav-link { color: #cfd3d8; text-decoration: none; font-weight: 500; }
-.nav-link:hover { color: #fff; }
-.nav-right { display: flex; align-items: center; gap: 12px; }
-.connect-button { background: var(--brand-primary, #00ff66); color: #000; border: none; border-radius: 8px; padding: 8px 12px; font-weight: 700; cursor: pointer; }
-.connect-button:hover { background: var(--brand-secondary, #00cc52); }
+  .nav-links { display: flex; gap: 14px; }
+  .nav-link { color: #cfd3d8; text-decoration: none; font-weight: 500; padding: 6px 10px; border-radius: 999px; transition: 0.2s; }
+  .nav-link:hover { color: #fff; background: rgba(255,255,255,0.06); }
+  .nav-link.is-active { color: #000; background: var(--brand-primary, #00ff66); font-weight: 600; }
+  .nav-right { display: flex; align-items: center; gap: 12px; }
+  .network-chip { padding: 6px 10px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.1); font-size: 12px; color: #cfd3d8; }
+  .connect-button { background: var(--brand-primary, #00ff66); color: #000; border: none; border-radius: 8px; padding: 8px 12px; font-weight: 700; cursor: pointer; }
+  .connect-button:hover { background: var(--brand-secondary, #00cc52); }
 
 .logo { width: 40px; height: 40px; border-radius: 8px; }
 
@@ -191,18 +193,42 @@ button:hover { background: var(--brand-secondary, #00cc52); }
 .pools-section { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 10px; }
 .section-title { margin: 0 0 14px; text-align: left; }
 .pools-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
-.pool-card {
-  background: #141414;
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 12px;
-  padding: 14px;
-  text-align: left;
-}
+  .pool-card {
+    background: #141414;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    padding: 14px;
+    text-align: left;
+    cursor: pointer;
+  }
+  .pool-card.is-active {
+    border-color: var(--brand-primary, #00ff66);
+    box-shadow: 0 0 0 1px rgba(0,255,102,0.2);
+  }
 .pool-pair { font-weight: 700; margin-bottom: 8px; }
 .pool-metrics { display: flex; gap: 12px; color: #b1b6bd; margin-bottom: 10px; }
 .metric-label { color: #8f949a; margin-right: 4px; }
-.pool-cta { width: auto; background: var(--brand-accent, #5ac8ff); color: #000; padding: 8px 12px; border-radius: 8px; }
-.pool-cta:hover { filter: brightness(0.95); }
+  .pool-cta { width: auto; background: var(--brand-accent, #5ac8ff); color: #000; padding: 8px 12px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; }
+  .pool-cta:hover { filter: brightness(0.95); }
+
+  .liquidity-panels {
+    display: grid;
+    gap: 16px;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+  .liquidity-box h2 { margin-top: 0; }
+  .liquidity-box .field-group { margin-top: 12px; }
+  .liquidity-box input {
+    background: #0f0f0f;
+    border: none;
+    border-radius: 10px;
+    height: 44px;
+    padding: 10px 12px;
+    color: #fff;
+  }
 
 /* Footer */
 .site-footer { margin-top: auto; border-top: 1px solid rgba(255,255,255,0.06); }
@@ -211,22 +237,24 @@ button:hover { background: var(--brand-secondary, #00cc52); }
 .footer-inner a:hover { color: #fff; }
 
 /* Responsive */
-@media (max-width: 1024px) {
-  .pools-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .asset-row { grid-template-columns: repeat(2, 1fr); }
-}
-@media (max-width: 768px) {
-  .stats-strip { grid-template-columns: 1fr; }
-  .nav-links { display: none; }
-  .asset-row { grid-template-columns: 1fr; }
-  .pair-row { grid-template-columns: auto 1fr; align-items: center; padding: 10px; }
-  .token-col { align-items: center; }
-  .token-select { padding: 6px 10px; }
-  .token-select select { font-size: 16px; }
-  .field-label { display: none; }
-  .amount-col input { font-size: 26px; }
-  .direction-toggle { width: 44px; height: 44px; }
-  .swap-controls { display: none; }
-  .pools-grid { grid-template-columns: 1fr; }
-  .swap-box { max-width: 100%; }
-}
+  @media (max-width: 1024px) {
+    .pools-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .liquidity-panels { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .asset-row { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 768px) {
+    .stats-strip { grid-template-columns: 1fr; }
+    .nav-links { display: none; }
+    .asset-row { grid-template-columns: 1fr; }
+    .pair-row { grid-template-columns: auto 1fr; align-items: center; padding: 10px; }
+    .token-col { align-items: center; }
+    .token-select { padding: 6px 10px; }
+    .token-select select { font-size: 16px; }
+    .field-label { display: none; }
+    .amount-col input { font-size: 26px; }
+    .direction-toggle { width: 44px; height: 44px; }
+    .swap-controls { display: none; }
+    .pools-grid { grid-template-columns: 1fr; }
+    .liquidity-panels { grid-template-columns: 1fr; }
+    .swap-box { max-width: 100%; }
+  }
