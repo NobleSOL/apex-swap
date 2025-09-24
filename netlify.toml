@@ -4,3 +4,9 @@
 
 [functions]
   directory = "functions"
+
+[[redirects]]
+  from = "/builder/*"
+  to = "/.netlify/functions/builderProxy?path=:splat"
+  status = 200
+  force = true
