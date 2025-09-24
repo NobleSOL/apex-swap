@@ -12,11 +12,10 @@ function SwapIcon() {
 }
 
 const TOKEN_ICON_PATHS = {
-  usdc: "/tokens/usdc.svg",
-  sol: "/tokens/sol.svg",
-  eth: "/tokens/eth.svg",
-  btc: "/tokens/btc.svg",
   kusd: "/tokens/kusd.svg",
+  ksol: "/tokens/sol.svg",
+  keth: "/tokens/eth.svg",
+  kbtc: "/tokens/btc.svg",
 };
 
 function getTokenIconUrl(symbol) {
@@ -102,23 +101,22 @@ function TokenSelect({ value, onChange, options }) {
 }
 
 export default function App() {
-  const [fromAsset, setFromAsset] = useState("USDC");
-  const [toAsset, setToAsset] = useState("kUSD");
+  const [fromAsset, setFromAsset] = useState("kUSD");
+  const [toAsset, setToAsset] = useState("kSOL");
   const [fromAmount, setFromAmount] = useState("");
   const [toAmount, setToAmount] = useState("");
   const [status, setStatus] = useState("");
   const [slippage, setSlippage] = useState(0.5);
   const [slippageOpen, setSlippageOpen] = useState(false);
-  const tokenOptions = useMemo(() => ["USDC", "SOL", "ETH", "BTC", "kUSD"], []);
+  const tokenOptions = useMemo(() => ["kUSD", "kSOL", "kETH", "kBTC"], []);
 
 
   const prices = useMemo(
     () => ({
-      USDC: 1,
-      SOL: 150,
-      ETH: 3200,
-      BTC: 65000,
       kUSD: 1,
+      kSOL: 24,
+      kETH: 320,
+      kBTC: 6200,
     }),
     []
   );
@@ -126,7 +124,7 @@ export default function App() {
   const feeBps = 30;
 
   const balances = useMemo(
-    () => ({ USDC: 0, SOL: 0, ETH: 0, BTC: 0, kUSD: 0 }),
+    () => ({ kUSD: 0, kSOL: 0, kETH: 0, kBTC: 0 }),
     []
   );
 
@@ -143,10 +141,10 @@ export default function App() {
 
   const pools = useMemo(
     () => [
-      { pair: "USDC / SOL", volume24h: "$1.2M", tvl: "$8.4M" },
-      { pair: "ETH / BTC", volume24h: "$980k", tvl: "$6.1M" },
-      { pair: "kUSD / SOL", volume24h: "$520k", tvl: "$2.7M" },
-      { pair: "USDC / kUSD", volume24h: "$410k", tvl: "$1.9M" },
+      { pair: "kUSD / kSOL", volume24h: "₭1.2M", tvl: "₭7.8M" },
+      { pair: "kUSD / kETH", volume24h: "₭880k", tvl: "₭5.2M" },
+      { pair: "kUSD / kBTC", volume24h: "₭640k", tvl: "₭3.6M" },
+      { pair: "kSOL / kETH", volume24h: "₭420k", tvl: "₭2.1M" },
     ],
     []
   );
@@ -171,7 +169,7 @@ export default function App() {
       const data = await res.json();
 
       if (res.ok) {
-        setStatus(`Swap complete ✅ TX Hash: ${data.tx.hash}`);
+        setStatus(`Swap complete ✅ Keeta TX: ${data.tx.hash}`);
       } else {
         setStatus(`Error: ${data.error}`);
       }
@@ -207,15 +205,15 @@ export default function App() {
 
         <header className="hero-banner" id="stats">
           <h1 className="hero-title">Trade digital assets seamlessly</h1>
-          <p className="hero-subtitle">Low slippage. Deep liquidity. Multi-chain.</p>
+          <p className="hero-subtitle">Low slippage. Deep liquidity. Native to Keeta.</p>
           <div className="stats-strip">
             <div className="stat-item">
               <div className="stat-label">24h Volume</div>
-              <div className="stat-value">$0</div>
+              <div className="stat-value">₭0</div>
             </div>
             <div className="stat-item">
               <div className="stat-label">Total TVL</div>
-              <div className="stat-value">$0</div>
+              <div className="stat-value">₭0</div>
             </div>
             <div className="stat-item">
               <div className="stat-label">Markets</div>
