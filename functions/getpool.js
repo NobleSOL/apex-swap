@@ -1,11 +1,12 @@
 // functions/getPool.js
 import * as KeetaNet from "@keetanetwork/keetanet-client";
+import { withCors } from "./cors.js";
 
 /**
  * Get pool reserves for two tokens
  * Input: { tokenA, tokenB }
  */
-export async function handler(event) {
+const baseHandler = async (event) => {
   try {
     const { tokenA, tokenB } = JSON.parse(event.body || "{}");
 
@@ -28,4 +29,6 @@ export async function handler(event) {
   } catch (err) {
     return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
   }
-}
+};
+
+export const handler = withCors(baseHandler);

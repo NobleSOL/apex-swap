@@ -1,11 +1,12 @@
 // functions/addLiquidity.js
 import * as KeetaNet from "@keetanetwork/keetanet-client";
+import { withCors } from "./cors.js";
 
 /**
  * Add liquidity to a pool
  * Input: { tokenA, tokenB, amountA, amountB, wallet }
  */
-export async function handler(event) {
+const baseHandler = async (event) => {
   try {
     const { tokenA, tokenB, amountA, amountB, wallet } = JSON.parse(event.body || "{}");
 
@@ -30,4 +31,6 @@ export async function handler(event) {
   } catch (err) {
     return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
   }
-}
+};
+
+export const handler = withCors(baseHandler);

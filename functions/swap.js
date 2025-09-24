@@ -1,4 +1,5 @@
 import * as KeetaNet from "@keetanetwork/keetanet-client";
+import { withCors } from "./cors.js";
 
 // Constant product AMM formula
 function getOutputAmount(inputAmount, reserveIn, reserveOut) {
@@ -8,7 +9,7 @@ function getOutputAmount(inputAmount, reserveIn, reserveOut) {
   return numerator / denominator;
 }
 
-export async function handler(event) {
+const baseHandler = async (event) => {
   try {
     const { from, to, amount, wallet } = JSON.parse(event.body || "{}");
 
@@ -41,4 +42,6 @@ export async function handler(event) {
       body: JSON.stringify({ error: err.message }),
     };
   }
-}
+};
+
+export const handler = withCors(baseHandler);
