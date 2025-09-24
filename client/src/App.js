@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import "./App.css";
-import logo from "./ApeX-logo.png";
-import { applyBrandTheme } from "./theme";
 
 const BRAND_LOGO = "https://cdn.builder.io/api/v1/image/assets%2Fd70091a6f5494e0195b033a72f7e79ae%2Fbcf60e97978040f8b093caea61156022?format=webp&width=800";
 
@@ -112,11 +110,6 @@ export default function App() {
   const [slippageOpen, setSlippageOpen] = useState(false);
   const tokenOptions = useMemo(() => ["USDC", "SOL", "ETH", "BTC", "kUSD"], []);
 
-  useEffect(() => {
-    applyBrandTheme(BRAND_LOGO).catch(() => {
-      /* no-op */
-    });
-  }, []);
 
   const prices = useMemo(
     () => ({
@@ -235,7 +228,6 @@ export default function App() {
             <div className="swap-box">
               <div className="swap-header">
                 <div className="swap-controls">
-                  <button type="button" className="icon-button" aria-label="Settings">⚙</button>
                   <button type="button" className="slippage-chip" aria-label="Slippage" onClick={() => setSlippageOpen((v) => !v)}>{slippage}%</button>
                 </div>
               </div>
@@ -254,7 +246,7 @@ export default function App() {
               )}
 
               <div className="pair-stack">
-                <div className="row-header">Sell</div>
+                <div className="row-header sell-label">Sell</div>
                 <div className="pair-row">
                   <div className="token-col">
                     <label className="field-group">
@@ -282,9 +274,7 @@ export default function App() {
                 <div className="toggle-row">
                   <div className="hr-line" />
                   <button type="button" className="direction-toggle" onClick={flipDirection} aria-label="Switch direction">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M7 7h11M7 7l3-3M7 7l3 3M17 17H6m11 0l-3-3m3 3l-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+                    <SwapIcon />
                   </button>
                   <div className="hr-line" />
                 </div>
@@ -347,7 +337,7 @@ export default function App() {
 
         <footer className="site-footer">
           <div className="footer-inner">
-            <span>© {new Date().getFullYear()} ApeX</span>
+            <span>© {new Date().getFullYear()} SILVERBACK</span>
             <div className="footer-links">
               <a href="#swap">Swap</a>
               <a href="#pools">Pools</a>
