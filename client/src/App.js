@@ -110,6 +110,8 @@ export default function App() {
     []
   );
 
+  const feeBps = 30;
+
   const balances = useMemo(
     () => ({ USDC: 0, SOL: 0, ETH: 0, BTC: 0, kUSD: 0 }),
     []
