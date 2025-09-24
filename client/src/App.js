@@ -3,7 +3,7 @@ import "./App.css";
 import { applyBrandTheme } from "./theme";
 
 const BRAND_LOGO =
-  "https://cdn.builder.io/api/v1/image/assets%2Fd70091a6f5494e0195b033a72f7e79ae%2Fbcf60e97978040f8b093caea61156022?format=webp&width=800";
+  "/builder/cdn/api/v1/image/assets%2Fd70091a6f5494e0195b033a72f7e79ae%2Fbcf60e97978040f8b093caea61156022?format=webp&width=800";
 
 const TOKENS = [
   { symbol: "USDC", name: "USD Coin" },
