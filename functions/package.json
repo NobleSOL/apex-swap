@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
-    "@keeta/sdk": "*",
+    "@keeta/sdk": "file:./vendor/keeta-sdk",
     "sharp": "^0.33.3"
   }
 }

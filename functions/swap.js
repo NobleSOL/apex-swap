@@ -4,13 +4,20 @@ let RealKeetaClientCtor = null;
 try {
   // Support different export styles from the SDK (CommonJS / ESM default exports).
   const maybeModule = require("@keeta/sdk");
+  const candidateCtors = [];
   if (typeof maybeModule === "function") {
-    RealKeetaClientCtor = maybeModule;
-  } else if (maybeModule && typeof maybeModule.KeetaClient === "function") {
-    RealKeetaClientCtor = maybeModule.KeetaClient;
-  } else if (maybeModule && typeof maybeModule.default === "function") {
-    RealKeetaClientCtor = maybeModule.default;
+    candidateCtors.push(maybeModule);
   }
+  if (maybeModule && typeof maybeModule.KeetaClient === "function") {
+    candidateCtors.push(maybeModule.KeetaClient);
+  }
+  if (maybeModule && typeof maybeModule.default === "function") {
+    candidateCtors.push(maybeModule.default);
+  }
+
+  RealKeetaClientCtor = candidateCtors.find(
+    (ctor) => typeof ctor === "function" && ctor.__isKeetaPlaceholder !== true
+  );
 } catch (err) {
   // The SDK is optional for local development; fall back to a mock client below.
   RealKeetaClientCtor = null;
