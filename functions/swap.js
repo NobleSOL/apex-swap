@@ -1,5 +1,11 @@
 const { randomUUID } = require("crypto");
 
+const KEETA_CHAIN = "keeta";
+const DEFAULT_KEETA_TOKENS = ["KUSD", "KSOL", "KETH", "KBTC"];
+const NETWORK = process.env.KEETA_NETWORK || "keeta-mainnet";
+const DEFAULT_ANCHOR_ID =
+  process.env.KEETA_DEFAULT_ANCHOR_ID || `${NETWORK}-native-anchor`;
+
 let RealKeetaClientCtor = null;
 try {
   // Support different export styles from the SDK (CommonJS / ESM default exports).
@@ -31,7 +37,7 @@ class MockKeetaClient {
   async swap({ from, to, amount, user, anchors, slippageBps, feeBps, quoteId, metadata }) {
     return {
       hash: `0xMOCK${randomUUID().replace(/-/g, "")}`,
-      network: this.opts.network || "mainnet",
+      network: this.opts.network || NETWORK,
       from,
       to,
       amount,
@@ -46,8 +52,6 @@ class MockKeetaClient {
     };
   }
 }
-
-const NETWORK = process.env.KEETA_NETWORK || "mainnet";
 
 let cachedAnchors = null;
 
@@ -76,7 +80,8 @@ function loadAnchors() {
     try {
       const parsed = JSON.parse(process.env.KEETA_ANCHORS);
       if (Array.isArray(parsed)) {
-        parsed.map(normalizeAnchor).forEach((anchor) => {
+        parsed.forEach((entry) => {
+          const anchor = normalizeKeetaAnchor(entry);
           if (anchor) anchors.push(anchor);
         });
       } else {
@@ -87,72 +92,77 @@ function loadAnchors() {
     }
   }
 
-  const envAnchorConfigs = [
-    {
-      key: "KEETA_SOLANA_ANCHOR",
-      base: {
-        id: "solana-mainnet",
-        chain: "solana",
-        tokens: ["SOL", "USDC", "KUSD"],
-        valueField: "publicKey",
-      },
-    },
-    {
-      key: "KEETA_ETHEREUM_ANCHOR",
-      base: {
-        id: "ethereum-mainnet",
-        chain: "ethereum",
-        tokens: ["ETH", "USDC"],
-        valueField: "address",
-      },
-    },
-    {
-      key: "KEETA_BITCOIN_ANCHOR",
-      base: {
-        id: "bitcoin-mainnet",
-        chain: "bitcoin",
-        tokens: ["BTC"],
-        valueField: "address",
-      },
-    },
-  ];
+  const anchorFromEnv = process.env.KEETA_NATIVE_ANCHOR;
+  if (anchorFromEnv) {
+    try {
+      const parsed = JSON.parse(anchorFromEnv);
+      if (Array.isArray(parsed)) {
+        parsed.forEach((entry) => {
+          const anchor = normalizeKeetaAnchor(entry);
+          if (anchor) anchors.push(anchor);
+        });
+      } else {
+        const anchor = normalizeKeetaAnchor(parsed);
+        if (anchor) {
+          anchors.push(anchor);
+        }
+      }
+    } catch (err) {
+      const anchor = normalizeKeetaAnchor({
+        id: DEFAULT_ANCHOR_ID,
+        address: anchorFromEnv,
+      });
+      if (anchor) {
+        anchors.push(anchor);
+      }
+    }
+  }
 
-  envAnchorConfigs.forEach(({ key, base }) => {
-    const value = process.env[key];
-    if (!value) return;
-    const anchor = normalizeAnchor({
-      ...base,
-      [base.valueField]: value,
+  const candidateAnchorId = process.env.KEETA_ANCHOR_ID || DEFAULT_ANCHOR_ID;
+  const candidateAddress =
+    process.env.KEETA_ADDRESS || process.env.KEETA_NATIVE_ADDRESS;
+  const candidatePublicKey =
+    process.env.KEETA_PUBLIC_KEY || process.env.KEETA_NATIVE_PUBLIC_KEY;
+  const candidateEndpoint =
+    process.env.KEETA_RPC_ENDPOINT || process.env.KEETA_ENDPOINT;
+
+  if (candidateAddress || candidatePublicKey || candidateEndpoint) {
+    const anchor = normalizeKeetaAnchor({
+      id: candidateAnchorId,
+      address: candidateAddress,
+      publicKey: candidatePublicKey,
+      endpoint: candidateEndpoint,
     });
     if (anchor) {
       anchors.push(anchor);
     }
-  });
+  }
 
   if (!anchors.length) {
     anchors.push(
-      normalizeAnchor({
-        id: "mock-solana-anchor",
-        chain: "solana",
-        publicKey: "11111111111111111111111111111111",
-        tokens: ["SOL", "USDC", "KUSD"],
-      }),
-      normalizeAnchor({
-        id: "mock-ethereum-anchor",
-        chain: "ethereum",
-        address: "0x0000000000000000000000000000000000000000",
-        tokens: ["ETH", "USDC"],
-      }),
-      normalizeAnchor({
-        id: "mock-bitcoin-anchor",
-        chain: "bitcoin",
-        address: "tb1qexampleanchoraddress0000000000000000000000",
-        tokens: ["BTC"],
+      normalizeKeetaAnchor({
+        id: candidateAnchorId,
+        endpoint: candidateEndpoint,
       })
     );
   }
 
-  cachedAnchors = anchors.filter(Boolean);
+  const deduped = [];
+  const seen = new Set();
+  anchors.forEach((anchor) => {
+    if (!anchor) return;
+    const key = anchor.id || JSON.stringify(anchor);
+    if (seen.has(key)) return;
+    seen.add(key);
+    deduped.push(anchor);
+  });
+
+  cachedAnchors = deduped;
+
+  if (!cachedAnchors.length) {
+    throw new Error("No Keeta anchors configured");
+  }
+
   return cachedAnchors;
 }
 
@@ -177,6 +187,47 @@ function normalizeAnchor(anchor) {
   }
 
   return compactObject(normalized);
+}
+
+function normalizeKeetaAnchor(anchor) {
+  if (!anchor) {
+    return null;
+  }
+
+  if (Array.isArray(anchor)) {
+    return null;
+  }
+
+  const base =
+    anchor && typeof anchor === "object"
+      ? { ...anchor }
+      : { address: anchor };
+
+  if (!base.id && !base.anchorId && !base.name) {
+    base.id = DEFAULT_ANCHOR_ID;
+  }
+
+  if (!base.tokens || (Array.isArray(base.tokens) && base.tokens.length === 0)) {
+    base.tokens = DEFAULT_KEETA_TOKENS;
+  }
+
+  base.chain = KEETA_CHAIN;
+
+  const normalized = normalizeAnchor(base);
+  if (!normalized) {
+    return null;
+  }
+
+  const tokens =
+    normalized.tokens && normalized.tokens.length
+      ? normalized.tokens
+      : DEFAULT_KEETA_TOKENS;
+
+  return compactObject({
+    ...normalized,
+    chain: KEETA_CHAIN,
+    tokens,
+  });
 }
 
 function extractAnchorTokens(anchor) {
