@@ -269,7 +269,7 @@ export default function App() {
                         <input
                           type="text"
                           inputMode="decimal"
-                          placeholder="0.0"
+                          placeholder="0.00"
                           value={fromAmount}
                           onChange={(e) => setFromAmount(e.target.value)}
                         />
