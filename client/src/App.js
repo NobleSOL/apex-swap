@@ -89,6 +89,9 @@ export default function App() {
   const [fromAmount, setFromAmount] = useState("");
   const [toAmount, setToAmount] = useState("");
   const [status, setStatus] = useState("");
+  const [slippage, setSlippage] = useState(0.5);
+  const [slippageOpen, setSlippageOpen] = useState(false);
+  const tokenOptions = useMemo(() => ["USDC", "SOL", "ETH", "BTC", "kUSD"], []);
 
   useEffect(() => {
     applyBrandTheme(logo).catch(() => {
