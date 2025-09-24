@@ -1,6 +1,6 @@
 [build]
   publish = "client/build"
-  command = "npm install --prefix client && npm run build --prefix client"
+  command = "npm install --prefix functions && npm install --prefix client && npm run build --prefix client"
 
 [functions]
   directory = "functions"
