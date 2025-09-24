@@ -15,14 +15,14 @@ function SwapIcon() {
 
 function getTokenIconUrl(symbol) {
   const s = String(symbol || "").toLowerCase();
-  const map = {
-    usdc: "https://cryptoicons.org/api/icon/usdc/32",
-    sol: "https://cryptoicons.org/api/icon/sol/32",
-    eth: "https://cryptoicons.org/api/icon/eth/32",
-    btc: "https://cryptoicons.org/api/icon/btc/32",
-    kusd: "https://cryptoicons.org/api/icon/usd/32",
+  const cryptoLogos = {
+    usdc: "https://cryptologos.cc/logos/usd-coin-usdc-logo.svg?v=029",
+    sol: "https://cryptologos.cc/logos/solana-sol-logo.svg?v=029",
+    eth: "https://cryptologos.cc/logos/ethereum-eth-logo.svg?v=029",
+    btc: "https://cryptologos.cc/logos/bitcoin-btc-logo.svg?v=029",
+    kusd: "https://cryptologos.cc/logos/usd-coin-usdc-logo.svg?v=029",
   };
-  return map[s] || `https://cryptoicons.org/api/icon/${s}/32`;
+  return cryptoLogos[s] || `https://cryptologos.cc/logos/${s}-${s}-logo.svg?v=029`;
 }
 
 function TokenBadge({ symbol }) {
