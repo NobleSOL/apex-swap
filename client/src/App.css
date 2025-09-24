@@ -92,7 +92,7 @@
 .field-group { display: flex; flex-direction: column; gap: 6px; }
 .field-label { color: #b1b6bd; font-size: 12px; }
 .pair-stack { display: flex; flex-direction: column; gap: 12px; }
-.pair-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #141414; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 12px; }
+.pair-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: #141414; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 12px; }
 
 .swap-box input,
 .swap-box select {
@@ -140,7 +140,7 @@ button:hover { background: var(--brand-secondary, #00cc52); }
 
 .row-header { text-align: left; color: #c5c7ca; font-size: 12px; font-weight: 600; margin: 6px 2px; }
 .token-col { display: flex; }
-.amount-col { display: flex; }
+.amount-col { display: flex; align-items: center; justify-content: flex-start; }
 .token-select { display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0)); border: 1px solid rgba(255,255,255,0.08); border-radius: 999px; padding: 4px 8px; }
 .token-select select { background: transparent; color: #fff; border: none; height: 28px; }
 .token-icon { display: inline-flex; width: 18px; height: 18px; }
@@ -157,8 +157,8 @@ button:hover { background: var(--brand-secondary, #00cc52); }
 .token-item.is-active { outline: 2px solid var(--brand-primary, #00ff66); }
 .token-symbol { white-space: nowrap; }
 
-.amount-col input { text-align: right; font-size: 20px; font-weight: 600; }
-.balance-line { margin-top: 6px; font-size: 12px; color: #8f949a; text-align: right; }
+.amount-col input { text-align: left; font-size: 20px; font-weight: 600; }
+.balance-line { margin-top: 6px; font-size: 12px; color: #8f949a; text-align: left; }
 .route-line { margin-top: 10px; font-size: 12px; color: #8f949a; text-align: left; }
 .info-rows { display: grid; gap: 6px; margin-top: 10px; }
 .info-line { font-size: 12px; color: #8f949a; text-align: left; }
