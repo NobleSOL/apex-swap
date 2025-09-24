@@ -218,9 +218,22 @@ export default function App() {
                 <h2 className="swap-title">Swap</h2>
                 <div className="swap-controls">
                   <button type="button" className="icon-button" aria-label="Settings">⚙</button>
-                  <div className="slippage-chip" aria-label="Slippage">0.5%</div>
+                  <button type="button" className="slippage-chip" aria-label="Slippage" onClick={() => setSlippageOpen((v) => !v)}>{slippage}%</button>
                 </div>
               </div>
+              {slippageOpen && (
+                <div className="slippage-popover">
+                  <div className="slip-row">
+                    {[0.1, 0.5, 1].map((v) => (
+                      <button key={v} className={`slip-btn${v === slippage ? " is-active" : ""}`} onClick={() => { setSlippage(v); setSlippageOpen(false); }}>{v}%</button>
+                    ))}
+                    <div className="slip-custom">
+                      <input type="number" min="0" step="0.1" value={slippage} onChange={(e) => setSlippage(parseFloat(e.target.value) || 0)} />
+                      <span>%</span>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="pair-stack">
                 <div className="row-header">Sell</div>
