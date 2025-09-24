@@ -11,6 +11,48 @@ function SwapIcon() {
   );
 }
 
+function TokenIcon({ symbol }) {
+  switch (symbol) {
+    case "USDC":
+      return (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="10" fill="#2775C9" />
+          <text x="12" y="16" textAnchor="middle" fontSize="10" fill="#fff" fontFamily="system-ui">$</text>
+        </svg>
+      );
+    case "SOL":
+      return (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="10" fill="#00FFA3" />
+          <circle cx="12" cy="12" r="6" fill="#9945FF" opacity="0.8" />
+        </svg>
+      );
+    case "ETH":
+      return (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="10" fill="#3C3C3D" />
+          <path d="M12 5l4 7-4 2-4-2 4-7zm0 14l4-6-4 2-4-2 4 6z" fill="#fff" />
+        </svg>
+      );
+    case "BTC":
+      return (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="10" fill="#F2A900" />
+          <text x="12" y="16" textAnchor="middle" fontSize="10" fill="#000" fontFamily="system-ui">₿</text>
+        </svg>
+      );
+    case "kUSD":
+      return (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="10" fill="#14B8A6" />
+          <text x="12" y="16" textAnchor="middle" fontSize="9" fill="#001" fontFamily="system-ui">k$</text>
+        </svg>
+      );
+    default:
+      return null;
+  }
+}
+
 export default function App() {
   const [fromAsset, setFromAsset] = useState("USDC");
   const [toAsset, setToAsset] = useState("kUSD");
@@ -23,6 +65,33 @@ export default function App() {
       /* no-op */
     });
   }, []);
+
+  const prices = useMemo(
+    () => ({
+      USDC: 1,
+      SOL: 150,
+      ETH: 3200,
+      BTC: 65000,
+      kUSD: 1,
+    }),
+    []
+  );
+
+  const balances = useMemo(
+    () => ({ USDC: 0, SOL: 0, ETH: 0, BTC: 0, kUSD: 0 }),
+    []
+  );
+
+  useEffect(() => {
+    const a = parseFloat(fromAmount);
+    if (!isNaN(a) && prices[fromAsset] && prices[toAsset]) {
+      const usd = a * prices[fromAsset];
+      const out = usd / prices[toAsset];
+      setToAmount(out ? String(out) : "");
+    } else if (fromAmount === "") {
+      setToAmount("");
+    }
+  }, [fromAmount, fromAsset, toAsset, prices]);
 
   const pools = useMemo(
     () => [
@@ -123,6 +192,7 @@ export default function App() {
                     <label className="field-group">
                       <span className="field-label">Token</span>
                       <div className="token-select">
+                        <span className="token-icon"><TokenIcon symbol={fromAsset} /></span>
                         <select value={fromAsset} onChange={(e) => setFromAsset(e.target.value)}>
                           <option value="USDC">USDC</option>
                           <option value="SOL">SOL</option>
@@ -142,9 +212,8 @@ export default function App() {
                           value={fromAmount}
                           onChange={(e) => setFromAmount(e.target.value)}
                         />
-                        <button type="button" className="small-action" onClick={() => setFromAmount("MAX")}>Max</button>
                       </div>
-                      <div className="balance-line">Balance: 0.00</div>
+                      <div className="balance-line">Balance: {balances[fromAsset]?.toFixed(2)}</div>
                     </label>
                   </div>
                 </div>
@@ -165,6 +234,7 @@ export default function App() {
                     <label className="field-group">
                       <span className="field-label">Token</span>
                       <div className="token-select">
+                        <span className="token-icon"><TokenIcon symbol={toAsset} /></span>
                         <select value={toAsset} onChange={(e) => setToAsset(e.target.value)}>
                           <option value="kUSD">kUSD</option>
                           <option value="BTC">BTC</option>
@@ -185,12 +255,13 @@ export default function App() {
                           onChange={(e) => setToAmount(e.target.value)}
                         />
                       </div>
-                      <div className="balance-line">Rate: —</div>
+                      <div className="balance-line">1 {fromAsset} ≈ {(prices[fromAsset] / prices[toAsset]).toFixed(6)} {toAsset}</div>
                     </label>
                   </div>
                 </div>
               </div>
 
+              <div className="route-line">Route: {fromAsset} → {toAsset}</div>
               <div className="submit-row">
                 <button className="primary-cta" onClick={handleSwap}>Swap</button>
               </div>
