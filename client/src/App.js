@@ -297,7 +297,11 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="route-line">Route: {fromAsset} → {toAsset}</div>
+              <div className="info-rows">
+                <div className="info-line">Price impact: 0.00%</div>
+                <div className="info-line">Est. fees: {(feeBps / 100).toFixed(2)}%</div>
+                <div className="route-line">Route: {fromAsset} → {toAsset}</div>
+              </div>
               <div className="submit-row">
                 <button className="primary-cta" onClick={handleSwap}>Swap</button>
               </div>
