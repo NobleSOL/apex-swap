@@ -1,12 +1,18 @@
 // functions/removeLiquidity.js
 import * as KeetaNet from "@keetanetwork/keetanet-client";
+ai_master_d7ba31322481
 import { withCors } from "./utils/cors.js";
+import { withCors } from "./cors.js";
+master
 
 /**
  * Remove liquidity from a pool
  * Input: { tokenA, tokenB, lpAmount, wallet }
  */
+ai_master_d7ba31322481
 const removeLiquidityHandler = async (event) => {
+const baseHandler = async (event) => {
+master
   try {
     const { tokenA, tokenB, lpAmount, wallet } = JSON.parse(event.body || "{}");
 
@@ -31,4 +37,7 @@ const removeLiquidityHandler = async (event) => {
   }
 };
 
+ai_master_d7ba31322481
 export const handler = withCors(removeLiquidityHandler);
+export const handler = withCors(baseHandler);
+master
