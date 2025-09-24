@@ -1,11 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <defs>
-    <linearGradient id="kusdGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#2BB673"/>
-      <stop offset="100%" stop-color="#0B8E46"/>
+    <linearGradient id="kusdBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#32D17C"/>
+      <stop offset="100%" stop-color="#0E8F4B"/>
+    </linearGradient>
+    <linearGradient id="kusdInner" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
     </linearGradient>
   </defs>
-  <rect width="64" height="64" rx="12" fill="url(#kusdGradient)"/>
-  <circle cx="32" cy="32" r="18" fill="#FFFFFF" fill-opacity="0.25"/>
-  <path fill="#FFFFFF" d="M32 20c-6.6 0-12 4.4-12 10s5.4 10 12 10c3 0 5.7-.8 7.9-2.4l-3.4-3.4a7.6 7.6 0 01-4.5 1.4c-3.3 0-5.8-1.9-5.8-4.7s2.5-4.7 5.8-4.7c1.5 0 2.9.4 4 1.2V32h4.7v-9.7A15.8 15.8 0 0032 20zm-2.1 17.7l-2.9 2.9 5 5 2.9-2.9-5-5z"/>
+  <rect width="64" height="64" rx="16" fill="url(#kusdBg)"/>
+  <circle cx="32" cy="32" r="22" fill="none" stroke="#FFFFFF" stroke-opacity="0.3" stroke-width="3"/>
+  <path fill="url(#kusdInner)" d="M32 10a22 22 0 1022 22A22 22 0 0032 10z"/>
+  <g fill="#FFFFFF">
+    <path d="M22 20v24h4.5V33.8l12.3 10.2H44L31 31.8l12.5-11.8h-5.4L26.5 28V20H22z"/>
+    <path d="M41 36.2c0 3.7-3.1 6.3-7.6 6.3-2.7 0-5.2-.9-7.3-2.6l-2.1 3.2c2.6 2.1 6 3.3 9.5 3.3 7 0 11.7-4.2 11.7-10.5 0-4.8-3.1-7.9-8.8-8.9l-3.8-.7c-2.9-.5-4.1-1.4-4.1-3 0-1.9 1.8-3.2 4.5-3.2 2.3 0 4.3.7 6 1.9l1.9-3.2c-1.9-1.3-4.5-2.2-7.5-2.4V16h-4v3.4c-4.7.6-7.7 3.5-7.7 7.6 0 3.8 2.3 6.2 7.1 7.1l3.9.8c3.1.6 4.3 1.6 4.3 3.3z" opacity="0.85"/>
+  </g>
 </svg>

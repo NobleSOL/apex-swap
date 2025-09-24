@@ -126,7 +126,7 @@ button:hover { background: var(--brand-secondary, #00cc52); }
 
 .direction-toggle { display: inline-flex; align-items: center; justify-content: center; margin: 2px auto; width: 36px; height: 36px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.08); color: #000; background: rgba(74,74,74,1); }
 .direction-toggle:hover { filter: brightness(1.1); }
-.direction-toggle svg { display: block; }
+.direction-toggle svg { display: block; width: 90%; height: 90%; }
 
 .amount-field { position: relative; width: 100%; }
 .amount-field input { padding-right: 56px; width: 200px; max-width: 100%; }
@@ -149,6 +149,7 @@ button:hover { background: var(--brand-secondary, #00cc52); }
 .token-select { display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0)); border: 1px solid rgba(255,255,255,0.08); border-radius: 999px; padding: 6px 10px; height: 44px; }
 .token-select select { background: transparent; color: #fff; border: none; height: 28px; }
 .token-icon { display: inline-flex; width: 18px; height: 18px; }
+.token-img { width: 100%; height: 100%; object-fit: contain; display: block; }
 
 /* Custom token selector */
 .token-select-wrap { position: relative; }
