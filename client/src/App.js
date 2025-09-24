@@ -3,12 +3,31 @@ import "./App.css";
 import logo from "./ApeX-logo.png";
 import { applyBrandTheme } from "./theme";
 
+const BRAND_LOGO = "https://cdn.builder.io/api/v1/image/assets%2Fd70091a6f5494e0195b033a72f7e79ae%2Fbcf60e97978040f8b093caea61156022?format=webp&width=800";
+
 function SwapIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M7 7h11M7 7l3-3M7 7l3 3M17 17H6m11 0l-3-3m3 3l-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   );
+}
+
+function getTokenIconUrl(symbol) {
+  const s = String(symbol || "").toLowerCase();
+  const map = {
+    usdc: "https://cryptoicons.org/api/icon/usdc/32",
+    sol: "https://cryptoicons.org/api/icon/sol/32",
+    eth: "https://cryptoicons.org/api/icon/eth/32",
+    btc: "https://cryptoicons.org/api/icon/btc/32",
+    kusd: "https://cryptoicons.org/api/icon/usd/32",
+  };
+  return map[s] || `https://cryptoicons.org/api/icon/${s}/32`;
+}
+
+function TokenBadge({ symbol }) {
+  const src = getTokenIconUrl(symbol);
+  return <img className="token-img" src={src} alt={`${symbol} logo`} onError={(e) => { e.currentTarget.style.display = "none"; }} />;
 }
 
 function TokenIcon({ symbol }) {
@@ -63,7 +82,7 @@ function TokenSelect({ value, onChange, options }) {
   return (
     <div className="token-select-wrap">
       <button type="button" className="token-pill" onClick={() => setOpen((v) => !v)} aria-haspopup="listbox" aria-expanded={open}>
-        <span className="token-icon"><TokenIcon symbol={value} /></span>
+        <span className="token-icon"><TokenBadge symbol={value} /></span>
         <span className="token-symbol">{value}</span>
       </button>
       {open && (
@@ -72,7 +91,7 @@ function TokenSelect({ value, onChange, options }) {
           <div className="token-list">
             {filtered.map((sym) => (
               <button key={sym} type="button" className={`token-item${sym === value ? " is-active" : ""}`} onClick={() => { onChange(sym); setOpen(false); }}>
-                <span className="token-icon"><TokenIcon symbol={sym} /></span>
+                <span className="token-icon"><TokenBadge symbol={sym} /></span>
                 <span className="token-symbol">{sym}</span>
               </button>
             ))}
@@ -94,7 +113,7 @@ export default function App() {
   const tokenOptions = useMemo(() => ["USDC", "SOL", "ETH", "BTC", "kUSD"], []);
 
   useEffect(() => {
-    applyBrandTheme(logo).catch(() => {
+    applyBrandTheme(BRAND_LOGO).catch(() => {
       /* no-op */
     });
   }, []);
@@ -179,8 +198,8 @@ export default function App() {
       <div className="site-shell">
         <nav className="top-nav">
           <div className="brand-wrap">
-            <img src={logo} alt="ApeX Logo" className="logo" />
-            <span className="brand-name">ApeX</span>
+            <img src={BRAND_LOGO} alt="SILVERBACK Logo" className="logo" />
+            <span className="brand-name">SILVERBACK</span>
           </div>
           <div className="nav-right">
             <div className="nav-links">
@@ -215,7 +234,6 @@ export default function App() {
           <section className="swap-section" id="swap">
             <div className="swap-box">
               <div className="swap-header">
-                <h2 className="swap-title">Swap</h2>
                 <div className="swap-controls">
                   <button type="button" className="icon-button" aria-label="Settings">⚙</button>
                   <button type="button" className="slippage-chip" aria-label="Slippage" onClick={() => setSlippageOpen((v) => !v)}>{slippage}%</button>
