@@ -124,7 +124,7 @@ button:hover { background: var(--brand-secondary, #00cc52); }
 
 .status { margin-top: 15px; font-size: 14px; color: var(--brand-primary, #00ff66); }
 
-.direction-toggle { display: inline-flex; align-items: center; justify-content: center; margin: 2px auto; width: 36px; height: 36px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.08); background: color-mix(in srgb, var(--brand-primary), #000 80%); color: #fff; }
+.direction-toggle { display: inline-flex; align-items: center; justify-content: center; margin: 2px auto; width: 36px; height: 36px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.08); color: #fff; }
 .direction-toggle:hover { filter: brightness(1.1); }
 
 .amount-field { position: relative; width: 100%; }
