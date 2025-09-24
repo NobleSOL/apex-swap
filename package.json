@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/NobleSOL/apex-swap/issues"
   },
-  "homepage": "https://github.com/NobleSOL/apex-swap#readme"
+  "homepage": "https://github.com/NobleSOL/apex-swap#readme",
+  "dependencies": {
+    "@keetanetwork/keetanet-client": "^0.14.5"
+  }
 }
