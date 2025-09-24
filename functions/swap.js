@@ -1,52 +1,49 @@
-import * as KeetaNet from "@keetanetwork/keetanet-client";
-ai_master_d7ba31322481
+// functions/swap.js
 import { withCors } from "./utils/cors.js";
-import { withCors } from "./cors.js";
-master
 
-// Constant product AMM formula
+// Constant product AMM formula (x*y=k) with 0.3% fee
 function getOutputAmount(inputAmount, reserveIn, reserveOut) {
   const inputWithFee = inputAmount * 997n;
   const numerator = inputWithFee * reserveOut;
   const denominator = reserveIn * 1000n + inputWithFee;
-  return numerator / denominator;
+  return denominator === 0n ? 0n : numerator / denominator;
 }
 
-ai_master_d7ba31322481
-const swapHandler = async (event) => {
-const baseHandler = async (event) => {
-master
+const handlerCore = async (event) => {
   try {
     const { from, to, amount, wallet } = JSON.parse(event.body || "{}");
 
-    const client = KeetaNet.UserClient.fromNetwork("test");
+    if (!from || !to || !amount || !wallet) {
+      return { statusCode: 400, body: JSON.stringify({ error: "from, to, amount, and wallet are required" }) };
+    }
 
+    // Demo reserves
     const reserveIn = 1000000n;
     const reserveOut = 500000n;
 
-    const outputAmount = getOutputAmount(BigInt(amount), reserveIn, reserveOut);
+    let input;
+    try {
+      input = BigInt(amount);
+    } catch {
+      return { statusCode: 400, body: JSON.stringify({ error: "amount must be a valid integer string" }) };
+    }
 
-    const builder = client.initBuilder();
+    if (input <= 0n) {
+      return { statusCode: 400, body: JSON.stringify({ error: "amount must be greater than 0" }) };
+    }
 
-    builder.send("POOL_ADDRESS_" + from, BigInt(amount), from);
-    builder.send(wallet, outputAmount, to);
+    const outputAmount = getOutputAmount(input, reserveIn, reserveOut);
 
-    await client.computeBuilderBlocks(builder);
-    const tx = await client.publishBuilder(builder);
+    // Return a demo transaction reference
+    const tx = { id: `demo-${Date.now()}`, hash: `0x${Math.random().toString(16).slice(2).padEnd(8, "0")}` };
 
     return {
       statusCode: 200,
       body: JSON.stringify({ tx, outputAmount: outputAmount.toString() }),
     };
   } catch (err) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: err.message }),
-    };
+    return { statusCode: 500, body: JSON.stringify({ error: err.message || String(err) }) };
   }
 };
 
-ai_master_d7ba31322481
-export const handler = withCors(swapHandler);
-export const handler = withCors(baseHandler);
-master
+export const handler = withCors(handlerCore);
