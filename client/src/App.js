@@ -11,21 +11,37 @@ function SwapIcon() {
   );
 }
 
+const TOKEN_ICON_PATHS = {
+  usdc: "/tokens/usdc.svg",
+  sol: "/tokens/sol.svg",
+  eth: "/tokens/eth.svg",
+  btc: "/tokens/btc.svg",
+  kusd: "/tokens/kusd.svg",
+};
+
 function getTokenIconUrl(symbol) {
-  const s = String(symbol || "").toLowerCase();
-  const cryptoLogos = {
-    usdc: "https://cryptologos.cc/logos/usd-coin-usdc-logo.svg?v=029",
-    sol: "https://cryptologos.cc/logos/solana-sol-logo.svg?v=029",
-    eth: "https://cryptologos.cc/logos/ethereum-eth-logo.svg?v=029",
-    btc: "https://cryptologos.cc/logos/bitcoin-btc-logo.svg?v=029",
-    kusd: "https://cryptologos.cc/logos/usd-coin-usdc-logo.svg?v=029",
-  };
-  return cryptoLogos[s] || `https://cryptologos.cc/logos/${s}-${s}-logo.svg?v=029`;
+  const key = String(symbol || "").toLowerCase();
+  return TOKEN_ICON_PATHS[key] || "/tokens/default.svg";
 }
 
+const FALLBACK_TOKEN_ICON = "/tokens/default.svg";
+
 function TokenBadge({ symbol }) {
-  const src = getTokenIconUrl(symbol);
-  return <img className="token-img" src={src} alt={`${symbol} logo`} onError={(e) => { e.currentTarget.style.display = "none"; }} />;
+  const [errored, setErrored] = useState(false);
+  useEffect(() => setErrored(false), [symbol]);
+  const src = errored ? FALLBACK_TOKEN_ICON : getTokenIconUrl(symbol);
+  return (
+    <img
+      className="token-img"
+      src={src}
+      alt={`${symbol} logo`}
+      onError={() => {
+        if (!errored) {
+          setErrored(true);
+        }
+      }}
+    />
+  );
 }
 
 function TokenSelect({ value, onChange, options }) {
