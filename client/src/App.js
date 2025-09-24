@@ -275,9 +275,7 @@ export default function App() {
                 <div className="toggle-row">
                   <div className="hr-line" />
                   <button type="button" className="direction-toggle" onClick={flipDirection} aria-label="Switch direction">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M7 7h11M7 7l3-3M7 7l3 3M17 17H6m11 0l-3-3m3 3l-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+                    <SwapIcon />
                   </button>
                   <div className="hr-line" />
                 </div>
