@@ -337,7 +337,7 @@ export default function App() {
 
         <footer className="site-footer">
           <div className="footer-inner">
-            <span>© {new Date().getFullYear()} ApeX</span>
+            <span>© {new Date().getFullYear()} SILVERBACK</span>
             <div className="footer-links">
               <a href="#swap">Swap</a>
               <a href="#pools">Pools</a>
