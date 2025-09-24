@@ -189,6 +189,14 @@ button:hover { background: var(--brand-secondary, #00cc52); }
   .stats-strip { grid-template-columns: 1fr; }
   .nav-links { display: none; }
   .asset-row { grid-template-columns: 1fr; }
-  .pair-row { grid-template-columns: 1fr; }
+  .pair-row { grid-template-columns: auto 1fr; align-items: center; padding: 10px; }
+  .token-col { align-items: center; }
+  .token-select { padding: 6px 10px; }
+  .token-select select { font-size: 16px; }
+  .field-label { display: none; }
+  .amount-col input { font-size: 26px; }
+  .direction-toggle { width: 44px; height: 44px; }
+  .swap-controls { display: none; }
   .pools-grid { grid-template-columns: 1fr; }
+  .swap-box { max-width: 100%; }
 }
