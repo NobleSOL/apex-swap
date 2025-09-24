@@ -1,12 +1,18 @@
 // functions/addLiquidity.js
 import * as KeetaNet from "@keetanetwork/keetanet-client";
+ai_master_d7ba31322481
+import { withCors } from "./utils/cors.js";
 import { withCors } from "./cors.js";
+master
 
 /**
  * Add liquidity to a pool
  * Input: { tokenA, tokenB, amountA, amountB, wallet }
  */
+ai_master_d7ba31322481
+const addLiquidityHandler = async (event) => {
 const baseHandler = async (event) => {
+master
   try {
     const { tokenA, tokenB, amountA, amountB, wallet } = JSON.parse(event.body || "{}");
 
@@ -17,9 +23,6 @@ const baseHandler = async (event) => {
     // Example: send both tokens into the pool account
     builder.send("POOL_ADDRESS_" + tokenA, BigInt(amountA), tokenA);
     builder.send("POOL_ADDRESS_" + tokenB, BigInt(amountB), tokenB);
-
-    // TODO: Mint LP tokens back to user
-    // builder.modifyTokenSupply(...)
 
     await client.computeBuilderBlocks(builder);
     const tx = await client.publishBuilder(builder);
@@ -33,4 +36,8 @@ const baseHandler = async (event) => {
   }
 };
 
+ai_master_d7ba31322481
+export const handler = withCors(addLiquidityHandler);
+
 export const handler = withCors(baseHandler);
+master
