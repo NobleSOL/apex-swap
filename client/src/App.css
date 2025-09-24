@@ -126,7 +126,7 @@ button:hover { background: var(--brand-secondary, #00cc52); }
 .direction-toggle:hover { filter: brightness(1.1); }
 
 .amount-field { position: relative; width: 100%; }
-.amount-field input { padding-right: 56px; }
+.amount-field input { padding-right: 56px; width: 200px; max-width: 100%; }
 .small-action { position: absolute; right: 6px; top: 6px; bottom: 6px; background: var(--brand-accent, #5ac8ff); color: #000; border: none; border-radius: 8px; padding: 0 10px; font-weight: 700; cursor: pointer; }
 .small-action:hover { filter: brightness(0.95); }
 
