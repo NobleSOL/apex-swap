@@ -241,14 +241,7 @@ export default function App() {
                   <div className="token-col">
                     <label className="field-group">
                       <span className="field-label">Token</span>
-                      <div className="token-select">
-                        <span className="token-icon"><TokenIcon symbol={fromAsset} /></span>
-                        <select value={fromAsset} onChange={(e) => setFromAsset(e.target.value)}>
-                          <option value="USDC">USDC</option>
-                          <option value="SOL">SOL</option>
-                          <option value="ETH">ETH</option>
-                        </select>
-                      </div>
+                      <TokenSelect value={fromAsset} onChange={setFromAsset} options={tokenOptions} />
                     </label>
                   </div>
                   <div className="amount-col">
