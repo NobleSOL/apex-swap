@@ -28,48 +28,6 @@ function TokenBadge({ symbol }) {
   return <img className="token-img" src={src} alt={`${symbol} logo`} onError={(e) => { e.currentTarget.style.display = "none"; }} />;
 }
 
-function TokenIcon({ symbol }) {
-  switch (symbol) {
-    case "USDC":
-      return (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="12" cy="12" r="10" fill="#2775C9" />
-          <text x="12" y="16" textAnchor="middle" fontSize="10" fill="#fff" fontFamily="system-ui">$</text>
-        </svg>
-      );
-    case "SOL":
-      return (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="12" cy="12" r="10" fill="#00FFA3" />
-          <circle cx="12" cy="12" r="6" fill="#9945FF" opacity="0.8" />
-        </svg>
-      );
-    case "ETH":
-      return (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="12" cy="12" r="10" fill="#3C3C3D" />
-          <path d="M12 5l4 7-4 2-4-2 4-7zm0 14l4-6-4 2-4-2 4 6z" fill="#fff" />
-        </svg>
-      );
-    case "BTC":
-      return (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="12" cy="12" r="10" fill="#F2A900" />
-          <text x="12" y="16" textAnchor="middle" fontSize="10" fill="#000" fontFamily="system-ui">₿</text>
-        </svg>
-      );
-    case "kUSD":
-      return (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="12" cy="12" r="10" fill="#14B8A6" />
-          <text x="12" y="16" textAnchor="middle" fontSize="9" fill="#001" fontFamily="system-ui">k$</text>
-        </svg>
-      );
-    default:
-      return null;
-  }
-}
-
 function TokenSelect({ value, onChange, options }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
