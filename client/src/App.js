@@ -146,9 +146,9 @@ function TokenSelect({ value, onChange, options }) {
 }
 
 function Header({ view, onNavigate }) {
-  const handleNav = (target, path) => (event) => {
+  const handleNav = (target, path, scrollTarget) => (event) => {
     event.preventDefault();
-    onNavigate(target, path);
+    onNavigate(target, path, scrollTarget);
   };
 
   return (
@@ -162,16 +162,23 @@ function Header({ view, onNavigate }) {
           <a
             href="/"
             className={`nav-link${view === "swap" ? " is-active" : ""}`}
-            onClick={handleNav("swap", "/")}
+            onClick={handleNav("swap", "/", "swap")}
           >
             Swap
           </a>
           <a
             href="/pools"
             className={`nav-link${view === "pools" ? " is-active" : ""}`}
-            onClick={handleNav("pools", "/pools")}
+            onClick={handleNav("pools", "/pools", "pools")}
           >
             Pools
+          </a>
+          <a
+            href="/#stats"
+            className="nav-link"
+            onClick={handleNav("swap", "/", "stats")}
+          >
+            Stats
           </a>
         </div>
         <button className="connect-button" type="button">
@@ -182,14 +189,29 @@ function Header({ view, onNavigate }) {
   );
 }
 
-function Footer() {
+function Footer({ onNavigate }) {
+  const handleNav = (target, path, scrollTarget) => (event) => {
+    if (!onNavigate) {
+      return;
+    }
+    event.preventDefault();
+    onNavigate(target, path, scrollTarget);
+  };
+
   return (
     <footer className="site-footer">
       <div className="footer-inner">
         <span>© {new Date().getFullYear()} SILVERBACK</span>
         <div className="footer-links">
-          <a href="/">Swap</a>
-          <a href="/pools">Pools</a>
+          <a href="/" onClick={handleNav("swap", "/", "swap")}>
+            Swap
+          </a>
+          <a href="/pools" onClick={handleNav("pools", "/pools", "pools")}>
+            Pools
+          </a>
+          <a href="/#stats" onClick={handleNav("swap", "/", "stats")}>
+            Stats
+          </a>
         </div>
       </div>
     </footer>
@@ -209,8 +231,8 @@ function SwapPage({ wallet, onWalletChange }) {
 
   const heroStats = useMemo(
     () => [
-      { label: "24h Volume", value: "$0" },
-      { label: "Total TVL", value: "$0" },
+      { label: "24h Volume", value: "₭0" },
+      { label: "Total TVL", value: "₭0" },
       { label: "Markets", value: "0" },
     ],
     []
@@ -291,11 +313,15 @@ function SwapPage({ wallet, onWalletChange }) {
     setToAmount(fromAmount);
   };
 
+  const feeBps = 30;
+
   return (
     <main className="content-container">
-      <section className="hero-banner">
-        <h1 className="hero-title">Trade digital assets seamlessly</h1>
-        <p className="hero-subtitle">Low slippage. Deep liquidity. Multi-chain.</p>
+      <header className="hero-banner" id="stats">
+        <div className="hero-title">
+          <p>TRADE SEAMLESSLY</p>
+        </div>
+        <p className="hero-subtitle">Low slippage. Deep liquidity. Native to Keeta.</p>
         <div className="stats-strip">
           {heroStats.map((item) => (
             <div className="stat-item" key={item.label}>
@@ -304,9 +330,9 @@ function SwapPage({ wallet, onWalletChange }) {
             </div>
           ))}
         </div>
-      </section>
+      </header>
 
-      <section className="swap-section">
+      <section className="swap-section" id="swap">
         <div className="swap-box">
           <div className="swap-header">
             <div className="swap-controls">
@@ -439,7 +465,7 @@ function SwapPage({ wallet, onWalletChange }) {
 
           <div className="info-rows">
             <div className="info-line">Price impact: 0.00%</div>
-            <div className="info-line">Est. fees: 0.30%</div>
+            <div className="info-line">Est. fees: {(feeBps / 100).toFixed(2)}%</div>
             <div className="route-line">
               Route: {fromAsset} → {toAsset}
             </div>
@@ -608,7 +634,7 @@ function PoolsPage({ wallet, onWalletChange }) {
         </div>
       </section>
 
-      <section className="pools-section">
+      <section className="pools-section" id="pools">
         <h2 className="section-title">Available Pools</h2>
         <div className="pools-grid">
           {POOLS.map((pool) => (
@@ -730,6 +756,14 @@ function App() {
   );
   const [wallet, setWallet] = useState("test-wallet");
 
+  const scrollToSection = (id) => {
+    if (typeof window === "undefined") return;
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   useEffect(() => {
     applyBrandTheme(BRAND_LOGO).catch(() => {
       /* ignore theme errors */
@@ -745,12 +779,17 @@ function App() {
     return () => window.removeEventListener("popstate", handlePop);
   }, []);
 
-  const handleNavigate = (target, path) => {
+  const handleNavigate = (target, path, scrollTarget) => {
     if (typeof window !== "undefined") {
       if (window.location.pathname !== path) {
         window.history.pushState({}, "", path);
       }
       setView(target);
+      if (scrollTarget) {
+        setTimeout(() => {
+          scrollToSection(scrollTarget);
+        }, 50);
+      }
     }
   };
 
@@ -763,7 +802,7 @@ function App() {
         ) : (
           <SwapPage wallet={wallet} onWalletChange={setWallet} />
         )}
-        <Footer />
+        <Footer onNavigate={handleNavigate} />
       </div>
     </div>
   );
