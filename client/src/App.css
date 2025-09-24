@@ -1,6 +1,6 @@
 :root {
-  --brand-primary: #00ff66; /* fallback until extracted */
-  --brand-secondary: #00cc52;
+  --brand-primary: #ffffff; /* fallback until extracted */
+  --brand-secondary: #ffffff;
   --brand-accent: #5ac8ff;
   --brand-bg: #0f0f0f;
 }

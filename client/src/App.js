@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import "./App.css";
-import logo from "./ApeX-logo.png";
-import { applyBrandTheme } from "./theme";
 
 const BRAND_LOGO = "https://cdn.builder.io/api/v1/image/assets%2Fd70091a6f5494e0195b033a72f7e79ae%2Fbcf60e97978040f8b093caea61156022?format=webp&width=800";
 
@@ -112,11 +110,6 @@ export default function App() {
   const [slippageOpen, setSlippageOpen] = useState(false);
   const tokenOptions = useMemo(() => ["USDC", "SOL", "ETH", "BTC", "kUSD"], []);
 
-  useEffect(() => {
-    applyBrandTheme(BRAND_LOGO).catch(() => {
-      /* no-op */
-    });
-  }, []);
 
   const prices = useMemo(
     () => ({
