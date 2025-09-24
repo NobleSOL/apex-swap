@@ -1,20 +1,20 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
 
 :root {
-  --brand-primary: #6affb6;
-  --brand-secondary: #38f2a4;
-  --brand-accent: #5ac8ff;
-  --brand-surface: rgba(255, 255, 255, 0.04);
-  --brand-surface-strong: rgba(255, 255, 255, 0.08);
-  --brand-bg: #03060f;
-  --brand-bg-gradient: radial-gradient(circle at 20% -10%, rgba(106, 255, 182, 0.4), transparent 55%),
-    radial-gradient(circle at 80% -20%, rgba(90, 200, 255, 0.35), transparent 50%),
-    linear-gradient(180deg, rgba(19, 31, 54, 0.92), rgba(3, 6, 15, 0.98));
-  --text-primary: #f3f7ff;
-  --text-secondary: #9aa6c1;
-  --border-subtle: rgba(255, 255, 255, 0.06);
-  --border-strong: rgba(255, 255, 255, 0.14);
-  --shadow-soft: 0 24px 80px rgba(7, 12, 28, 0.55);
+  --brand-primary: #ffffff;
+  --brand-secondary: #d1d5db;
+  --brand-accent: #9ca3af;
+  --brand-surface: rgba(255, 255, 255, 0.06);
+  --brand-surface-strong: rgba(255, 255, 255, 0.12);
+  --brand-bg: #0a0a0a;
+  --brand-bg-gradient: radial-gradient(circle at 20% -10%, rgba(255, 255, 255, 0.02), transparent 55%),
+    radial-gradient(circle at 80% -20%, rgba(255, 255, 255, 0.02), transparent 50%),
+    linear-gradient(180deg, rgba(10, 10, 10, 0.98), rgba(0, 0, 0, 0.98));
+  --text-primary: #ffffff;
+  --text-secondary: #bfbfbf;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --shadow-soft: 0 24px 80px rgba(0, 0, 0, 0.6);
 }
 
 * {
