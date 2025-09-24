@@ -228,7 +228,7 @@ export default function App() {
             <div className="swap-box">
               <div className="swap-header">
                 <div className="swap-controls">
-                  <button type="button" className="icon-button" aria-label="Settings">⚙</button>
+                  <button type="button" className="icon-button" aria-label="Settings"><h1 className="icon-glyph">⚙</h1></button>
                   <button type="button" className="slippage-chip" aria-label="Slippage" onClick={() => setSlippageOpen((v) => !v)}>{slippage}%</button>
                 </div>
               </div>
@@ -247,7 +247,7 @@ export default function App() {
               )}
 
               <div className="pair-stack">
-                <div className="row-header">Sell</div>
+                <div className="row-header sell-label">Sell</div>
                 <div className="pair-row">
                   <div className="token-col">
                     <label className="field-group">

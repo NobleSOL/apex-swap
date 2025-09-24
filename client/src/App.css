@@ -124,7 +124,7 @@ button:hover { background: var(--brand-secondary, #00cc52); }
 
 .status { margin-top: 15px; font-size: 14px; color: var(--brand-primary, #00ff66); }
 
-.direction-toggle { display: inline-flex; align-items: center; justify-content: center; margin: 2px auto; width: 36px; height: 36px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.08); color: #fff; }
+.direction-toggle { display: inline-flex; align-items: center; justify-content: center; margin: 2px auto; width: 36px; height: 36px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.08); color: #fff; background: rgba(74,74,74,1); }
 .direction-toggle:hover { filter: brightness(1.1); }
 
 .amount-field { position: relative; width: 100%; }
@@ -136,11 +136,13 @@ button:hover { background: var(--brand-secondary, #00cc52); }
 .swap-header { display: flex; align-items: center; justify-content: flex-end; margin-bottom: 8px; }
 .swap-title { display: none; }
 .swap-controls { display: flex; align-items: center; gap: 8px; }
-.icon-button { background: transparent; border: 1px solid rgba(255,255,255,0.08); color: #cfd3d8; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; }
+.icon-button { background: transparent; border: 1px solid rgba(255,255,255,0.08); color: #cfd3d8; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; text-align: center; }
 .icon-button:hover { color: #fff; border-color: rgba(255,255,255,0.16); }
+.icon-button h1 { margin: 0; font-size: 13px; line-height: 32px; font-weight: 700; }
 .slippage-chip { border: 1px solid rgba(255,255,255,0.08); padding: 6px 8px; border-radius: 999px; font-size: 12px; color: #cfd3d8; }
 
 .row-header { text-align: left; color: #c5c7ca; font-size: 12px; font-weight: 600; margin: 6px 2px; }
+.sell-label { font-style: italic; font-weight: 400; }
 .token-col { display: flex; align-items: center; justify-content: center; }
 .amount-col { display: flex; align-items: center; justify-content: flex-start; }
 .token-select { display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0)); border: 1px solid rgba(255,255,255,0.08); border-radius: 999px; padding: 6px 10px; height: 44px; }
