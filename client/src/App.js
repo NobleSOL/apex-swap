@@ -9,31 +9,32 @@ export default function App() {
   const [status, setStatus] = useState("");
 
   const handleSwap = async () => {
-    setStatus("Processing swap...");
+  setStatus("Processing swap...");
 
-    try {
-      const res = await fetch("/.netlify/functions/swap", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          from: fromAsset,
-          to: toAsset,
-          amount,
-          wallet: "user-wallet-address", // TODO: replace with connected wallet
-        }),
-      });
+  try {
+    const res = await fetch("/.netlify/functions/swap", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: fromAsset,
+        to: toAsset,
+        amount,
+        wallet: "user-wallet-address", // TODO: replace with connected wallet
+      }),
+    });
 
-      const data = await res.json();
+    const data = await res.json();
 
-      if (res.ok) {
-        setStatus(`Swap complete ✅ TX Hash: ${data.tx.hash}`);
-      } else {
-        setStatus(`Error: ${data.error}`);
-      }
-    } catch (err) {
-      setStatus(`Request failed: ${err.message}`);
+    if (res.ok) {
+      setStatus(`Swap complete ✅ TX: ${data.tx.hash}, Output: ${data.outputAmount} ${toAsset}`);
+    } else {
+      setStatus(`Error: ${data.error}`);
     }
-  };
+  } catch (err) {
+    setStatus(`Request failed: ${err.message}`);
+  }
+};
+
 
   return (
     <div className="app">
