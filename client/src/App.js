@@ -196,12 +196,11 @@ function Footer() {
   );
 }
 
-function SwapPage() {
+function SwapPage({ wallet, onWalletChange }) {
   const [fromAsset, setFromAsset] = useState("USDC");
   const [toAsset, setToAsset] = useState("kUSD");
   const [fromAmount, setFromAmount] = useState("");
   const [toAmount, setToAmount] = useState("");
-  const [wallet, setWallet] = useState("test-wallet");
   const [status, setStatus] = useState("");
   const [slippage, setSlippage] = useState(0.5);
   const [slippageOpen, setSlippageOpen] = useState(false);
@@ -455,7 +454,7 @@ function SwapPage() {
               type="text"
               placeholder="wallet address"
               value={wallet}
-              onChange={(event) => setWallet(event.target.value)}
+              onChange={(event) => onWalletChange(event.target.value)}
             />
           </div>
 
@@ -472,7 +471,7 @@ function SwapPage() {
   );
 }
 
-function PoolsPage() {
+function PoolsPage({ wallet, onWalletChange }) {
   const [selectedPoolId, setSelectedPoolId] = useState(POOLS[0].id);
   const selectedPool = useMemo(
     () => POOLS.find((pool) => pool.id === selectedPoolId) || POOLS[0],
@@ -485,7 +484,6 @@ function PoolsPage() {
   const [amountA, setAmountA] = useState("");
   const [amountB, setAmountB] = useState("");
   const [lpAmount, setLpAmount] = useState("");
-  const [wallet, setWallet] = useState("test-wallet");
   const [addStatus, setAddStatus] = useState("");
   const [removeStatus, setRemoveStatus] = useState("");
 
@@ -684,7 +682,7 @@ function PoolsPage() {
               <span className="field-label">Wallet</span>
               <input
                 value={wallet}
-                onChange={(event) => setWallet(event.target.value)}
+                onChange={(event) => onWalletChange(event.target.value)}
                 placeholder="wallet address"
               />
             </div>
@@ -709,7 +707,7 @@ function PoolsPage() {
               <span className="field-label">Wallet</span>
               <input
                 value={wallet}
-                onChange={(event) => setWallet(event.target.value)}
+                onChange={(event) => onWalletChange(event.target.value)}
                 placeholder="wallet address"
               />
             </div>
@@ -730,6 +728,7 @@ function App() {
       ? "pools"
       : "swap"
   );
+  const [wallet, setWallet] = useState("test-wallet");
 
   useEffect(() => {
     applyBrandTheme(BRAND_LOGO).catch(() => {
@@ -759,7 +758,11 @@ function App() {
     <div className="app">
       <div className="site-shell">
         <Header view={view} onNavigate={handleNavigate} />
-        {view === "pools" ? <PoolsPage /> : <SwapPage />}
+        {view === "pools" ? (
+          <PoolsPage wallet={wallet} onWalletChange={setWallet} />
+        ) : (
+          <SwapPage wallet={wallet} onWalletChange={setWallet} />
+        )}
         <Footer />
       </div>
     </div>
