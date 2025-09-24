@@ -53,6 +53,36 @@ function TokenIcon({ symbol }) {
   }
 }
 
+function TokenSelect({ value, onChange, options }) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const filtered = useMemo(
+    () => options.filter((o) => o.toLowerCase().includes(query.toLowerCase())),
+    [options, query]
+  );
+  return (
+    <div className="token-select-wrap">
+      <button type="button" className="token-pill" onClick={() => setOpen((v) => !v)} aria-haspopup="listbox" aria-expanded={open}>
+        <span className="token-icon"><TokenIcon symbol={value} /></span>
+        <span className="token-symbol">{value}</span>
+      </button>
+      {open && (
+        <div className="token-popover" role="listbox">
+          <input className="token-search" placeholder="Search token" value={query} onChange={(e) => setQuery(e.target.value)} />
+          <div className="token-list">
+            {filtered.map((sym) => (
+              <button key={sym} type="button" className={`token-item${sym === value ? " is-active" : ""}`} onClick={() => { onChange(sym); setOpen(false); }}>
+                <span className="token-icon"><TokenIcon symbol={sym} /></span>
+                <span className="token-symbol">{sym}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function App() {
   const [fromAsset, setFromAsset] = useState("USDC");
   const [toAsset, setToAsset] = useState("kUSD");
