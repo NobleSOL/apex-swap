@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="kusdGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2BB673"/>
+      <stop offset="100%" stop-color="#0B8E46"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="12" fill="url(#kusdGradient)"/>
+  <circle cx="32" cy="32" r="18" fill="#FFFFFF" fill-opacity="0.25"/>
+  <path fill="#FFFFFF" d="M32 20c-6.6 0-12 4.4-12 10s5.4 10 12 10c3 0 5.7-.8 7.9-2.4l-3.4-3.4a7.6 7.6 0 01-4.5 1.4c-3.3 0-5.8-1.9-5.8-4.7s2.5-4.7 5.8-4.7c1.5 0 2.9.4 4 1.2V32h4.7v-9.7A15.8 15.8 0 0032 20zm-2.1 17.7l-2.9 2.9 5 5 2.9-2.9-5-5z"/>
+</svg>
