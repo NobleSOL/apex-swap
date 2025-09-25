@@ -1,41 +1,37 @@
-// functions/getPool.js
-import * as KeetaNet from "@keetanetwork/keetanet-client";
-ai_master_d7ba31322481
-import { withCors } from "./utils/cors.js";
 import { withCors } from "./cors.js";
-master
+import { createClient, loadPoolContext } from "./utils/keeta.js";
 
-/**
- * Get pool reserves for two tokens
- * Input: { tokenA, tokenB }
- */
-ai_master_d7ba31322481
-const getPoolHandler = async (event) => {
-const baseHandler = async (event) => {
-master
+async function handler(event) {
+  if (event.httpMethod && event.httpMethod.toUpperCase() === "OPTIONS") {
+    return { statusCode: 204, body: "" };
+  }
+
+  let client;
   try {
-    const { tokenA, tokenB } = JSON.parse(event.body || "{}");
-
-    const client = KeetaNet.UserClient.fromNetwork("test");
-
-    const reserveA = 1000000n;
-    const reserveB = 500000n;
-
+    client = await createClient();
+    const context = await loadPoolContext(client);
     return {
       statusCode: 200,
       body: JSON.stringify({
-        tokenA,
-        tokenB,
-        reserveA: reserveA.toString(),
-        reserveB: reserveB.toString(),
+        ...context,
+        message: "Pool state fetched successfully",
       }),
     };
-  } catch (err) {
-    return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
+  } catch (error) {
+    console.error("getpool error", error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: error.message || "Failed to load pool" }),
+    };
+  } finally {
+    if (client && typeof client.destroy === "function") {
+      try {
+        await client.destroy();
+      } catch (destroyErr) {
+        console.warn("Failed to destroy Keeta client", destroyErr);
+      }
+    }
   }
-};
+}
 
-ai_master_d7ba31322481
-export const handler = withCors(getPoolHandler);
-export const handler = withCors(baseHandler);
-master
+export const handler = withCors(handler);
