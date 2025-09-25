@@ -1,8 +1,5 @@
 /* global BigInt */
-codex/verify-amm-liquidity-pool-token-functionality-8fk14o
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-master
 import "./App.css";
 import { lib as KeetaLib } from "@keetanetwork/keetanet-client";
 import { applyBrandTheme } from "./theme";
@@ -267,7 +264,6 @@ function usePoolState() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-codex/verify-amm-liquidity-pool-token-functionality-8fk14o
   const [overrideSnapshot, setOverrideSnapshot] = useState({});
   const overridesRef = useRef({});
 
@@ -300,33 +296,21 @@ codex/verify-amm-liquidity-pool-token-functionality-8fk14o
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(overridesRef.current || {}),
       });
-
-  const refresh = useCallback(async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const response = await fetch("/.netlify/functions/getpool");
-master
       const payload = await response.json();
       if (!response.ok) {
         throw new Error(payload.error || "Failed to load pool");
       }
       setData(payload);
-codex/verify-amm-liquidity-pool-token-functionality-8fk14o
       setOverrideSnapshot(overridesRef.current || {});
       return true;
     } catch (err) {
       setError(err.message);
       return false;
-    } catch (err) {
-      setError(err.message);
-master
     } finally {
       setLoading(false);
     }
   }, []);
 
-codex/verify-amm-liquidity-pool-token-functionality-8fk14o
   const refresh = useCallback(
     async (nextOverrides) => {
       overridesRef.current = mergeOverrides(overridesRef.current, nextOverrides);
@@ -350,12 +334,6 @@ codex/verify-amm-liquidity-pool-token-functionality-8fk14o
   }, [fetchPool]);
 
   return { data, loading, error, refresh, setOverrides, overrides: overrideSnapshot };
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
-
-  return { data, loading, error, refresh };
-master
 }
 
 function Header({ view, onNavigate, wallet, onConnectClick }) {
@@ -444,7 +422,6 @@ function Footer({ onNavigate }) {
 }
 
 function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
-codex/verify-amm-liquidity-pool-token-functionality-8fk14o
   const {
     data: poolData,
     loading: poolLoading,
@@ -452,8 +429,6 @@ codex/verify-amm-liquidity-pool-token-functionality-8fk14o
     refresh,
     overrides: poolOverrides,
   } = poolState;
-  const { data: poolData, loading: poolLoading, error: poolError, refresh } = poolState;
-master
   const tokenOptions = useMemo(() => {
     if (!poolData?.tokens?.length) return [];
     return poolData.tokens.map((token) => ({
@@ -514,7 +489,6 @@ master
     const tokenIn = tokenMap[fromAsset];
     const tokenOut = tokenMap[toAsset];
     if (!tokenIn || !tokenOut) {
-codex/verify-amm-liquidity-pool-token-functionality-8fk14o
       setToAmount("");
       return;
     }
@@ -538,34 +512,8 @@ codex/verify-amm-liquidity-pool-token-functionality-8fk14o
       }
       setToAmount(formatAmount(amountOut, tokenOut.decimals));
     } catch (error) {
-master
-      setToAmount("");
-      return;
-    }
-codex/verify-amm-liquidity-pool-token-functionality-8fk14o
-    try {
-      const amountInRaw = toRawAmount(fromAmount, tokenIn.decimals);
-      if (amountInRaw <= 0n) {
-        setToAmount("");
-        return;
-      }
-      const reserveIn = BigInt(tokenIn.reserveRaw);
-      const reserveOut = BigInt(tokenOut.reserveRaw);
-      const { amountOut } = calculateSwapQuote(
-        amountInRaw,
-        reserveIn,
-        reserveOut,
-        poolData.pool.feeBps
-      );
-      if (amountOut <= 0n) {
-        setToAmount("");
-        return;
-      }
-      setToAmount(formatAmount(amountOut, tokenOut.decimals));
-    } catch (error) {
       setToAmount("");
     }
-master
   }, [fromAmount, fromAsset, toAsset, poolData, tokenMap]);
 
   const flipDirection = () => {
@@ -590,11 +538,9 @@ master
     setQuoteDetails(null);
 
     try {
-codex/verify-amm-liquidity-pool-token-functionality-8fk14o
       const tokenOverrides = poolOverrides?.tokenAddresses
         ? { ...poolOverrides.tokenAddresses }
         : {};
-master
       const response = await fetch("/.netlify/functions/swap", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -605,11 +551,9 @@ master
           seed: wallet.seed,
           accountIndex: wallet.index || 0,
           slippageBps: Math.max(0, Math.round(Number(slippage) * 100)),
-codex/verify-amm-liquidity-pool-token-functionality-8fk14o
           tokenAddresses: tokenOverrides,
           fromAddress: tokenOverrides[fromAsset],
           toAddress: tokenOverrides[toAsset],
-master
         }),
       });
       const payload = await response.json();
@@ -947,7 +891,6 @@ master
   );
 }
 function PoolsPage({ wallet, onWalletChange, poolState }) {
-codex/verify-amm-liquidity-pool-token-functionality-8fk14o
   const {
     data: poolData,
     loading: poolLoading,
@@ -955,11 +898,6 @@ codex/verify-amm-liquidity-pool-token-functionality-8fk14o
     refresh,
     overrides: poolOverrides,
   } = poolState;
-  const { data: poolData, loading: poolLoading, error: poolError, refresh } = poolState;
-  const tokenA = poolData?.tokens?.[0];
-  const tokenB = poolData?.tokens?.[1];
-  const lpToken = poolData?.lpToken;
-master
 
   const [amountA, setAmountA] = useState("");
   const [amountB, setAmountB] = useState("");
@@ -968,7 +906,6 @@ master
   const [removeStatus, setRemoveStatus] = useState("");
   const [mintPreview, setMintPreview] = useState(null);
   const [withdrawPreview, setWithdrawPreview] = useState(null);
-codex/verify-amm-liquidity-pool-token-functionality-8fk14o
   const [tokenAAddressInput, setTokenAAddressInput] = useState("");
   const [tokenBAddressInput, setTokenBAddressInput] = useState("");
   const [tokenBSelection, setTokenBSelection] = useState("");
@@ -1091,37 +1028,6 @@ codex/verify-amm-liquidity-pool-token-functionality-8fk14o
     }
   }, [amountA, amountB, poolData, tokenA, tokenB, lpToken]);
 
-
-  useEffect(() => {
-    if (!poolData || !tokenA || !tokenB) {
-      setMintPreview(null);
-      return;
-    }
-    try {
-      const rawA = toRawAmount(amountA, tokenA.decimals);
-      const rawB = toRawAmount(amountB, tokenB.decimals);
-      if (rawA <= 0n || rawB <= 0n) {
-        setMintPreview(null);
-        return;
-      }
-      const preview = calculateLiquidityQuote(
-        rawA,
-        rawB,
-        BigInt(tokenA.reserveRaw),
-        BigInt(tokenB.reserveRaw),
-        BigInt(lpToken.supplyRaw)
-      );
-      setMintPreview({
-        minted: preview.minted,
-        share: preview.share,
-        formatted: formatAmount(preview.minted, lpToken.decimals),
-      });
-    } catch (error) {
-      setMintPreview(null);
-    }
-  }, [amountA, amountB, poolData, tokenA, tokenB, lpToken]);
-
-master
   useEffect(() => {
     if (!poolData || !tokenA || !tokenB) {
       setWithdrawPreview(null);
@@ -1162,7 +1068,6 @@ master
     }
     setAddStatus("Submitting liquidity...");
     try {
-codex/verify-amm-liquidity-pool-token-functionality-8fk14o
       const tokenOverrides = poolOverrides?.tokenAddresses
         ? { ...poolOverrides.tokenAddresses }
         : {};
@@ -1174,7 +1079,6 @@ codex/verify-amm-liquidity-pool-token-functionality-8fk14o
       if (tokenB?.symbol && tokenBAddressValue) {
         tokenOverrides[tokenB.symbol] = tokenBAddressValue;
       }
-master
       const response = await fetch("/.netlify/functions/addLiquidity", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1185,11 +1089,9 @@ master
           amountB,
           seed: wallet.seed,
           accountIndex: wallet.index || 0,
-codex/verify-amm-liquidity-pool-token-functionality-8fk14o
           tokenAddresses: tokenOverrides,
           tokenAAddress: tokenAAddressValue,
           tokenBAddress: tokenBAddressValue,
-master
         }),
       });
       const payload = await response.json();
@@ -1216,7 +1118,6 @@ master
     }
     setRemoveStatus("Submitting withdrawal...");
     try {
-codex/verify-amm-liquidity-pool-token-functionality-8fk14o
       const tokenOverrides = poolOverrides?.tokenAddresses
         ? { ...poolOverrides.tokenAddresses }
         : {};
@@ -1228,7 +1129,6 @@ codex/verify-amm-liquidity-pool-token-functionality-8fk14o
       if (tokenB?.symbol && tokenBAddressValue) {
         tokenOverrides[tokenB.symbol] = tokenBAddressValue;
       }
-master
       const response = await fetch("/.netlify/functions/removeLiquidity", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1238,11 +1138,9 @@ master
           lpAmount,
           seed: wallet.seed,
           accountIndex: wallet.index || 0,
-codex/verify-amm-liquidity-pool-token-functionality-8fk14o
           tokenAddresses: tokenOverrides,
           tokenAAddress: tokenAAddressValue,
           tokenBAddress: tokenBAddressValue,
-master
         }),
       });
       const payload = await response.json();
@@ -1345,7 +1243,6 @@ master
                   Provide both assets to receive {lpToken?.symbol || "LP"} tokens. Quotes are computed before broadcasting.
                 </p>
                 <div className="field-group">
-codex/verify-amm-liquidity-pool-token-functionality-8fk14o
                   <span className="field-label">Token A contract</span>
                   <input
                     value={tokenAAddressInput}
@@ -1385,8 +1282,6 @@ codex/verify-amm-liquidity-pool-token-functionality-8fk14o
                 </div>
                 {tokenConfigStatus && <p className="status">{tokenConfigStatus}</p>}
                 <div className="field-group">
-
-master
                   <span className="field-label">Amount {tokenA?.symbol || "Token A"}</span>
                   <input
                     value={amountA}
