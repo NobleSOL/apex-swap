@@ -1,5 +1,5 @@
 {
-  "name": "apex-swap-starter",
+  "name": "silverback-starter",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -8,15 +8,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/NobleSOL/apex-swap.git"
+    "url": "git+https://github.com/NobleSOL/silverback.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/NobleSOL/apex-swap/issues"
+    "url": "https://github.com/NobleSOL/silverback/issues"
   },
-  "homepage": "https://github.com/NobleSOL/apex-swap#readme",
+  "homepage": "https://github.com/NobleSOL/silverback#readme",
   "dependencies": {
     "@keetanetwork/keetanet-client": "^0.14.5"
   }
