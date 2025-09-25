@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import "./App.css";
 import { applyBrandTheme } from "./theme";
+import { useWalletConnect } from "./walletConnect";
 
 const BRAND_LOGO =
   "https://cdn.builder.io/api/v1/image/assets%2Fd70091a6f5494e0195b033a72f7e79ae%2F116ddd439df04721809dcdc66245e3fa?format=webp&width=800";
@@ -349,7 +350,7 @@ function SwapPage({ wallet, onWalletChange, onNavigate }) {
 
       if (res.ok) {
         const txHash = data?.tx?.hash || data?.tx?.id || "submitted";
-        setStatus(`Swap complete ✅ TX: ${txHash}`);
+        setStatus(`Swap complete ��� TX: ${txHash}`);
       } else {
         setStatus(`Error: ${data.error || "Swap failed"}`);
       }
@@ -889,8 +890,6 @@ function PoolsPage({ wallet, onWalletChange }) {
     </main>
   );
 }
-
-import { useWalletConnect } from "./walletConnect";
 
 function App() {
   const [view, setView] = useState(() =>
