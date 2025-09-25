@@ -1,41 +1,64 @@
-// functions/getPool.js
-import * as KeetaNet from "@keetanetwork/keetanet-client";
-ai_master_d7ba31322481
-import { withCors } from "./utils/cors.js";
 import { withCors } from "./cors.js";
-master
+import { createClient, loadPoolContext } from "./utils/keeta.js";
 
-/**
- * Get pool reserves for two tokens
- * Input: { tokenA, tokenB }
- */
-ai_master_d7ba31322481
-const getPoolHandler = async (event) => {
-const baseHandler = async (event) => {
-master
+function parseOverrides(event) {
+  if (!event || !event.body) {
+    return {};
+  }
   try {
-    const { tokenA, tokenB } = JSON.parse(event.body || "{}");
+    const payload = JSON.parse(event.body);
+    if (!payload || typeof payload !== "object") {
+      return {};
+    }
+    const overrides = {};
+    if (payload.poolAccount) {
+      overrides.poolAccount = payload.poolAccount;
+    }
+    if (payload.lpTokenAccount) {
+      overrides.lpTokenAccount = payload.lpTokenAccount;
+    }
+    if (payload.tokenAddresses && typeof payload.tokenAddresses === "object") {
+      overrides.tokenAddresses = { ...payload.tokenAddresses };
+    }
+    return overrides;
+  } catch (error) {
+    console.warn("Failed to parse getpool overrides", error);
+    return {};
+  }
+}
 
-    const client = KeetaNet.UserClient.fromNetwork("test");
+async function handler(event) {
+  if (event.httpMethod && event.httpMethod.toUpperCase() === "OPTIONS") {
+    return { statusCode: 204, body: "" };
+  }
 
-    const reserveA = 1000000n;
-    const reserveB = 500000n;
-
+  let client;
+  try {
+    client = await createClient();
+    const overrides = parseOverrides(event);
+    const context = await loadPoolContext(client, overrides);
     return {
       statusCode: 200,
       body: JSON.stringify({
-        tokenA,
-        tokenB,
-        reserveA: reserveA.toString(),
-        reserveB: reserveB.toString(),
+        ...context,
+        message: "Pool state fetched successfully",
       }),
     };
-  } catch (err) {
-    return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
+  } catch (error) {
+    console.error("getpool error", error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: error.message || "Failed to load pool" }),
+    };
+  } finally {
+    if (client && typeof client.destroy === "function") {
+      try {
+        await client.destroy();
+      } catch (destroyErr) {
+        console.warn("Failed to destroy Keeta client", destroyErr);
+      }
+    }
   }
-};
+}
 
-ai_master_d7ba31322481
-export const handler = withCors(getPoolHandler);
-export const handler = withCors(baseHandler);
-master
+export const handler = withCors(handler);
