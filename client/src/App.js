@@ -167,7 +167,7 @@ function TokenSelect({ value, onChange, options }) {
   );
 }
 
-function Header({ view, onNavigate }) {
+function Header({ view, onNavigate, wallet, onWalletChange, wc }) {
   const handleNav = (target, path, scrollTarget) => (event) => {
     event.preventDefault();
     onNavigate(target, path, scrollTarget);
@@ -204,11 +204,29 @@ function Header({ view, onNavigate }) {
           </a>
         </div>
         <div className="nav-actions">
-          <button className="link-action" type="button">
-            Docs
-          </button>
-          <button className="connect-button" type="button">
-            Connect
+          <button
+            className="connect-button"
+            type="button"
+            onClick={async () => {
+              if (wc?.isConnected) {
+                await wc.disconnect();
+                onWalletChange("");
+                return;
+              }
+              try {
+                const addr = await wc.connect();
+                if (addr) onWalletChange(addr);
+              } catch (_e) {
+                // ignore click errors
+              }
+            }}
+            disabled={!wc?.ready || wc?.isConnecting}
+            aria-busy={wc?.isConnecting ? "true" : undefined}
+            aria-label={wc?.isConnected ? "Disconnect" : "Connect Wallet"}
+          >
+            {wc?.isConnected && wallet
+              ? `${wallet.slice(0, 6)}...${wallet.slice(-4)}`
+              : "Connect"}
           </button>
         </div>
       </nav>
@@ -872,13 +890,22 @@ function PoolsPage({ wallet, onWalletChange }) {
   );
 }
 
+import { useWalletConnect } from "./walletConnect";
+
 function App() {
   const [view, setView] = useState(() =>
     typeof window !== "undefined" && window.location.pathname.toLowerCase().includes("pools")
       ? "pools"
       : "swap"
   );
-  const [wallet, setWallet] = useState("test-wallet");
+  const [wallet, setWallet] = useState("");
+  const wc = useWalletConnect();
+
+  useEffect(() => {
+    if (wc.isConnected && wc.address) {
+      setWallet(wc.address);
+    }
+  }, [wc.isConnected, wc.address]);
 
   const scrollToSection = (id) => {
     if (typeof window === "undefined") return;
@@ -920,7 +947,7 @@ function App() {
   return (
     <div className="app">
       <div className="site-shell">
-        <Header view={view} onNavigate={handleNavigate} />
+        <Header view={view} onNavigate={handleNavigate} wallet={wallet} onWalletChange={setWallet} wc={wc} />
         {view === "pools" ? (
           <PoolsPage wallet={wallet} onWalletChange={setWallet} />
         ) : (
