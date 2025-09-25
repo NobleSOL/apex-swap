@@ -24,7 +24,6 @@ export function useWalletConnect() {
   const [address, setAddress] = useState("");
   const [error, setError] = useState("");
   const providerRef = useRef(null);
-  const modalRef = useRef(null);
 
   const projectId = useMemo(getProjectId, []);
   const chains = useMemo(getChains, []);
@@ -33,18 +32,19 @@ export function useWalletConnect() {
     let mounted = true;
     (async () => {
       try {
-        const [{ default: UniversalProvider }, { WalletConnectModal }] = await Promise.all([
-          import("@walletconnect/universal-provider"),
-          import("@walletconnect/modal"),
-        ]);
+        const { default: UniversalProvider } = await import("@walletconnect/universal-provider");
         if (!mounted) return;
-        const modal = new WalletConnectModal({ projectId, standaloneChains: chains });
-        modalRef.current = modal;
         const provider = await UniversalProvider.init({ projectId, logger: "error" });
         providerRef.current = provider;
 
+        // When provider wants user to open a URI, open in new tab/window.
         provider.on("display_uri", (uri) => {
-          if (modalRef.current) modalRef.current.openModal({ uri });
+          try {
+            // Try opening a deep-link which wallet apps can catch, fallback to new tab.
+            window.open(uri, "_blank");
+          } catch (_) {
+            // no-op
+          }
         });
 
         provider.on("session_delete", () => {
@@ -83,7 +83,6 @@ export function useWalletConnect() {
         },
       };
       const session = await provider.connect({ namespaces: ns });
-      if (modalRef.current) modalRef.current.closeModal();
       const accounts = session?.namespaces?.eip155?.accounts || [];
       const first = accounts[0];
       const addr = first ? first.split(":").pop() : "";
