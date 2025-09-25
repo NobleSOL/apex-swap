@@ -43,7 +43,7 @@ async function executeSwap(client, poolContext, params) {
   return { blocks, published };
 }
 
-async function handler(event) {
+async function swapHandler(event) {
   if (event.httpMethod && event.httpMethod.toUpperCase() === "OPTIONS") {
     return { statusCode: 204, body: "" };
   }
@@ -208,4 +208,4 @@ async function handler(event) {
   }
 }
 
-export const handler = withCors(handler);
+export const handler = withCors(swapHandler);
