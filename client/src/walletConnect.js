@@ -117,7 +117,7 @@ export function useWalletConnect() {
     } finally {
       setIsConnecting(false);
     }
-  }, [chains, projectId]);
+  }, [chains, solChains, projectId]);
 
   const disconnect = useCallback(async () => {
     setError("");
