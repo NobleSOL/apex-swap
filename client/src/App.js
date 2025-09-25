@@ -20,7 +20,7 @@ const TOKEN_ICON_PATHS = {
   eth: "/tokens/eth.svg",
   btc: "/tokens/btc.svg",
   kusd: "/tokens/kusd.svg",
-  kta: "/tokens/kusd.svg",
+  kta: "/tokens/kta.svg",
   test: "/tokens/default.svg",
 };
 
@@ -929,10 +929,7 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
     setTokenAAddressInput(tokenA?.address || "");
   }, [tokenA?.address]);
 
-  useEffect(() => {
-    setTokenBAddressInput(tokenB?.address || "");
-    setTokenBSelection((prev) => (prev ? prev : tokenB?.symbol || ""));
-  }, [tokenB?.address, tokenB?.symbol]);
+  const baseToken = poolData?.baseToken;
 
   const tokenConfigOptions = useMemo(() => {
     if (!poolData) {
@@ -960,6 +957,22 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
       address: token.address,
     }));
   }, [poolData]);
+
+  useEffect(() => {
+    const fallbackSymbol = tokenB?.symbol || tokenBSelection || baseToken?.symbol || "";
+    const fallbackOption = tokenConfigOptions.find((item) => item.symbol === fallbackSymbol);
+    const fallbackAddress =
+      tokenB?.address || fallbackOption?.address || baseToken?.address || "";
+    setTokenBAddressInput(fallbackAddress);
+    setTokenBSelection((prev) => (prev ? prev : fallbackSymbol));
+  }, [
+    tokenB?.address,
+    tokenB?.symbol,
+    tokenConfigOptions,
+    tokenBSelection,
+    baseToken?.address,
+    baseToken?.symbol,
+  ]);
 
   const handleTokenBSelect = useCallback(
     (symbol) => {
@@ -1322,7 +1335,7 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
               <div className="swap-card liquidity-card">
                 <h3>Remove Liquidity</h3>
                 <p className="wallet-copy">
-                  Burn {lpToken?.symbol || "LP"} tokens to receive the underlying assets.
+                  Withdraw {lpToken?.symbol || "LP"} tokens to receive the underlying assets.
                 </p>
                 <div className="field-group">
                   <span className="field-label">LP Tokens to burn</span>
