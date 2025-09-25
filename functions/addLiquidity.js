@@ -10,6 +10,33 @@ import {
 
 function parseBody(body) {
   if (!body) return {};
+codex/verify-amm-liquidity-pool-token-functionality-8fk14o
+  try {
+    return JSON.parse(body);
+  } catch (error) {
+    throw new Error("Invalid JSON body");
+  }
+}
+
+async function addLiquidityHandler(event) {
+  if (event.httpMethod && event.httpMethod.toUpperCase() === "OPTIONS") {
+    return { statusCode: 204, body: "" };
+  }
+
+  let client;
+  try {
+    const payload = parseBody(event.body);
+    const {
+      tokenA,
+      tokenB,
+      amountA,
+      amountB,
+      seed,
+      accountIndex = 0,
+      tokenAddresses: rawTokenAddresses = {},
+      tokenAAddress,
+      tokenBAddress,
+    } = payload;
   try {
     return JSON.parse(body);
   } catch (error) {
@@ -26,6 +53,7 @@ async function handler(event) {
   try {
     const payload = parseBody(event.body);
     const { tokenA, tokenB, amountA, amountB, seed, accountIndex = 0 } = payload;
+master
 
     if (!tokenA || !tokenB) {
       throw new Error("Token symbols are required");
@@ -35,6 +63,43 @@ async function handler(event) {
     }
     if (!seed) {
       throw new Error("A signer seed is required to add liquidity");
+    }
+
+codex/verify-amm-liquidity-pool-token-functionality-8fk14o
+    const normalizedOverrides = { ...rawTokenAddresses };
+    if (tokenAAddress) {
+      normalizedOverrides[tokenA] = tokenAAddress;
+    }
+    if (tokenBAddress) {
+      normalizedOverrides[tokenB] = tokenBAddress;
+    }
+
+    client = await createClient({ seed, accountIndex });
+    const context = await loadPoolContext(client, {
+      tokenAddresses: normalizedOverrides,
+    });
+
+    const findBySymbol = (symbol) =>
+      context.tokens.find((item) => item.symbol === symbol);
+    const findByAddress = (address) =>
+      context.tokens.find((item) => item.address === address);
+
+    const tokenDetailsA =
+      findBySymbol(tokenA) ||
+      (normalizedOverrides[tokenA] && findByAddress(normalizedOverrides[tokenA]));
+    const tokenDetailsB =
+      findBySymbol(tokenB) ||
+      (normalizedOverrides[tokenB] && findByAddress(normalizedOverrides[tokenB]));
+
+    if (!tokenDetailsA || !tokenDetailsB) {
+      throw new Error("Selected pool does not support the provided token pair");
+    }
+
+    const amountARaw = toRawAmount(amountA, tokenDetailsA.decimals);
+    const amountBRaw = toRawAmount(amountB, tokenDetailsB.decimals);
+
+    if (amountARaw <= 0n || amountBRaw <= 0n) {
+      throw new Error("Liquidity amounts must be greater than zero");
     }
 
     client = await createClient({ seed, accountIndex });
@@ -54,6 +119,7 @@ async function handler(event) {
       throw new Error("Liquidity amounts must be greater than zero");
     }
 
+master
     const reserveA = BigInt(tokenDetailsA.reserveRaw);
     const reserveB = BigInt(tokenDetailsB.reserveRaw);
     const totalSupply = BigInt(context.lpToken.supplyRaw || "0");
@@ -134,6 +200,7 @@ async function handler(event) {
     return {
       statusCode: 200,
       body: JSON.stringify(response),
+codex/verify-amm-liquidity-pool-token-functionality-8fk14o
     };
   } catch (error) {
     console.error("addLiquidity error", error);
@@ -141,6 +208,14 @@ async function handler(event) {
       statusCode: 500,
       body: JSON.stringify({ error: error.message || "Add liquidity failed" }),
     };
+    };
+  } catch (error) {
+    console.error("addLiquidity error", error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: error.message || "Add liquidity failed" }),
+    };
+master
   } finally {
     if (client && typeof client.destroy === "function") {
       try {
@@ -152,4 +227,7 @@ async function handler(event) {
   }
 }
 
+codex/verify-amm-liquidity-pool-token-functionality-8fk14o
+export const handler = withCors(addLiquidityHandler);
 export const handler = withCors(handler);
+master

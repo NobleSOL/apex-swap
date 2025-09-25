@@ -1,5 +1,8 @@
 /* global BigInt */
+codex/verify-amm-liquidity-pool-token-functionality-8fk14o
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+master
 import "./App.css";
 import { lib as KeetaLib } from "@keetanetwork/keetanet-client";
 import { applyBrandTheme } from "./theme";
@@ -264,29 +267,95 @@ function usePoolState() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+codex/verify-amm-liquidity-pool-token-functionality-8fk14o
+  const [overrideSnapshot, setOverrideSnapshot] = useState({});
+  const overridesRef = useRef({});
+
+  const mergeOverrides = useCallback((current, updates = {}) => {
+    if (!updates) {
+      return current || {};
+    }
+    const next = { ...(current || {}) };
+    if (updates.poolAccount) {
+      next.poolAccount = updates.poolAccount;
+    }
+    if (updates.lpTokenAccount) {
+      next.lpTokenAccount = updates.lpTokenAccount;
+    }
+    if (updates.tokenAddresses) {
+      next.tokenAddresses = {
+        ...(current?.tokenAddresses || {}),
+        ...updates.tokenAddresses,
+      };
+    }
+    return next;
+  }, []);
+
+  const fetchPool = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const response = await fetch("/.netlify/functions/getpool", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(overridesRef.current || {}),
+      });
 
   const refresh = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
       const response = await fetch("/.netlify/functions/getpool");
+master
       const payload = await response.json();
       if (!response.ok) {
         throw new Error(payload.error || "Failed to load pool");
       }
       setData(payload);
+codex/verify-amm-liquidity-pool-token-functionality-8fk14o
+      setOverrideSnapshot(overridesRef.current || {});
+      return true;
     } catch (err) {
       setError(err.message);
+      return false;
+    } catch (err) {
+      setError(err.message);
+master
     } finally {
       setLoading(false);
     }
   }, []);
 
+codex/verify-amm-liquidity-pool-token-functionality-8fk14o
+  const refresh = useCallback(
+    async (nextOverrides) => {
+      overridesRef.current = mergeOverrides(overridesRef.current, nextOverrides);
+      setOverrideSnapshot(overridesRef.current || {});
+      return fetchPool();
+    },
+    [fetchPool, mergeOverrides]
+  );
+
+  const setOverrides = useCallback(
+    async (nextOverrides = {}) => {
+      overridesRef.current = nextOverrides || {};
+      setOverrideSnapshot(overridesRef.current);
+      return fetchPool();
+    },
+    [fetchPool]
+  );
+
+  useEffect(() => {
+    fetchPool();
+  }, [fetchPool]);
+
+  return { data, loading, error, refresh, setOverrides, overrides: overrideSnapshot };
   useEffect(() => {
     refresh();
   }, [refresh]);
 
   return { data, loading, error, refresh };
+master
 }
 
 function Header({ view, onNavigate, wallet, onConnectClick }) {
@@ -375,7 +444,16 @@ function Footer({ onNavigate }) {
 }
 
 function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
+codex/verify-amm-liquidity-pool-token-functionality-8fk14o
+  const {
+    data: poolData,
+    loading: poolLoading,
+    error: poolError,
+    refresh,
+    overrides: poolOverrides,
+  } = poolState;
   const { data: poolData, loading: poolLoading, error: poolError, refresh } = poolState;
+master
   const tokenOptions = useMemo(() => {
     if (!poolData?.tokens?.length) return [];
     return poolData.tokens.map((token) => ({
@@ -436,6 +514,7 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
     const tokenIn = tokenMap[fromAsset];
     const tokenOut = tokenMap[toAsset];
     if (!tokenIn || !tokenOut) {
+codex/verify-amm-liquidity-pool-token-functionality-8fk14o
       setToAmount("");
       return;
     }
@@ -459,8 +538,34 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
       }
       setToAmount(formatAmount(amountOut, tokenOut.decimals));
     } catch (error) {
+master
+      setToAmount("");
+      return;
+    }
+codex/verify-amm-liquidity-pool-token-functionality-8fk14o
+    try {
+      const amountInRaw = toRawAmount(fromAmount, tokenIn.decimals);
+      if (amountInRaw <= 0n) {
+        setToAmount("");
+        return;
+      }
+      const reserveIn = BigInt(tokenIn.reserveRaw);
+      const reserveOut = BigInt(tokenOut.reserveRaw);
+      const { amountOut } = calculateSwapQuote(
+        amountInRaw,
+        reserveIn,
+        reserveOut,
+        poolData.pool.feeBps
+      );
+      if (amountOut <= 0n) {
+        setToAmount("");
+        return;
+      }
+      setToAmount(formatAmount(amountOut, tokenOut.decimals));
+    } catch (error) {
       setToAmount("");
     }
+master
   }, [fromAmount, fromAsset, toAsset, poolData, tokenMap]);
 
   const flipDirection = () => {
@@ -485,6 +590,11 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
     setQuoteDetails(null);
 
     try {
+codex/verify-amm-liquidity-pool-token-functionality-8fk14o
+      const tokenOverrides = poolOverrides?.tokenAddresses
+        ? { ...poolOverrides.tokenAddresses }
+        : {};
+master
       const response = await fetch("/.netlify/functions/swap", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -495,6 +605,11 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
           seed: wallet.seed,
           accountIndex: wallet.index || 0,
           slippageBps: Math.max(0, Math.round(Number(slippage) * 100)),
+codex/verify-amm-liquidity-pool-token-functionality-8fk14o
+          tokenAddresses: tokenOverrides,
+          fromAddress: tokenOverrides[fromAsset],
+          toAddress: tokenOverrides[toAsset],
+master
         }),
       });
       const payload = await response.json();
@@ -832,10 +947,19 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
   );
 }
 function PoolsPage({ wallet, onWalletChange, poolState }) {
+codex/verify-amm-liquidity-pool-token-functionality-8fk14o
+  const {
+    data: poolData,
+    loading: poolLoading,
+    error: poolError,
+    refresh,
+    overrides: poolOverrides,
+  } = poolState;
   const { data: poolData, loading: poolLoading, error: poolError, refresh } = poolState;
   const tokenA = poolData?.tokens?.[0];
   const tokenB = poolData?.tokens?.[1];
   const lpToken = poolData?.lpToken;
+master
 
   const [amountA, setAmountA] = useState("");
   const [amountB, setAmountB] = useState("");
@@ -844,6 +968,99 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
   const [removeStatus, setRemoveStatus] = useState("");
   const [mintPreview, setMintPreview] = useState(null);
   const [withdrawPreview, setWithdrawPreview] = useState(null);
+codex/verify-amm-liquidity-pool-token-functionality-8fk14o
+  const [tokenAAddressInput, setTokenAAddressInput] = useState("");
+  const [tokenBAddressInput, setTokenBAddressInput] = useState("");
+  const [tokenBSelection, setTokenBSelection] = useState("");
+  const [tokenConfigStatus, setTokenConfigStatus] = useState("");
+
+  const tokensInPool = useMemo(() => poolData?.tokens || [], [poolData]);
+  const tokenA = tokensInPool[0];
+  const defaultTokenB = tokensInPool[1];
+  const tokenB = useMemo(() => {
+    if (!tokensInPool.length) {
+      return undefined;
+    }
+    if (!tokenBSelection) {
+      return defaultTokenB;
+    }
+    return tokensInPool.find((token) => token.symbol === tokenBSelection) || defaultTokenB;
+  }, [tokensInPool, tokenBSelection, defaultTokenB]);
+  const lpToken = poolData?.lpToken;
+
+  useEffect(() => {
+    setTokenAAddressInput(tokenA?.address || "");
+  }, [tokenA?.address]);
+
+  useEffect(() => {
+    setTokenBAddressInput(tokenB?.address || "");
+    setTokenBSelection((prev) => (prev ? prev : tokenB?.symbol || ""));
+  }, [tokenB?.address, tokenB?.symbol]);
+
+  const tokenConfigOptions = useMemo(() => {
+    if (!poolData) {
+      return [];
+    }
+    const seen = new Set();
+    const tokens = [];
+    for (const token of poolData.tokens || []) {
+      if (!token?.symbol) continue;
+      const key = token.symbol.toUpperCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      tokens.push(token);
+    }
+    if (poolData.baseToken?.symbol) {
+      const key = poolData.baseToken.symbol.toUpperCase();
+      if (!seen.has(key)) {
+        seen.add(key);
+        tokens.push(poolData.baseToken);
+      }
+    }
+    return tokens.map((token) => ({
+      symbol: token.symbol,
+      name: formatAddress(token.address),
+      address: token.address,
+    }));
+  }, [poolData]);
+
+  const handleTokenBSelect = useCallback(
+    (symbol) => {
+      setTokenBSelection(symbol);
+      const option = tokenConfigOptions.find((item) => item.symbol === symbol);
+      if (option?.address) {
+        setTokenBAddressInput(option.address);
+      }
+      setTokenConfigStatus("");
+    },
+    [tokenConfigOptions]
+  );
+
+  const handleApplyTokenConfig = useCallback(async () => {
+    if (!tokenA && !tokenB && !tokenBSelection) {
+      setTokenConfigStatus("Load pool data before configuring tokens");
+      return;
+    }
+    const overrides = {};
+    if (tokenA?.symbol && tokenAAddressInput.trim()) {
+      overrides[tokenA.symbol] = tokenAAddressInput.trim();
+    }
+    const selectionSymbol = (tokenBSelection || tokenB?.symbol || "").trim();
+    if (selectionSymbol && tokenBAddressInput.trim()) {
+      overrides[selectionSymbol] = tokenBAddressInput.trim();
+    }
+    if (!Object.keys(overrides).length) {
+      setTokenConfigStatus("Enter token contract addresses to update the pool mapping");
+      return;
+    }
+    setTokenConfigStatus("Updating token mapping...");
+    const success = await refresh({ tokenAddresses: overrides });
+    if (success === false) {
+      setTokenConfigStatus("Failed to update tokens. Check the contract addresses and try again.");
+    } else {
+      setTokenConfigStatus("Token mapping updated");
+    }
+  }, [refresh, tokenA, tokenB, tokenAAddressInput, tokenBAddressInput, tokenBSelection]);
 
   useEffect(() => {
     if (!poolData || !tokenA || !tokenB) {
@@ -874,6 +1091,37 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
     }
   }, [amountA, amountB, poolData, tokenA, tokenB, lpToken]);
 
+
+  useEffect(() => {
+    if (!poolData || !tokenA || !tokenB) {
+      setMintPreview(null);
+      return;
+    }
+    try {
+      const rawA = toRawAmount(amountA, tokenA.decimals);
+      const rawB = toRawAmount(amountB, tokenB.decimals);
+      if (rawA <= 0n || rawB <= 0n) {
+        setMintPreview(null);
+        return;
+      }
+      const preview = calculateLiquidityQuote(
+        rawA,
+        rawB,
+        BigInt(tokenA.reserveRaw),
+        BigInt(tokenB.reserveRaw),
+        BigInt(lpToken.supplyRaw)
+      );
+      setMintPreview({
+        minted: preview.minted,
+        share: preview.share,
+        formatted: formatAmount(preview.minted, lpToken.decimals),
+      });
+    } catch (error) {
+      setMintPreview(null);
+    }
+  }, [amountA, amountB, poolData, tokenA, tokenB, lpToken]);
+
+master
   useEffect(() => {
     if (!poolData || !tokenA || !tokenB) {
       setWithdrawPreview(null);
@@ -914,6 +1162,19 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
     }
     setAddStatus("Submitting liquidity...");
     try {
+codex/verify-amm-liquidity-pool-token-functionality-8fk14o
+      const tokenOverrides = poolOverrides?.tokenAddresses
+        ? { ...poolOverrides.tokenAddresses }
+        : {};
+      const tokenAAddressValue = (tokenAAddressInput || tokenA?.address || "").trim();
+      const tokenBAddressValue = (tokenBAddressInput || tokenB?.address || "").trim();
+      if (tokenA?.symbol && tokenAAddressValue) {
+        tokenOverrides[tokenA.symbol] = tokenAAddressValue;
+      }
+      if (tokenB?.symbol && tokenBAddressValue) {
+        tokenOverrides[tokenB.symbol] = tokenBAddressValue;
+      }
+master
       const response = await fetch("/.netlify/functions/addLiquidity", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -924,6 +1185,11 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
           amountB,
           seed: wallet.seed,
           accountIndex: wallet.index || 0,
+codex/verify-amm-liquidity-pool-token-functionality-8fk14o
+          tokenAddresses: tokenOverrides,
+          tokenAAddress: tokenAAddressValue,
+          tokenBAddress: tokenBAddressValue,
+master
         }),
       });
       const payload = await response.json();
@@ -950,6 +1216,19 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
     }
     setRemoveStatus("Submitting withdrawal...");
     try {
+codex/verify-amm-liquidity-pool-token-functionality-8fk14o
+      const tokenOverrides = poolOverrides?.tokenAddresses
+        ? { ...poolOverrides.tokenAddresses }
+        : {};
+      const tokenAAddressValue = (tokenAAddressInput || tokenA?.address || "").trim();
+      const tokenBAddressValue = (tokenBAddressInput || tokenB?.address || "").trim();
+      if (tokenA?.symbol && tokenAAddressValue) {
+        tokenOverrides[tokenA.symbol] = tokenAAddressValue;
+      }
+      if (tokenB?.symbol && tokenBAddressValue) {
+        tokenOverrides[tokenB.symbol] = tokenBAddressValue;
+      }
+master
       const response = await fetch("/.netlify/functions/removeLiquidity", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -959,6 +1238,11 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
           lpAmount,
           seed: wallet.seed,
           accountIndex: wallet.index || 0,
+codex/verify-amm-liquidity-pool-token-functionality-8fk14o
+          tokenAddresses: tokenOverrides,
+          tokenAAddress: tokenAAddressValue,
+          tokenBAddress: tokenBAddressValue,
+master
         }),
       });
       const payload = await response.json();
@@ -1061,6 +1345,48 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
                   Provide both assets to receive {lpToken?.symbol || "LP"} tokens. Quotes are computed before broadcasting.
                 </p>
                 <div className="field-group">
+codex/verify-amm-liquidity-pool-token-functionality-8fk14o
+                  <span className="field-label">Token A contract</span>
+                  <input
+                    value={tokenAAddressInput}
+                    onChange={(event) => {
+                      setTokenAAddressInput(event.target.value);
+                      setTokenConfigStatus("");
+                    }}
+                    placeholder="Enter token A contract"
+                    type="text"
+                    spellCheck={false}
+                  />
+                </div>
+                <div className="field-group">
+                  <span className="field-label">Token B</span>
+                  {tokenConfigOptions.length > 0 && (
+                    <TokenSelect
+                      value={tokenBSelection || tokenB?.symbol || ""}
+                      onChange={handleTokenBSelect}
+                      options={tokenConfigOptions}
+                    />
+                  )}
+                  <input
+                    value={tokenBAddressInput}
+                    onChange={(event) => {
+                      setTokenBAddressInput(event.target.value);
+                      setTokenConfigStatus("");
+                    }}
+                    placeholder="Enter token B contract"
+                    type="text"
+                    spellCheck={false}
+                  />
+                </div>
+                <div className="field-group">
+                  <button type="button" className="ghost-cta full" onClick={handleApplyTokenConfig}>
+                    Apply token addresses
+                  </button>
+                </div>
+                {tokenConfigStatus && <p className="status">{tokenConfigStatus}</p>}
+                <div className="field-group">
+
+master
                   <span className="field-label">Amount {tokenA?.symbol || "Token A"}</span>
                   <input
                     value={amountA}
