@@ -144,6 +144,7 @@ async function createClient(options = {}) {
   return KeetaNet.UserClient.fromNetwork(DEFAULT_NETWORK, signer);
 }
 
+codex/verify-amm-liquidity-pool-token-functionality-8fk14o
 async function resolveTokenAccount(client, symbol, fallback, overrideAddress) {
   if (!symbol) return fallback || null;
   if (overrideAddress) {
@@ -153,6 +154,9 @@ async function resolveTokenAccount(client, symbol, fallback, overrideAddress) {
       throw new Error(`Invalid override address provided for ${symbol}`);
     }
   }
+async function resolveTokenAccount(client, symbol, fallback) {
+  if (!symbol) return fallback || null;
+master
   if (symbol.toUpperCase() === "KTA") {
     return client.baseToken;
   }
@@ -191,6 +195,7 @@ async function loadPoolContext(client, overrides = {}) {
   const lpTokenInfo = await loadTokenDetails(client, lpTokenAccount);
   const lpSupply = await client.client.getTokenSupply(lpTokenAccount);
 
+codex/verify-amm-liquidity-pool-token-functionality-8fk14o
   const tokenAddressOverrides = { ...(overrides.tokenAddresses || {}) };
 
   const baseTokenDetails = await loadTokenDetails(client, client.baseToken);
@@ -207,6 +212,11 @@ async function loadPoolContext(client, overrides = {}) {
     const fallbackAccount = null;
     const overrideAddress = tokenAddressOverrides[symbol] || tokenAddressOverrides[symbol?.toUpperCase?.()];
     const tokenAccount = await resolveTokenAccount(client, symbol, fallbackAccount, overrideAddress);
+  const tokenDetails = [];
+  for (const symbol of tokenSymbols) {
+    const fallbackAccount = null;
+    const tokenAccount = await resolveTokenAccount(client, symbol, fallbackAccount);
+master
     if (!tokenAccount) {
       throw new Error(
         `Token address for symbol ${symbol} is not configured. Set KEETA_TOKEN_${symbol.toUpperCase()}`
@@ -260,7 +270,9 @@ async function loadPoolContext(client, overrides = {}) {
       supplyRaw: lpSupply.toString(),
       supplyFormatted: formatAmount(lpSupply, lpTokenInfo.decimals),
     },
+codex/verify-amm-liquidity-pool-token-functionality-8fk14o
     baseToken,
+master
     timestamp: new Date().toISOString(),
   };
 }
