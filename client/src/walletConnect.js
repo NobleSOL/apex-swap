@@ -17,6 +17,14 @@ function getChains() {
     .filter(Boolean);
 }
 
+function getSolanaChains() {
+  const raw = process.env.REACT_APP_WC_SOLANA_CHAINS || window.WALLETCONNECT_SOLANA_CHAINS || "";
+  return String(raw)
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 export function useWalletConnect() {
   const [ready, setReady] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -27,6 +35,7 @@ export function useWalletConnect() {
 
   const projectId = useMemo(getProjectId, []);
   const chains = useMemo(getChains, []);
+  const solChains = useMemo(getSolanaChains, []);
 
   useEffect(() => {
     let mounted = true;
@@ -60,7 +69,7 @@ export function useWalletConnect() {
     return () => {
       mounted = false;
     };
-  }, [projectId, chains]);
+  }, [projectId, chains, solChains]);
 
   const connect = useCallback(async () => {
     setError("");
@@ -69,8 +78,9 @@ export function useWalletConnect() {
     setIsConnecting(true);
     try {
       const provider = providerRef.current;
-      const ns = {
-        eip155: {
+      const ns = {};
+      if (chains.length) {
+        ns.eip155 = {
           methods: [
             "eth_sendTransaction",
             "personal_sign",
@@ -80,11 +90,23 @@ export function useWalletConnect() {
           ],
           events: ["chainChanged", "accountsChanged"],
           chains,
-        },
-      };
+        };
+      }
+      if (solChains.length) {
+        ns.solana = {
+          methods: [
+            "solana_signMessage",
+            "solana_signTransaction",
+            "solana_signAndSendTransaction"
+          ],
+          events: ["chainChanged", "accountsChanged"],
+          chains: solChains,
+        };
+      }
       const session = await provider.connect({ namespaces: ns });
-      const accounts = session?.namespaces?.eip155?.accounts || [];
-      const first = accounts[0];
+      const evmAccounts = session?.namespaces?.eip155?.accounts || [];
+      const solAccounts = session?.namespaces?.solana?.accounts || [];
+      const first = (evmAccounts[0] || solAccounts[0]) || "";
       const addr = first ? first.split(":").pop() : "";
       setAddress(addr || "");
       setIsConnected(Boolean(addr));
