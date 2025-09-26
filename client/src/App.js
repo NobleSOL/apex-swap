@@ -22,7 +22,7 @@ const TOKEN_ICON_PATHS = {
   eth: "/tokens/eth.svg",
   btc: "/tokens/btc.svg",
   kusd: "/tokens/kusd.svg",
-  kta: "/tokens/kta.svg",
+  kta: TOKENS.KTA.logo,
   test: "/tokens/default.svg",
 };
 
