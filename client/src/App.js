@@ -1075,57 +1075,47 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
     ];
   }, [poolData]);
   return (
-    <main className="swap-screen" id="swap">
-      <section className="swap-hero">
-        <div className="swap-hero__content">
-          <span className="eyebrow">Keeta Liquidity Layer</span>
-          <h1 className="swap-title">Swap at apex speed with Silverback.</h1>
-          <p className="swap-subtitle">
-            Deep liquidity, MEV-aware routing, and a premium trading experience built for the Keeta ecosystem.
-          </p>
-          <div className="swap-cta-row">
-            <button
-              type="button"
-              className="primary-cta"
-              onClick={() => onNavigate("swap", "/", "swap-panel")}
-            >
-              Start swapping
-            </button>
-            <button
-              type="button"
-              className="ghost-cta"
-              onClick={() => onNavigate("pools", "/pools", "pools")}
-            >
-              View pools
-            </button>
+    <main className="page" id="swap">
+      <section className="hero-section">
+        <div className="hero-grid">
+          <div className="hero-content">
+            <span className="eyebrow">Keeta Liquidity Layer</span>
+            <h1 className="hero-heading">Swap at apex speed with Silverback.</h1>
+            <p className="hero-subtitle">
+              Deep liquidity, MEV-aware routing, and a premium trading experience built for the Keeta ecosystem.
+            </p>
+            <div className="hero-actions">
+              <button
+                type="button"
+                className="primary-cta"
+                onClick={() => onNavigate("swap", "/", "swap-panel")}
+              >
+                Start swapping
+              </button>
+              <button
+                type="button"
+                className="ghost-cta"
+                onClick={() => onNavigate("pools", "/pools", "pools")}
+              >
+                View pools
+              </button>
+            </div>
+            <div className="metric-row" id="stats">
+              {heroStats.map((item) => (
+                <div className="metric-card" key={item.label}>
+                  <span className="metric-label">{item.label}</span>
+                  <span className="metric-value">{item.value}</span>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="swap-metrics" id="stats">
-            {heroStats.map((item) => (
-              <div className="metric-card" key={item.label}>
-                <span className="metric-label">{item.label}</span>
-                <span className="metric-value">{item.value}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="swap-hero__panels" id="swap-panel">
-          <div className="swap-panel swap-panel--primary">
-            <div className="swap-card swap-card--panel">
-              <div className="swap-card__tabs">
-                <button type="button" className="swap-card__tab is-active">
-                  Swap
-                </button>
-                <button type="button" className="swap-card__tab" disabled>
-                  Limit
-                </button>
-                <button type="button" className="swap-card__tab" disabled>
-                  Liquidity
-                </button>
-              </div>
-              <div className="swap-card__header">
-                <div>
-                  <h2>Swap tokens</h2>
-                  <p className="swap-card__subtitle">Live Keeta pricing with one-tap execution.</p>
+          <div className="hero-panel" id="swap-panel">
+            <WalletControls wallet={wallet} onWalletChange={onWalletChange} />
+            <div className="swap-card">
+              <div className="swap-card-header">
+                <div className="swap-card-title">
+                  <span className="swap-chip">Classic</span>
+                  <h2>Swap</h2>
                 </div>
                 <button
                   type="button"
@@ -1136,8 +1126,9 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
                   {slippage}%
                 </button>
               </div>
+
               {slippageOpen && (
-                <div className="slippage-popover swap-card__popover">
+                <div className="slippage-popover">
                   <div className="slip-row">
                     {[0.1, 0.5, 1].map((value) => (
                       <button
@@ -1165,54 +1156,77 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
                   </div>
                 </div>
               )}
-              <div className="swap-card__body">
-                <div className="swap-input-block">
-                  <div className="swap-input-block__top">
-                    <span className="swap-input-block__label">You pay</span>
-                    {walletBaseToken && symbolsEqual(fromAsset, walletBaseToken.symbol) && (
-                      <span className="swap-input-block__balance">
-                        {walletLoading
-                          ? "Loading..."
-                          : walletBaseTokenBalance != null
-                          ? `${walletBaseTokenBalance} ${walletBaseToken.symbol}`
-                          : "—"}
-                      </span>
-                    )}
-                  </div>
-                  <div className="swap-input">
-                    <input
-                      id="swap-from-amount"
-                      type="text"
-                      inputMode="decimal"
-                      placeholder="0.00"
-                      value={fromAmount}
-                      onChange={(event) => setFromAmount(event.target.value)}
+
+              <div className="swap-stack">
+                <div className="swap-row">
+                  <div className="field-group">
+                    <label className="field-label" htmlFor="swap-from-token">
+                      Sell token
+                    </label>
+                    <TokenSelect
+                      value={fromAsset}
+                      onChange={setFromAsset}
+                      options={tokenOptions}
                     />
-                    <TokenSelect value={fromAsset} onChange={setFromAsset} options={tokenOptions} />
+                  </div>
+                  <div className="field-group">
+                    <label className="field-label" htmlFor="swap-from-amount">
+                      Amount
+                    </label>
+                    <div className="amount-field">
+                      <input
+                        id="swap-from-amount"
+                        type="text"
+                        inputMode="decimal"
+                        placeholder="0.00"
+                        value={fromAmount}
+                        onChange={(event) => setFromAmount(event.target.value)}
+                      />
+                      <button
+                        type="button"
+                        className="small-action"
+                        onClick={() => setFromAmount("")}
+                      >
+                        Clear
+                      </button>
+                    </div>
+                    <div className="balance-line">
+                      {walletLoading
+                        ? "Balance: Loading..."
+                        : walletBaseToken &&
+                          symbolsEqual(fromAsset, walletBaseToken.symbol) &&
+                          walletBaseTokenBalance != null
+                        ? `Balance: ${walletBaseTokenBalance} ${walletBaseToken.symbol}`
+                        : "Balance: —"}
+                    </div>
                   </div>
                 </div>
+
                 <button
                   type="button"
-                  className="swap-flip"
+                  className="direction-toggle"
                   onClick={flipDirection}
                   aria-label="Switch direction"
                 >
                   <SwapIcon />
                 </button>
-                <div className="swap-input-block">
-                  <div className="swap-input-block__top">
-                    <span className="swap-input-block__label">You receive</span>
-                    {walletBaseToken && symbolsEqual(toAsset, walletBaseToken.symbol) && (
-                      <span className="swap-input-block__balance">
-                        {walletLoading
-                          ? "Loading..."
-                          : walletBaseTokenBalance != null
-                          ? `${walletBaseTokenBalance} ${walletBaseToken.symbol}`
-                          : "—"}
-                      </span>
-                    )}
+
+                <div className="swap-row">
+                  <div className="field-group">
+                    <label className="field-label" htmlFor="swap-to-token">
+                      Buy token
+                    </label>
+                    <TokenSelect
+                      value={toAsset}
+                      onChange={setToAsset}
+                      options={tokenOptions}
+                    />
                   </div>
-                  <div className="swap-input">
+                  <div className="field-group">
+                    <label className="field-label" htmlFor="swap-to-amount">
+                      Amount
+                    </label>
+                  <div className="amount-field">
                     <input
                       id="swap-to-amount"
                       type="text"
@@ -1221,67 +1235,83 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
                       value={toAmount}
                       onChange={(event) => setToAmount(event.target.value)}
                     />
-                    <TokenSelect value={toAsset} onChange={setToAsset} options={tokenOptions} />
                   </div>
-                  <div className="swap-input__caption">Pool price updates automatically</div>
+                  {walletBaseToken && symbolsEqual(toAsset, walletBaseToken.symbol) && (
+                    <div className="balance-line">
+                      {walletLoading
+                        ? "Balance: Loading..."
+                        : walletBaseTokenBalance != null
+                        ? `Balance: ${walletBaseTokenBalance} ${walletBaseToken.symbol}`
+                        : "Balance: —"}
+                    </div>
+                  )}
+                  <div className="balance-line">Pool price updates automatically</div>
                 </div>
-                <div className="swap-summary">
-                  <div className="swap-summary__row">
-                    <span>Expected output</span>
-                    <span>
-                      {quoteDetails?.tokens?.to?.expectedFormatted || "—"}{" "}
-                      {quoteDetails?.tokens?.to?.symbol || toAsset}
-                    </span>
-                  </div>
-                  <div className="swap-summary__row">
-                    <span>Minimum received ({slippage}%)</span>
-                    <span>{quoteDetails?.tokens?.to?.minimumFormatted || "—"}</span>
-                  </div>
-                  <div className="swap-summary__row">
-                    <span>Fee</span>
-                    <span>
-                      {quoteDetails?.tokens?.from?.feePaidFormatted || `${(poolData?.pool?.feeBps ?? 0) / 100}%`}{" "}
-                      {quoteDetails?.tokens?.from?.symbol || fromAsset}
-                    </span>
-                  </div>
-                  <div className="swap-summary__row">
-                    <span>Price impact</span>
-                    <span>{quoteDetails ? `${quoteDetails.priceImpact} %` : "—"}</span>
-                  </div>
-                  <div className="swap-summary__row">
-                    <span>Route</span>
-                    <span>{poolData?.pool?.address ? formatAddress(poolData.pool.address) : "—"}</span>
-                  </div>
-                </div>
-                {poolStatusMessage && <div className="swap-alert">{poolStatusMessage}</div>}
-                <button type="button" className="primary-cta full swap-submit" onClick={handleSwap}>
-                  Swap
-                </button>
-                {status && <p className="status">{status}</p>}
               </div>
+              </div>
+
+              <div className="info-rows">
+                <div className="info-line">
+                  Expected output: {quoteDetails?.tokens?.to?.expectedFormatted || "—"} {" "}
+                  {quoteDetails?.tokens?.to?.symbol || toAsset}
+                </div>
+                <div className="info-line">
+                  Minimum received ({slippage}% slippage): {quoteDetails?.tokens?.to?.minimumFormatted || "—"}
+                </div>
+                <div className="info-line">
+                  Fee: {quoteDetails?.tokens?.from?.feePaidFormatted || `${(poolData?.pool?.feeBps ?? 0) / 100}%`} {" "}
+                  {quoteDetails?.tokens?.from?.symbol || fromAsset}
+                </div>
+                <div className="info-line">
+                  Price impact: {quoteDetails ? `${quoteDetails.priceImpact} %` : "—"}
+                </div>
+                <div className="route-line">
+                  Pool: {poolData?.pool?.address ? formatAddress(poolData.pool.address) : "—"}
+                </div>
+              </div>
+
+              {poolStatusMessage && <p className="status">{poolStatusMessage}</p>}
+
+              <button type="button" className="primary-cta full" onClick={handleSwap}>
+                Swap
+              </button>
+
+              {status && <p className="status">{status}</p>}
             </div>
-          </div>
-          <div className="swap-panel swap-panel--wallet">
-            <WalletControls wallet={wallet} onWalletChange={onWalletChange} />
           </div>
         </div>
       </section>
-      <section className="swap-featured" id="pools">
-        <div className="swap-featured__head">
-          <h2>Featured pools</h2>
-          <button type="button" className="pill-link" onClick={() => onNavigate("pools", "/pools", "pools")}>
-            Manage positions <ArrowTopRight />
+
+      <section className="market-section">
+        <div className="section-header">
+          <div>
+            <span className="eyebrow">Featured markets</span>
+            <h2>Discover deep liquidity pairs</h2>
+            <p className="section-subtitle">
+              Deploy capital into the highest performing pools backed by Silverback routing.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="ghost-cta"
+            onClick={() => onNavigate("pools", "/pools", "pools")}
+          >
+            Explore pools
           </button>
         </div>
-        <div className="swap-featured__grid">
-          {poolLoading && (
-            <article className="pool-card">
+        <div className="pool-grid">
+          {featuredPools.length === 0 && (
+            <article className="pool-card" key="placeholder">
               <div className="pool-card-head">
                 <div className="pool-token-icons">
-                  <span className="token-icon token-icon-lg" />
-                  <span className="token-icon token-icon-lg" />
+                  <span className="token-icon token-icon-lg">
+                    <TokenBadge symbol="KTA" />
+                  </span>
+                  <span className="token-icon token-icon-lg">
+                    <TokenBadge symbol="TEST" />
+                  </span>
                 </div>
-                <span className="pool-pair">Loading pools...</span>
+                <span className="pool-pair">KTA/TEST</span>
               </div>
               <div className="pool-card-body">
                 <div className="pool-metric">
@@ -1293,6 +1323,13 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
                   <span className="metric-value">—</span>
                 </div>
               </div>
+              <button
+                type="button"
+                className="pill-link"
+                onClick={() => onNavigate("pools", "/pools", "pools")}
+              >
+                Manage position <ArrowTopRight />
+              </button>
             </article>
           )}
           {featuredPools.map((pool) => (
@@ -1318,25 +1355,15 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
                   <span className="metric-value">{pool.reserves}</span>
                 </div>
               </div>
+              <button
+                type="button"
+                className="pill-link"
+                onClick={() => onNavigate("pools", "/pools", "pools")}
+              >
+                Manage position <ArrowTopRight />
+              </button>
             </article>
           ))}
-          {!poolLoading && featuredPools.length === 0 && (
-            <article className="pool-card">
-              <div className="pool-card-head">
-                <span className="pool-pair">No pools available</span>
-              </div>
-              <div className="pool-card-body">
-                <div className="pool-metric">
-                  <span className="metric-label">Fee</span>
-                  <span className="metric-value">—</span>
-                </div>
-                <div className="pool-metric">
-                  <span className="metric-label">Reserves</span>
-                  <span className="metric-value">—</span>
-                </div>
-              </div>
-            </article>
-          )}
         </div>
       </section>
     </main>
@@ -1366,7 +1393,6 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
   const [tokenBAddressInput, setTokenBAddressInput] = useState("");
   const [tokenBSelection, setTokenBSelection] = useState("");
   const [tokenConfigStatus, setTokenConfigStatus] = useState("");
-  const [poolSearch, setPoolSearch] = useState("");
 
   const tokensInPool = useMemo(() => {
     if (!poolData) {
@@ -1400,78 +1426,6 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
     return tokensInPool.find((token) => token.symbol === tokenBSelection) || defaultTokenB;
   }, [tokensInPool, tokenBSelection, defaultTokenB]);
   const lpToken = poolData?.lpToken;
-
-  const availablePools = useMemo(() => {
-    if (!poolData?.pool || tokensInPool.length < 2) {
-      return [];
-    }
-    const [primary, secondary] = tokensInPool;
-    return [
-      {
-        id: poolData.pool.address,
-        address: poolData.pool.address,
-        symbolA: primary?.symbol || "Token A",
-        symbolB: secondary?.symbol || "Token B",
-        reserveA: primary?.reserveFormatted,
-        reserveB: secondary?.reserveFormatted,
-        feeBps: poolData.pool.feeBps,
-        lpSupply: lpToken?.supplyFormatted || "—",
-      },
-    ];
-  }, [poolData, tokensInPool, lpToken?.supplyFormatted]);
-
-  const filteredPools = useMemo(() => {
-    const query = poolSearch.trim().toLowerCase();
-    if (!query) {
-      return availablePools;
-    }
-    return availablePools.filter((pool) => {
-      const pairLabel = `${pool.symbolA}/${pool.symbolB}`.toLowerCase();
-      return pairLabel.includes(query) || pool.address.toLowerCase().includes(query);
-    });
-  }, [availablePools, poolSearch]);
-
-  const heroMetrics = useMemo(() => {
-    const metrics = [
-      {
-        label: "Active pools",
-        value: poolLoading ? "—" : String(availablePools.length || 0),
-      },
-    ];
-    if (lpToken?.symbol) {
-      metrics.push({
-        label: `${lpToken.symbol} supply`,
-        value: lpToken?.supplyFormatted || "—",
-      });
-    }
-    if (tokenA?.symbol) {
-      metrics.push({
-        label: `${tokenA.symbol} reserves`,
-        value: tokenA?.reserveFormatted ? `${tokenA.reserveFormatted} ${tokenA.symbol}` : "—",
-      });
-    }
-    if (tokenB?.symbol) {
-      metrics.push({
-        label: `${tokenB.symbol} reserves`,
-        value: tokenB?.reserveFormatted ? `${tokenB.reserveFormatted} ${tokenB.symbol}` : "—",
-      });
-    }
-    metrics.push({
-      label: "Fee tier",
-      value: poolData?.pool?.feeBps ? `${poolData.pool.feeBps} bps` : "—",
-    });
-    return metrics;
-  }, [
-    availablePools.length,
-    lpToken?.symbol,
-    lpToken?.supplyFormatted,
-    poolData?.pool?.feeBps,
-    poolLoading,
-    tokenA?.reserveFormatted,
-    tokenA?.symbol,
-    tokenB?.reserveFormatted,
-    tokenB?.symbol,
-  ]);
 
   useEffect(() => {
     setTokenAAddressInput(tokenA?.address || "");
@@ -1719,198 +1673,51 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
   return (
     <main className="page pools-page" id="pools">
       <section className="pools-hero">
-        <div className="pools-hero__inner">
-          <div className="pools-hero__copy">
-            <span className="eyebrow pools-hero__eyebrow">Sonus Liquidity Hub</span>
-            <h1 className="pools-hero__title">Deploy liquidity with confidence.</h1>
-            <p className="pools-hero__subtitle">
-              Track depth, fee tiers, and live reserves for every Silverback-enabled pool. Precision controls and instant
-              refresh keep you aligned with Sonus design aesthetics.
-            </p>
-            <div className="pools-hero__actions">
-              <button type="button" className="primary-cta">
-                Create position
-              </button>
-              <button type="button" className="ghost-cta" onClick={refresh}>
-                Refresh data
-              </button>
-            </div>
-          </div>
-          <div className="pools-hero__stats">
-            {heroMetrics.map((metric) => (
-              <div className="hero-stat" key={metric.label}>
-                <span className="hero-stat__label">{metric.label}</span>
-                <span className="hero-stat__value">{metric.value || "—"}</span>
-              </div>
-            ))}
-          </div>
+        <div className="hero-content">
+          <span className="eyebrow">Liquidity Network</span>
+          <h1 className="hero-heading">Deploy liquidity with confidence.</h1>
+          <p className="hero-subtitle">
+            Choose high performing pools, monitor reserves in real-time, and manage LP tokens from a single dashboard.
+          </p>
         </div>
       </section>
 
-      <section className="pools-featured">
-        <div className="pools-featured__head">
-          <div>
-            <h2>Trending pools</h2>
-            <p>Live Keeta pairs styled like Sonus.</p>
-          </div>
-          <button type="button" className="pill-link" onClick={refresh}>
-            Refresh <ArrowTopRight />
-          </button>
-        </div>
-        <div className="pools-featured__grid">
-          {poolLoading && (
-            <article className="pool-card">
-              <div className="pool-card-head">
-                <div className="pool-token-icons">
-                  <span className="token-icon token-icon-lg" />
-                  <span className="token-icon token-icon-lg" />
-                </div>
-                <span className="pool-pair">Loading pools...</span>
+      <section className="pools-layout-section">
+        <div className="pools-layout">
+          <aside className="pool-selector">
+            <h2 className="section-title">Available Pools</h2>
+            {poolLoading && <p className="status">Fetching pool data...</p>}
+            {poolError && <p className="status">Failed to load pool: {poolError}</p>}
+            {!poolLoading && !poolError && tokenA && tokenB && (
+              <div className="pool-selector-list">
+                <button type="button" className="pool-selector-card is-active">
+                  <div className="pool-card-head">
+                    <div className="pool-token-icons">
+                      <span className="token-icon">
+                        <TokenBadge symbol={tokenA.symbol} />
+                      </span>
+                      <span className="token-icon">
+                        <TokenBadge symbol={tokenB.symbol} />
+                      </span>
+                    </div>
+                    <span className="pool-pair">{tokenA.symbol}/{tokenB.symbol}</span>
+                  </div>
+                  <div className="pool-card-body">
+                    <div className="pool-metric">
+                      <span className="metric-label">Fee tier</span>
+                      <span className="metric-value">{poolData.pool.feeBps} bps</span>
+                    </div>
+                    <div className="pool-metric">
+                      <span className="metric-label">LP supply</span>
+                      <span className="metric-value">{lpToken.supplyFormatted}</span>
+                    </div>
+                  </div>
+                </button>
               </div>
-              <div className="pool-card-body">
-                <div className="pool-metric">
-                  <span className="metric-label">Fee</span>
-                  <span className="metric-value">—</span>
-                </div>
-                <div className="pool-metric">
-                  <span className="metric-label">Reserves</span>
-                  <span className="metric-value">—</span>
-                </div>
-              </div>
-            </article>
-          )}
-          {!poolLoading && filteredPools.length === 0 && (
-            <article className="pool-card">
-              <div className="pool-card-head">
-                <span className="pool-pair">No pools match your search</span>
-              </div>
-              <div className="pool-card-body">
-                <div className="pool-metric">
-                  <span className="metric-label">Fee</span>
-                  <span className="metric-value">—</span>
-                </div>
-                <div className="pool-metric">
-                  <span className="metric-label">Reserves</span>
-                  <span className="metric-value">—</span>
-                </div>
-              </div>
-            </article>
-          )}
-          {filteredPools.map((pool) => (
-            <article className="pool-card" key={pool.id}>
-              <div className="pool-card-head">
-                <div className="pool-token-icons">
-                  <span className="token-icon token-icon-lg">
-                    <TokenBadge symbol={pool.symbolA} />
-                  </span>
-                  <span className="token-icon token-icon-lg">
-                    <TokenBadge symbol={pool.symbolB} />
-                  </span>
-                </div>
-                <span className="pool-pair">
-                  {pool.symbolA}/{pool.symbolB}
-                </span>
-              </div>
-              <div className="pool-card-body">
-                <div className="pool-metric">
-                  <span className="metric-label">Fee</span>
-                  <span className="metric-value">{pool.feeBps} bps</span>
-                </div>
-                <div className="pool-metric">
-                  <span className="metric-label">Reserves</span>
-                  <span className="metric-value">
-                    {pool.reserveA || "—"} {pool.symbolA} / {pool.reserveB || "—"} {pool.symbolB}
-                  </span>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
+            )}
+          </aside>
 
-      <section className="pools-content">
-        <div className="pools-grid">
-          <div className="pools-grid__left">
-            <div className="pools-card pools-card--list">
-              <div className="pools-card__head">
-                <div>
-                  <h2>All pools</h2>
-                  <p>Monitor depth, LP supply, and routing endpoints.</p>
-                </div>
-                <div className="pools-card__filters">
-                  <div className="search-field">
-                    <svg
-                      className="search-field__icon"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 16 16"
-                      aria-hidden="true"
-                    >
-                      <path
-                        d="M11.742 10.344a6.5 6.5 0 10-1.397 1.398l3.387 3.387a1 1 0 001.415-1.414l-3.405-3.371zM6.5 11a4.5 4.5 0 110-9 4.5 4.5 0 010 9z"
-                        fill="currentColor"
-                        fillRule="evenodd"
-                      />
-                    </svg>
-                    <input
-                      type="search"
-                      placeholder="Search pools"
-                      value={poolSearch}
-                      onChange={(event) => setPoolSearch(event.target.value)}
-                    />
-                  </div>
-                  <button type="button" className="ghost-cta ghost-cta--compact" onClick={refresh}>
-                    Sync
-                  </button>
-                </div>
-              </div>
-              <div className="pools-table">
-                <div className="pools-table__header">
-                  <span>Pair</span>
-                  <span>Reserves</span>
-                  <span>LP supply</span>
-                  <span>Fee</span>
-                  <span>Address</span>
-                </div>
-                {poolLoading && <div className="pools-table__empty">Fetching pool data...</div>}
-                {poolError && !poolLoading && (
-                  <div className="pools-table__empty">Failed to load pool: {poolError}</div>
-                )}
-                {!poolLoading && !poolError && filteredPools.length === 0 && (
-                  <div className="pools-table__empty">No pools found.</div>
-                )}
-                {!poolLoading && !poolError && filteredPools.length > 0 && (
-                  <div className="pools-table__body">
-                    {filteredPools.map((pool) => (
-                      <div className="pools-table__row" key={pool.id}>
-                        <span className="pools-table__pair">
-                          <span className="pool-token-icons">
-                            <span className="token-icon">
-                              <TokenBadge symbol={pool.symbolA} />
-                            </span>
-                            <span className="token-icon">
-                              <TokenBadge symbol={pool.symbolB} />
-                            </span>
-                          </span>
-                          <span>
-                            {pool.symbolA}/{pool.symbolB}
-                          </span>
-                        </span>
-                        <span className="pools-table__reserves">
-                          <span>{pool.reserveA || "—"}</span>
-                          <span>{pool.reserveB || "—"}</span>
-                        </span>
-                        <span>{pool.lpSupply}</span>
-                        <span>{pool.feeBps} bps</span>
-                        <span className="pools-table__address">{formatAddress(pool.address)}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-          <div className="pools-grid__right">
+          <div className="pool-detail">
             <div className="swap-card pool-overview">
               <div className="swap-card-header">
                 <div className="swap-card-title">
@@ -1932,147 +1739,156 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
                   <div className="info-line">
                     LP supply: {lpToken.supplyFormatted} {lpToken.symbol}
                   </div>
-                  <div className="info-line">Pool address: {formatAddress(poolData.pool.address)}</div>
-                  <div className="info-line">Fee tier: {poolData.pool.feeBps} bps</div>
+                  <div className="info-line">
+                    Pool address: {formatAddress(poolData.pool.address)}
+                  </div>
+                  <div className="info-line">
+                    Fee tier: {poolData.pool.feeBps} bps
+                  </div>
                 </div>
               ) : (
                 <p className="status">Pool unavailable</p>
               )}
             </div>
 
-            <div className="swap-card liquidity-card">
-              <h3>Add Liquidity</h3>
-              <p className="wallet-copy">
-                Provide both assets to receive {lpToken?.symbol || "LP"} tokens. Quotes are computed before broadcasting.
-              </p>
-              <div className="field-group">
-                <span className="field-label">Token A contract</span>
-                <input
-                  value={tokenAAddressInput}
-                  onChange={(event) => {
-                    setTokenAAddressInput(event.target.value);
-                    setTokenConfigStatus("");
-                  }}
-                  placeholder="Enter token A contract"
-                  type="text"
-                  spellCheck={false}
-                />
-              </div>
-              <div className="field-group">
-                <span className="field-label">Token B</span>
-                {tokenConfigOptions.length > 0 && (
-                  <TokenSelect
-                    value={tokenBSelection || tokenB?.symbol || ""}
-                    onChange={handleTokenBSelect}
-                    options={tokenConfigOptions}
+            <div className="dual-card">
+              <div className="swap-card liquidity-card">
+                <h3>Add Liquidity</h3>
+                <p className="wallet-copy">
+                  Provide both assets to receive {lpToken?.symbol || "LP"} tokens. Quotes are computed before broadcasting.
+                </p>
+                <div className="field-group">
+                  <span className="field-label">Token A contract</span>
+                  <input
+                    value={tokenAAddressInput}
+                    onChange={(event) => {
+                      setTokenAAddressInput(event.target.value);
+                      setTokenConfigStatus("");
+                    }}
+                    placeholder="Enter token A contract"
+                    type="text"
+                    spellCheck={false}
                   />
+                </div>
+                <div className="field-group">
+                  <span className="field-label">Token B</span>
+                  {tokenConfigOptions.length > 0 && (
+                    <TokenSelect
+                      value={tokenBSelection || tokenB?.symbol || ""}
+                      onChange={handleTokenBSelect}
+                      options={tokenConfigOptions}
+                    />
+                  )}
+                  <input
+                    value={tokenBAddressInput}
+                    onChange={(event) => {
+                      setTokenBAddressInput(event.target.value);
+                      setTokenConfigStatus("");
+                    }}
+                    placeholder="Enter token B contract"
+                    type="text"
+                    spellCheck={false}
+                  />
+                </div>
+                <div className="field-group">
+                  <button type="button" className="ghost-cta full" onClick={handleApplyTokenConfig}>
+                    Apply token addresses
+                  </button>
+                </div>
+                {tokenConfigStatus && <p className="status">{tokenConfigStatus}</p>}
+                <div className="field-group">
+                  <span className="field-label">Amount {tokenA?.symbol || "Token A"}</span>
+                  <input
+                    value={amountA}
+                    onChange={(event) => setAmountA(event.target.value)}
+                    placeholder="0.0"
+                    type="number"
+                    min="0"
+                    step="any"
+                  />
+                  {walletBaseToken && symbolsEqual(tokenA?.symbol, walletBaseToken.symbol) && (
+                    <div className="balance-line">
+                      {walletLoading
+                        ? "Balance: Loading..."
+                        : walletBaseTokenBalance != null
+                        ? `Balance: ${walletBaseTokenBalance} ${walletBaseToken.symbol}`
+                        : "Balance: —"}
+                    </div>
+                  )}
+                </div>
+                <div className="field-group">
+                  <span className="field-label">Amount {tokenB?.symbol || "Token B"}</span>
+                  <input
+                    value={amountB}
+                    onChange={(event) => setAmountB(event.target.value)}
+                    placeholder="0.0"
+                    type="number"
+                    min="0"
+                    step="any"
+                  />
+                  {walletBaseToken && symbolsEqual(tokenB?.symbol, walletBaseToken.symbol) && (
+                    <div className="balance-line">
+                      {walletLoading
+                        ? "Balance: Loading..."
+                        : walletBaseTokenBalance != null
+                        ? `Balance: ${walletBaseTokenBalance} ${walletBaseToken.symbol}`
+                        : "Balance: —"}
+                    </div>
+                  )}
+                </div>
+                {mintPreview && (
+                  <div className="info-rows">
+                    <div className="info-line">
+                      Est. mint: {mintPreview.formatted} {lpToken.symbol}
+                    </div>
+                    <div className="info-line">
+                      Pool share: {(mintPreview.share * 100).toFixed(4)}%
+                    </div>
+                  </div>
                 )}
-                <input
-                  value={tokenBAddressInput}
-                  onChange={(event) => {
-                    setTokenBAddressInput(event.target.value);
-                    setTokenConfigStatus("");
-                  }}
-                  placeholder="Enter token B contract"
-                  type="text"
-                  spellCheck={false}
-                />
-              </div>
-              <div className="field-group">
-                <button type="button" className="ghost-cta full" onClick={handleApplyTokenConfig}>
-                  Apply token addresses
+                <button type="button" className="primary-cta full" onClick={handleAddLiquidity}>
+                  Supply liquidity
                 </button>
+                {addStatus && <p className="status">{addStatus}</p>}
               </div>
-              {tokenConfigStatus && <p className="status">{tokenConfigStatus}</p>}
-              <div className="field-group">
-                <span className="field-label">Amount {tokenA?.symbol || "Token A"}</span>
-                <input
-                  value={amountA}
-                  onChange={(event) => setAmountA(event.target.value)}
-                  placeholder="0.0"
-                  type="number"
-                  min="0"
-                  step="any"
-                />
-                {walletBaseToken && symbolsEqual(tokenA?.symbol, walletBaseToken.symbol) && (
-                  <div className="balance-line">
-                    {walletLoading
-                      ? "Balance: Loading..."
-                      : walletBaseTokenBalance != null
-                      ? `Balance: ${walletBaseTokenBalance} ${walletBaseToken.symbol}`
-                      : "Balance: —"}
-                  </div>
-                )}
-              </div>
-              <div className="field-group">
-                <span className="field-label">Amount {tokenB?.symbol || "Token B"}</span>
-                <input
-                  value={amountB}
-                  onChange={(event) => setAmountB(event.target.value)}
-                  placeholder="0.0"
-                  type="number"
-                  min="0"
-                  step="any"
-                />
-                {walletBaseToken && symbolsEqual(tokenB?.symbol, walletBaseToken.symbol) && (
-                  <div className="balance-line">
-                    {walletLoading
-                      ? "Balance: Loading..."
-                      : walletBaseTokenBalance != null
-                      ? `Balance: ${walletBaseTokenBalance} ${walletBaseToken.symbol}`
-                      : "Balance: —"}
-                  </div>
-                )}
-              </div>
-              {mintPreview && (
-                <div className="info-rows">
-                  <div className="info-line">
-                    Est. mint: {mintPreview.formatted} {lpToken.symbol}
-                  </div>
-                  <div className="info-line">Pool share: {(mintPreview.share * 100).toFixed(4)}%</div>
-                </div>
-              )}
-              <button type="button" className="primary-cta full" onClick={handleAddLiquidity}>
-                Add liquidity
-              </button>
-              {addStatus && <p className="status">{addStatus}</p>}
-            </div>
 
-            <div className="swap-card liquidity-card">
-              <h3>Remove Liquidity</h3>
-              <p className="wallet-copy">
-                Burn {lpToken?.symbol || "LP"} to withdraw the underlying assets. Withdrawals are prepared before signing.
-              </p>
-              <div className="field-group">
-                <span className="field-label">LP amount</span>
-                <input
-                  value={lpAmount}
-                  onChange={(event) => setLpAmount(event.target.value)}
-                  placeholder="0.0"
-                  type="number"
-                  min="0"
-                  step="any"
-                />
-              </div>
-              {withdrawPreview && (
-                <div className="info-rows">
-                  <div className="info-line">
-                    Est. withdraw: {withdrawPreview.formattedA} {tokenA.symbol}
-                  </div>
-                  <div className="info-line">+ {withdrawPreview.formattedB} {tokenB.symbol}</div>
+              <div className="swap-card liquidity-card">
+                <h3>Remove Liquidity</h3>
+                <p className="wallet-copy">
+                  Withdraw {lpToken?.symbol || "LP"} tokens to receive the underlying assets.
+                </p>
+                <div className="field-group">
+                  <span className="field-label">LP Tokens to withdraw</span>
+                  <input
+                    value={lpAmount}
+                    onChange={(event) => setLpAmount(event.target.value)}
+                    placeholder="0.0"
+                    type="number"
+                    min="0"
+                    step="any"
+                  />
                 </div>
-              )}
-              <button type="button" className="ghost-cta full" onClick={handleRemoveLiquidity}>
-                Remove liquidity
-              </button>
-              {removeStatus && <p className="status">{removeStatus}</p>}
+                {withdrawPreview && (
+                  <div className="info-rows">
+                    <div className="info-line">
+                      Est. return: {withdrawPreview.formattedA} {tokenA.symbol} & {withdrawPreview.formattedB} {tokenB.symbol}
+                    </div>
+                    <div className="info-line">
+                      Pool share: {(withdrawPreview.share * 100).toFixed(4)}%
+                    </div>
+                  </div>
+                )}
+                <button type="button" className="ghost-cta full" onClick={handleRemoveLiquidity}>
+                  Withdraw liquidity
+                </button>
+                {removeStatus && <p className="status">{removeStatus}</p>}
+              </div>
             </div>
           </div>
         </div>
       </section>
     </main>
   );
-
 }
 function App() {
   const [view, setView] = useState(() =>
@@ -2167,70 +1983,70 @@ function App() {
         });
         return;
       }
-      setWallet((prev) => ({
-        ...prev,
-        balanceLoading: true,
-        balanceError: "",
-      }));
-      let client;
+    setWallet((prev) => ({
+      ...prev,
+      balanceLoading: true,
+      balanceError: "",
+    }));
+    let client;
+    try {
+      let account = walletAccount;
+      if (!account) {
+        account = KeetaLib.Account.fromSeed(walletSeed, walletIndex || 0);
+      }
+      client = await createKeetaClient(account);
+      let accountInfo;
       try {
-        let account = walletAccount;
-        if (!account) {
-          account = KeetaLib.Account.fromSeed(walletSeed, walletIndex || 0);
-        }
-        client = await createKeetaClient(account);
-        let accountInfo;
+        accountInfo = await client.client.getAccountInfo(
+          account.publicKeyString.get()
+        );
+      } catch (infoError) {
+        accountInfo = await client.client.getAccountInfo(account);
+      }
+      const balances = Array.isArray(accountInfo?.balances) ? accountInfo.balances : [];
+      const normalized = balances.map((entry, index) => {
+        const raw = entry?.balance ?? entry?.amount ?? entry?.raw ?? 0;
+        const { address, label } = resolveBalanceMetadata(entry, index);
+        const uniqueKey = address || `${label}-${index}`;
+        return {
+          ...entry,
+          accountId: address,
+          accountLabel: label,
+          balanceKey: uniqueKey,
+          formatted: formatKeetaBalance(raw),
+        };
+      });
+      if (!cancelled) {
+        setWallet((prev) => ({
+          ...prev,
+          account,
+          balances: normalized,
+          balanceLoading: false,
+          balanceError: "",
+        }));
+      }
+    } catch (error) {
+      if (!cancelled) {
+        setWallet((prev) => ({
+          ...prev,
+          balances: [],
+          balanceLoading: false,
+          balanceError: error?.message || "Failed to load balances",
+        }));
+      }
+    } finally {
+      if (client && typeof client.destroy === "function") {
         try {
-          accountInfo = await client.client.getAccountInfo(
-            account.publicKeyString.get()
-          );
-        } catch (infoError) {
-          accountInfo = await client.client.getAccountInfo(account);
-        }
-        const balances = Array.isArray(accountInfo?.balances) ? accountInfo.balances : [];
-        const normalized = balances.map((entry, index) => {
-          const raw = entry?.balance ?? entry?.amount ?? entry?.raw ?? 0;
-          const { address, label } = resolveBalanceMetadata(entry, index);
-          const uniqueKey = address || `${label}-${index}`;
-          return {
-            ...entry,
-            accountId: address,
-            accountLabel: label,
-            balanceKey: uniqueKey,
-            formatted: formatKeetaBalance(raw),
-          };
-        });
-        if (!cancelled) {
-          setWallet((prev) => ({
-            ...prev,
-            account,
-            balances: normalized,
-            balanceLoading: false,
-            balanceError: "",
-          }));
-        }
-      } catch (error) {
-        if (!cancelled) {
-          setWallet((prev) => ({
-            ...prev,
-            balances: [],
-            balanceLoading: false,
-            balanceError: error?.message || "Failed to load balances",
-          }));
-        }
-      } finally {
-        if (client && typeof client.destroy === "function") {
-          try {
-            await client.destroy();
-          } catch (destroyError) {
-            // eslint-disable-next-line no-console
-            console.warn("Failed to destroy wallet client", destroyError);
-          }
+          await client.destroy();
+        } catch (destroyError) {
+          // eslint-disable-next-line no-console
+          console.warn("Failed to destroy wallet client", destroyError);
         }
       }
-    };
+    }
+  };
 
-    loadBalances();
+  loadBalances();
 
     return () => {
       cancelled = true;
