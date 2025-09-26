@@ -30,6 +30,145 @@ function decodeMetadata(metadata) {
   }
 }
 
+function extractAccountAddress(value, seen = new Set()) {
+  if (!value) {
+    return null;
+  }
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed ? trimmed : null;
+  }
+  if (typeof value !== "object") {
+    return null;
+  }
+  if (seen.has(value)) {
+    return null;
+  }
+  seen.add(value);
+
+  if (typeof value.publicKeyString === "string") {
+    const trimmed = value.publicKeyString.trim();
+    if (trimmed) {
+      return trimmed;
+    }
+  }
+  if (value.publicKeyString && typeof value.publicKeyString.get === "function") {
+    try {
+      const resolved = value.publicKeyString.get();
+      if (typeof resolved === "string" && resolved.trim()) {
+        return resolved.trim();
+      }
+    } catch (err) {
+      /* ignore invalid getter */
+    }
+  }
+
+  const candidateKeys = [
+    "address",
+    "account",
+    "accountAddress",
+    "publicKey",
+    "public_key",
+    "publicKeyString",
+    "tokenAccount",
+    "token",
+    "id",
+    "value",
+  ];
+
+  for (const key of candidateKeys) {
+    if (!Object.prototype.hasOwnProperty.call(value, key)) {
+      continue;
+    }
+    const nested = value[key];
+    if (!nested) {
+      continue;
+    }
+    const resolved = extractAccountAddress(nested, seen);
+    if (resolved) {
+      return resolved;
+    }
+  }
+
+  return null;
+}
+
+function resolveMetadataTokenAccount(metadata, symbol, index) {
+  if (!metadata) {
+    return null;
+  }
+
+  const candidates = [];
+  const normalizedSymbol = typeof symbol === "string" ? symbol.toUpperCase() : "";
+  const variantSet = new Set();
+  if (symbol !== undefined && symbol !== null) {
+    variantSet.add(String(symbol));
+  }
+  if (normalizedSymbol) {
+    variantSet.add(normalizedSymbol);
+    variantSet.add(normalizedSymbol.toLowerCase());
+  }
+  const symbolVariants = Array.from(variantSet).filter(Boolean);
+
+  const tokenLetter = index === 0 ? "A" : index === 1 ? "B" : null;
+  if (tokenLetter) {
+    const baseKey = `token${tokenLetter}`;
+    const baseValue = metadata[baseKey];
+    if (baseValue && typeof baseValue === "object" && !Array.isArray(baseValue)) {
+      candidates.push(baseValue, baseValue.account, baseValue.address, baseValue.tokenAccount, baseValue.token);
+    }
+    const letterKeys = [`${baseKey}Account`, `${baseKey}Address`];
+    for (const key of letterKeys) {
+      if (!metadata[key]) {
+        continue;
+      }
+      const value = metadata[key];
+      if (value && typeof value === "object" && !Array.isArray(value)) {
+        candidates.push(value.account, value.address, value.tokenAccount, value.token);
+      }
+      candidates.push(value);
+    }
+  }
+
+  const nestedGroups = [metadata.tokenAccounts, metadata.tokenAddresses, metadata.tokens, metadata.assets];
+  for (const group of nestedGroups) {
+    if (!group) {
+      continue;
+    }
+    if (Array.isArray(group)) {
+      for (const entry of group) {
+        if (!entry) continue;
+        const entrySymbol =
+          (entry.symbol || entry.ticker || entry.token || entry.name || "").toString();
+        if (entrySymbol && entrySymbol.toUpperCase() === normalizedSymbol) {
+          candidates.push(entry, entry.account, entry.address, entry.tokenAccount, entry.token);
+        }
+      }
+      continue;
+    }
+    for (const variant of symbolVariants) {
+      if (!variant || typeof group !== "object") continue;
+      const key = String(variant);
+      if (Object.prototype.hasOwnProperty.call(group, key)) {
+        candidates.push(group[key]);
+      }
+      const upperVariant = key.toUpperCase();
+      if (Object.prototype.hasOwnProperty.call(group, upperVariant)) {
+        candidates.push(group[upperVariant]);
+      }
+    }
+  }
+
+  for (const candidate of candidates) {
+    const address = extractAccountAddress(candidate);
+    if (address) {
+      return address;
+    }
+  }
+
+  return null;
+}
+
 function formatAmount(raw, decimals) {
   const bigRaw = BigInt(raw);
   const absValue = bigRaw < 0n ? -bigRaw : bigRaw;
@@ -227,8 +366,23 @@ async function loadPoolContext(client, overrides = {}) {
   };
 
   const tokenDetails = [];
-  for (const symbol of tokenSymbols) {
-    const fallbackAccount = null;
+  for (const [index, symbol] of tokenSymbols.entries()) {
+    let fallbackAccount = null;
+    const metadataAddress = resolveMetadataTokenAccount(
+      poolMetadata,
+      symbol,
+      index
+    );
+    if (metadataAddress) {
+      try {
+        fallbackAccount = KeetaNet.lib.Account.toAccount(metadataAddress);
+      } catch (error) {
+        console.warn(
+          `Invalid metadata account address for ${symbol}: ${metadataAddress}`,
+          error
+        );
+      }
+    }
     const overrideAddress =
       tokenAddressOverrides[symbol] ||
       tokenAddressOverrides[symbol?.toUpperCase?.()];
@@ -240,7 +394,11 @@ async function loadPoolContext(client, overrides = {}) {
     );
     if (!tokenAccount) {
       throw new Error(
-        `Token address for symbol ${symbol} is not configured. Set KEETA_TOKEN_${symbol.toUpperCase()}`
+        `Token address for symbol ${symbol} is not configured. ${
+          metadataAddress
+            ? "Verify that the provided account address is valid."
+            : `Set KEETA_TOKEN_${symbol.toUpperCase()}`
+        }`
       );
     }
     const details = await loadTokenDetails(client, tokenAccount);
