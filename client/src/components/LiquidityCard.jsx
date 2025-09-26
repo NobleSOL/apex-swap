@@ -1,14 +1,23 @@
 import React, { useMemo, useState } from "react";
+codex/update-swap-and-liquidity-cards-for-kta-g07qzt
 import { TOKENS, getTokenLogo } from "../config/tokens";
+
+import { TOKENS } from "../config/tokens";
+master
 
 function cx(...a) {
   return a.filter(Boolean).join(" ");
 }
+codex/update-swap-and-liquidity-cards-for-kta-g07qzt
 function resolveTokenLogo(token) {
+
+function getTokenLogo(token) {
+master
   if (token?.logo) {
     return token.logo;
   }
   const symbol = token?.symbol || token;
+codex/update-swap-and-liquidity-cards-for-kta-g07qzt
   const catalogLogo = getTokenLogo(symbol);
   if (catalogLogo) {
     return catalogLogo;
@@ -18,6 +27,15 @@ function resolveTokenLogo(token) {
   }
   const known = new Set(["kta", "kusd", "btc", "eth", "usdc", "sol"]);
   const lower = String(symbol).toLowerCase();
+
+  const key = String(symbol || "");
+  const config = TOKENS[key.toUpperCase()];
+  if (config?.logo) {
+    return config.logo;
+  }
+  const known = new Set(["kta", "kusd", "btc", "eth", "usdc", "sol"]);
+  const lower = key.toLowerCase();
+master
   return known.has(lower) ? `/tokens/${lower}.svg` : "/tokens/default.svg";
 }
 
@@ -168,6 +186,7 @@ export default function LiquidityCard({
                 />
                 <div className="token-select">
                   <button type="button" className="token-trigger" onClick={onSelectTokenA}>
+codex/update-swap-and-liquidity-cards-for-kta-g07qzt
                     <span className="token-trigger-icon">
                       <img
                         className="token-img"
@@ -175,6 +194,13 @@ export default function LiquidityCard({
                         alt={displayTokenA?.symbol ? `${displayTokenA.symbol} logo` : "Token A"}
                       />
                     </span>
+
+                    <img
+                      className="token-trigger-icon"
+                      src={getTokenLogo(displayTokenA)}
+                      alt={displayTokenA?.symbol || "Token A"}
+                    />
+master
                     <span className="token-trigger-symbol">{displayTokenA?.symbol || "—"}</span>
                   </button>
                 </div>
@@ -197,6 +223,7 @@ export default function LiquidityCard({
                 />
                 <div className="token-select">
                   <button type="button" className="token-trigger" onClick={onSelectTokenB}>
+codex/update-swap-and-liquidity-cards-for-kta-g07qzt
                     <span className="token-trigger-icon">
                       <img
                         className="token-img"
@@ -205,6 +232,14 @@ export default function LiquidityCard({
                       />
                     </span>
                     <span className="token-trigger-symbol">{displayTokenB?.symbol || "Select"}</span>
+
+                    <img
+                      className="token-trigger-icon"
+                      src={getTokenLogo(displayTokenB)}
+                      alt={displayTokenB?.symbol || "Token B"}
+                    />
+                    <span className="token-trigger-symbol">{displayTokenB?.symbol || "—"}</span>
+master
                   </button>
                 </div>
               </div>

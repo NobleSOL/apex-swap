@@ -11,7 +11,10 @@ import {
   formatAmount,
   toRawAmount,
 } from "./utils/tokenMath";
+codex/update-swap-and-liquidity-cards-for-kta-g07qzt
 import { TOKENS, getTokenLogo } from "./config/tokens";
+=import { TOKENS } from "./config/tokens";
+master
 
 const BRAND_LOGO =
   "https://cdn.builder.io/api/v1/image/assets%2Fd70091a6f5494e0195b033a72f7e79ae%2F116ddd439df04721809dcdc66245e3fa?format=webp&width=800";
@@ -22,7 +25,11 @@ const TOKEN_ICON_PATHS = {
   eth: "/tokens/eth.svg",
   btc: "/tokens/btc.svg",
   kusd: "/tokens/kusd.svg",
+codex/update-swap-and-liquidity-cards-for-kta-g07qzt
   kta: getTokenLogo("KTA") || "/tokens/kta.svg",
+
+  kta: TOKENS.KTA.logo,
+    master
   test: "/tokens/default.svg",
 };
 
@@ -229,17 +236,29 @@ function withTokenLogo(token) {
   if (!token || !token.symbol) {
     return token;
   }
+codex/update-swap-and-liquidity-cards-for-kta-g07qzt
   const catalogLogo = getTokenLogo(token.symbol);
   if (catalogLogo && token.logo !== catalogLogo) {
     return { ...token, logo: catalogLogo };
+
+  const config = getKnownTokenConfig(token.symbol);
+  if (config?.logo && token.logo !== config.logo) {
+    return { ...token, logo: config.logo };
+master
   }
   return token;
 }
 
 function getTokenLogoSource(symbol) {
+codex/update-swap-and-liquidity-cards-for-kta-g07qzt
   const catalogLogo = getTokenLogo(symbol);
   if (catalogLogo) {
     return catalogLogo;
+
+  const config = getKnownTokenConfig(symbol);
+  if (config?.logo) {
+    return config.logo;
+master
   }
   return getTokenIconUrl(symbol);
 }
@@ -283,11 +302,14 @@ const INITIAL_WALLET_STATE = {
 
 function TokenBadge({ symbol, logo }) {
   const [errored, setErrored] = useState(false);
-  useEffect(() => setErrored(false), [symbol, logo]);
+  useEffect(() => setErrored(false), [symbol, logo]);codex/update-swap-and-liquidity-cards-for-kta-g07qzt
   const resolvedLogo = logo || getTokenLogo(symbol);
   const src = errored
     ? FALLBACK_TOKEN_ICON
     : resolvedLogo || getTokenLogoSource(symbol);
+
+  const src = errored ? FALLBACK_TOKEN_ICON : logo || getTokenLogoSource(symbol);
+master
   return (
     <img
       className="token-img"
@@ -904,7 +926,10 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
       seen.add(key);
       const enriched = withTokenLogo(token);
       const config = getKnownTokenConfig(token.symbol);
+codex/update-swap-and-liquidity-cards-for-kta-g07qzt
       const catalogLogo = getTokenLogo(token.symbol);
+
+master
       options.push({
         symbol: enriched.symbol,
         name:
@@ -913,7 +938,11 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
           enriched.name ||
           config?.name ||
           enriched.symbol,
+codex/update-swap-and-liquidity-cards-for-kta-g07qzt
         logo: enriched.logo || catalogLogo,
+
+        logo: enriched.logo || config?.logo,
+master
       });
     };
 
@@ -1530,6 +1559,7 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
   const [tokenConfigStatus, setTokenConfigStatus] = useState("");
 
   const tokensInPool = useMemo(() => {
+codex/update-swap-and-liquidity-cards-for-kta-g07qzt
     const tokens = [];
 
     const pushToken = (candidate) => {
@@ -1556,6 +1586,25 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
           reserveFormatted:
             reserve?.reserveFormatted || poolData.baseToken.reserveFormatted || "0",
         });
+
+    if (!poolData) {
+      return [];
+    }
+    const tokens = [...(poolData.tokens || [])].map(withTokenLogo);
+    if (poolData.baseToken?.symbol) {
+      const key = poolData.baseToken.symbol;
+      const exists = tokens.some((token) => token.symbol === key);
+      if (!exists) {
+        const reserve = poolData.reserves?.[key];
+        tokens.unshift(
+          withTokenLogo({
+            ...poolData.baseToken,
+            reserveRaw: reserve?.reserveRaw || poolData.baseToken.reserveRaw || "0",
+            reserveFormatted:
+              reserve?.reserveFormatted || poolData.baseToken.reserveFormatted || "0",
+          })
+        );
+master
       }
     }
 
