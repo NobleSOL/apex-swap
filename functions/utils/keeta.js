@@ -336,6 +336,39 @@ function normalizeTokenOverrides(overrides = {}) {
   return normalized;
 }
 
+function resolvePoolMetadataTokenInfo(poolMetadata, index) {
+  if (!poolMetadata) {
+    return { metadata: {}, decimals: 0 };
+  }
+
+  const tokenKey = index === 0 ? "tokenA" : index === 1 ? "tokenB" : null;
+  if (!tokenKey) {
+    return { metadata: {}, decimals: 0 };
+  }
+
+  const entry = poolMetadata[tokenKey];
+  const entryObject = entry && typeof entry === "object" && !Array.isArray(entry) ? entry : {};
+  const decimalCandidates = [
+    entryObject.decimalPlaces,
+    entryObject.decimals,
+    poolMetadata[`${tokenKey}Decimals`],
+  ];
+
+  let decimals = 0;
+  for (const candidate of decimalCandidates) {
+    if (candidate === undefined || candidate === null) {
+      continue;
+    }
+    const numeric = Number(candidate);
+    if (Number.isFinite(numeric) && numeric >= 0) {
+      decimals = numeric;
+      break;
+    }
+  }
+
+  return { metadata: entryObject, decimals };
+}
+
 async function loadPoolContext(client, overrides = {}) {
   const poolAccountAddress = overrides.poolAccount || DEFAULT_POOL_ACCOUNT;
   const pool = KeetaNet.lib.Account.toAccount(poolAccountAddress);
@@ -366,6 +399,7 @@ async function loadPoolContext(client, overrides = {}) {
   };
 
   const tokenDetails = [];
+  const missingTokenSymbols = [];
   for (const [index, symbol] of tokenSymbols.entries()) {
     let fallbackAccount = null;
     const metadataAddress = resolveMetadataTokenAccount(
@@ -373,6 +407,7 @@ async function loadPoolContext(client, overrides = {}) {
       symbol,
       index
     );
+    const tokenMetadataInfo = resolvePoolMetadataTokenInfo(poolMetadata, index);
     if (metadataAddress) {
       try {
         fallbackAccount = KeetaNet.lib.Account.toAccount(metadataAddress);
@@ -393,13 +428,16 @@ async function loadPoolContext(client, overrides = {}) {
       overrideAddress
     );
     if (!tokenAccount) {
-      throw new Error(
-        `Token address for symbol ${symbol} is not configured. ${
-          metadataAddress
-            ? "Verify that the provided account address is valid."
-            : `Set KEETA_TOKEN_${symbol.toUpperCase()}`
-        }`
-      );
+      missingTokenSymbols.push(symbol);
+      tokenDetails.push({
+        symbol,
+        address: overrideAddress || metadataAddress || "",
+        decimals: tokenMetadataInfo.decimals,
+        info: null,
+        metadata: tokenMetadataInfo.metadata || {},
+        requiresConfiguration: true,
+      });
+      continue;
     }
     const details = await loadTokenDetails(client, tokenAccount);
     details.symbol = symbol;
@@ -413,15 +451,18 @@ async function loadPoolContext(client, overrides = {}) {
   }
 
   const formattedTokens = tokenDetails.map((token) => {
-    const raw = reserveMap.get(token.address) || 0n;
+    const address = token.address || "";
+    const decimals = token.decimals ?? 0;
+    const raw = address ? reserveMap.get(address) || 0n : 0n;
     return {
       symbol: token.symbol,
-      address: token.address,
-      decimals: token.decimals,
+      address,
+      decimals,
       info: token.info,
       metadata: token.metadata,
       reserveRaw: raw.toString(),
-      reserveFormatted: formatAmount(raw, token.decimals),
+      reserveFormatted: formatAmount(raw, decimals),
+      requiresConfiguration: Boolean(token.requiresConfiguration),
     };
   });
 
@@ -451,6 +492,8 @@ async function loadPoolContext(client, overrides = {}) {
     },
     baseToken,
     timestamp: new Date().toISOString(),
+    requiresTokenConfiguration: missingTokenSymbols.length > 0,
+    missingTokenSymbols,
   };
 }
 

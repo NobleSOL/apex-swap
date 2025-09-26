@@ -895,7 +895,7 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
     const options = [];
 
     const addOption = (token) => {
-      if (!token?.symbol) return;
+      if (!token?.symbol || token?.requiresConfiguration) return;
       const key = token.symbol.toUpperCase();
       if (seen.has(key)) return;
       seen.add(key);
@@ -927,7 +927,7 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
   const tokenMap = useMemo(() => {
     const map = {};
     const registerToken = (token) => {
-      if (!token?.symbol) return;
+      if (!token?.symbol || token?.requiresConfiguration) return;
       const enriched = withTokenLogo(token);
       const entry = { ...enriched };
       map[entry.symbol] = entry;
@@ -1524,6 +1524,7 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
   const [tokenBAddressInput, setTokenBAddressInput] = useState("");
   const [tokenBSelection, setTokenBSelection] = useState("");
   const [tokenConfigStatus, setTokenConfigStatus] = useState("");
+  const autoTokenStatusRef = useRef("");
 
   const tokensInPool = useMemo(() => {
     if (!poolData) {
@@ -1549,6 +1550,15 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
   }, [poolData]);
   const tokenA = tokensInPool[0];
   const defaultTokenB = tokensInPool[1];
+  const missingTokenSymbols = useMemo(() => {
+    if (!poolData?.tokens) {
+      return [];
+    }
+    return poolData.tokens
+      .filter((token) => token?.requiresConfiguration)
+      .map((token) => token.symbol)
+      .filter(Boolean);
+  }, [poolData?.tokens]);
   const tokenB = useMemo(() => {
     if (!tokensInPool.length) {
       return undefined;
@@ -1593,13 +1603,26 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
   }, [tokenB?.symbol, walletBaseToken, walletLoading, walletBaseTokenBalance]);
 
   const canAdd = useMemo(() => {
+    if (!tokenA?.symbol || !tokenB?.symbol) {
+      return false;
+    }
+    if (tokenA?.requiresConfiguration || tokenB?.requiresConfiguration) {
+      return false;
+    }
     const valueA = parseFloat(amountA);
     const valueB = parseFloat(amountB);
     if (!Number.isFinite(valueA) || !Number.isFinite(valueB)) {
       return false;
     }
     return valueA > 0 && valueB > 0;
-  }, [amountA, amountB]);
+  }, [
+    amountA,
+    amountB,
+    tokenA?.symbol,
+    tokenB?.symbol,
+    tokenA?.requiresConfiguration,
+    tokenB?.requiresConfiguration,
+  ]);
 
   const canRemove = useMemo(() => {
     const value = parseFloat(lpAmount);
@@ -1630,6 +1653,45 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
     setAddStatus("");
     setTokenConfigStatus("");
   }, [tokenA?.symbol, tokenB?.symbol]);
+
+  useEffect(() => {
+    if (!poolData?.requiresTokenConfiguration) {
+      if (autoTokenStatusRef.current && tokenConfigStatus === autoTokenStatusRef.current) {
+        setTokenConfigStatus("");
+      }
+      autoTokenStatusRef.current = "";
+      return;
+    }
+
+    const symbols = missingTokenSymbols;
+    let message = "";
+    if (symbols.length === 0) {
+      message = "Enter token contract addresses to finish configuring this pool.";
+    } else if (symbols.length === 1) {
+      message = `Enter the contract address for ${symbols[0]} to finish configuring this pool.`;
+    } else if (symbols.length === 2) {
+      message = `Enter the contract addresses for ${symbols[0]} and ${symbols[1]} to finish configuring this pool.`;
+    } else {
+      const [first, second, ...rest] = symbols;
+      const trailing = rest.slice(0, -1).join(", ");
+      const last = rest[rest.length - 1];
+      const middle = trailing ? `${second}, ${trailing}` : second;
+      message = `Enter the contract addresses for ${first}, ${middle}, and ${last} to finish configuring this pool.`;
+    }
+
+    setTokenConfigStatus((prev) => {
+      if (prev && prev !== autoTokenStatusRef.current) {
+        return prev;
+      }
+      autoTokenStatusRef.current = message;
+      return message;
+    });
+  }, [
+    poolData?.requiresTokenConfiguration,
+    missingTokenSymbols,
+    tokenConfigStatus,
+    setTokenConfigStatus,
+  ]);
 
   const baseToken = poolData?.baseToken;
 
@@ -1712,7 +1774,13 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
   ]);
 
   useEffect(() => {
-    if (!poolData || !tokenA || !tokenB) {
+    if (
+      !poolData ||
+      !tokenA ||
+      !tokenB ||
+      tokenA?.requiresConfiguration ||
+      tokenB?.requiresConfiguration
+    ) {
       setMintPreview(null);
       return;
     }
@@ -1738,10 +1806,25 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
     } catch (error) {
       setMintPreview(null);
     }
-  }, [amountA, amountB, poolData, tokenA, tokenB, lpToken]);
+  }, [
+    amountA,
+    amountB,
+    poolData,
+    tokenA,
+    tokenB,
+    lpToken,
+    tokenA?.requiresConfiguration,
+    tokenB?.requiresConfiguration,
+  ]);
 
   useEffect(() => {
-    if (!poolData || !tokenA || !tokenB) {
+    if (
+      !poolData ||
+      !tokenA ||
+      !tokenB ||
+      tokenA?.requiresConfiguration ||
+      tokenB?.requiresConfiguration
+    ) {
       setWithdrawPreview(null);
       return;
     }
@@ -1767,11 +1850,23 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
     } catch (error) {
       setWithdrawPreview(null);
     }
-  }, [lpAmount, poolData, tokenA, tokenB, lpToken]);
+  }, [
+    lpAmount,
+    poolData,
+    tokenA,
+    tokenB,
+    lpToken,
+    tokenA?.requiresConfiguration,
+    tokenB?.requiresConfiguration,
+  ]);
 
   const handleAddLiquidity = async () => {
     if (!tokenA?.symbol || !tokenB?.symbol) {
       setAddStatus("Select both tokens before adding liquidity");
+      return;
+    }
+    if (tokenA?.requiresConfiguration || tokenB?.requiresConfiguration) {
+      setAddStatus("Configure token contract addresses before adding liquidity");
       return;
     }
     if (!wallet?.seed) {
