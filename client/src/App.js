@@ -503,10 +503,6 @@ function WalletControls({ wallet, onWalletChange }) {
       if (!/^[0-9a-fA-F]{64}$/.test(trimmed)) {
         throw new Error("Provide a 64-character hexadecimal seed");
       }
-      const index = Number(indexInput) || 0;
-master
-master
-master
       const account = KeetaLib.Account.fromSeed(trimmed, index);
       const address = account.publicKeyString.get();
 
@@ -519,15 +515,12 @@ master
         error: "",
         balanceError: "",
         balances: [],
-codex/fix-website-issue-with-seed-paste-n3ykf1
         balanceLoading: false,
         address: "",
         identifier: "",
         network: "",
         baseToken: null,
         account: null,
-
-master
       });
 
       let payload;
@@ -535,7 +528,7 @@ master
         payload = await requestWalletDetails(trimmed, index);
       } catch (requestError) {
         onWalletChange({
-codex/fix-website-issue-with-seed-paste-n3ykf1
+          ...INITIAL_WALLET_STATE,
           seed: trimmed,
           index,
           loading: false,
@@ -547,12 +540,6 @@ codex/fix-website-issue-with-seed-paste-n3ykf1
           baseToken: null,
           balances: [],
           account: null,
-
-          ...INITIAL_WALLET_STATE,
-          seed: trimmed,
-          index,
-          error: requestError.message,
-master
         });
         setStatus(`Failed to load wallet details: ${requestError.message}`);
         return;
@@ -560,19 +547,13 @@ master
 
       const sanitized = sanitizeWalletPayload(payload, address);
       onWalletChange({
+        ...INITIAL_WALLET_STATE,
         seed: trimmed,
         index,
-codex/fix-website-issue-with-seed-paste-n3ykf1
         address: sanitized.address,
         identifier: sanitized.identifier,
         network: sanitized.network,
         baseToken: sanitized.baseToken,
-
-        address: payload.address || address,
-        identifier: payload.identifier || "",
-        network: payload.network || "",
-        baseToken: payload.baseToken || null,
-master
         balances: [],
         balanceError: "",
         loading: false,
@@ -583,17 +564,12 @@ master
       setStatus(`Connected ${formatAddress(sanitized.address)}`);
     } catch (error) {
       onWalletChange({
-codex/fix-website-issue-with-seed-paste-n3ykf1
-        seed: trimmed,
-        index,
-        loading: false,
-        balanceLoading: false,
-
         ...INITIAL_WALLET_STATE,
         seed: trimmed,
         index,
-master
+        loading: false,
         error: error.message,
+        balanceLoading: false,
         address: "",
         identifier: "",
         network: "",
