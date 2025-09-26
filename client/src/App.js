@@ -75,6 +75,37 @@ function getTokenIconUrl(symbol) {
 
 const FALLBACK_TOKEN_ICON = "/tokens/default.svg";
 
+function symbolsEqual(a, b) {
+  if (!a || !b) return false;
+  return String(a).toUpperCase() === String(b).toUpperCase();
+}
+
+function resolveBaseTokenBalance(baseToken) {
+  if (!baseToken) return null;
+  if (baseToken.balanceFormatted != null) {
+    return baseToken.balanceFormatted;
+  }
+  if (baseToken.balanceRaw != null && baseToken.decimals != null) {
+    try {
+      return formatAmount(baseToken.balanceRaw, baseToken.decimals);
+    } catch (error) {
+      return null;
+    }
+  }
+  return null;
+}
+
+const INITIAL_WALLET_STATE = {
+  seed: "",
+  index: 0,
+  address: "",
+  identifier: "",
+  network: "",
+  baseToken: null,
+  loading: false,
+  error: "",
+};
+
 function TokenBadge({ symbol }) {
   const [errored, setErrored] = useState(false);
   useEffect(() => setErrored(false), [symbol]);
@@ -179,6 +210,33 @@ function WalletControls({ wallet, onWalletChange }) {
     setIndexInput(wallet.index || 0);
   }, [wallet.seed, wallet.index]);
 
+  const baseTokenBalance = resolveBaseTokenBalance(wallet.baseToken);
+  const walletLoading = Boolean(wallet.loading);
+
+  const requestWalletDetails = useCallback(async (seedValue, accountIndexValue) => {
+    const response = await fetch("/.netlify/functions/wallet", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ seed: seedValue, accountIndex: accountIndexValue }),
+    });
+
+    const text = await response.text();
+    let payload = {};
+    if (text) {
+      try {
+        payload = JSON.parse(text);
+      } catch (error) {
+        throw new Error("Invalid wallet response");
+      }
+    }
+
+    if (!response.ok) {
+      throw new Error(payload.error || "Failed to load wallet details");
+    }
+
+    return payload;
+  }, []);
+
   const handleGenerate = () => {
     const generated = KeetaLib.Account.generateRandomSeed({ asString: true });
     setSeedInput(generated);
@@ -186,7 +244,7 @@ function WalletControls({ wallet, onWalletChange }) {
     setStatus("Generated random seed (not saved)");
   };
 
-  const handleConnect = () => {
+  const handleConnect = async () => {
     try {
       const trimmed = seedInput.trim();
       if (!trimmed) {
@@ -195,9 +253,43 @@ function WalletControls({ wallet, onWalletChange }) {
       const index = Number(indexInput) || 0;
       const account = KeetaLib.Account.fromSeed(trimmed, index);
       const address = account.publicKeyString.get();
-      onWalletChange({ seed: trimmed, index, address });
-      setStatus(`Connected ${formatAddress(address)}`);
+      setStatus(`Connecting ${formatAddress(address)}...`);
+      onWalletChange({
+        seed: trimmed,
+        index,
+        address,
+        loading: true,
+        baseToken: null,
+        identifier: "",
+        network: "",
+        error: "",
+      });
+
+      let payload;
+      try {
+        payload = await requestWalletDetails(trimmed, index);
+      } catch (requestError) {
+        onWalletChange({ loading: false, error: requestError.message });
+        setStatus(`Failed to load wallet details: ${requestError.message}`);
+        return;
+      }
+
+      onWalletChange({
+        seed: trimmed,
+        index,
+        address: payload.address || address,
+        identifier: payload.identifier || "",
+        network: payload.network || "",
+        baseToken: payload.baseToken || null,
+        loading: false,
+        error: "",
+      });
+      setStatus(`Connected ${formatAddress(payload.address || address)}`);
     } catch (error) {
+      onWalletChange({
+        ...INITIAL_WALLET_STATE,
+        error: error.message,
+      });
       setStatus(error.message);
     }
   };
@@ -245,14 +337,32 @@ function WalletControls({ wallet, onWalletChange }) {
           <button type="button" className="ghost-cta" onClick={handleGenerate}>
             Generate seed
           </button>
-          <button type="button" className="primary-cta" onClick={handleConnect}>
-            {wallet.address ? "Reconnect" : "Connect"}
+          <button
+            type="button"
+            className="primary-cta"
+            onClick={handleConnect}
+            disabled={walletLoading}
+          >
+            {walletLoading
+              ? "Connecting..."
+              : wallet.address
+              ? "Reconnect"
+              : "Connect"}
           </button>
         </div>
       </div>
       {wallet.address && (
         <div className="info-line">
           Connected address: <code className="wallet-address">{wallet.address}</code>
+        </div>
+      )}
+      {wallet.baseToken && (
+        <div className="info-line">
+          Balance: {walletLoading
+            ? "Loading..."
+            : baseTokenBalance != null
+            ? `${baseTokenBalance} ${wallet.baseToken.symbol || ""}`.trim()
+            : "—"}
         </div>
       )}
       {status && <p className="status">{status}</p>}
@@ -447,6 +557,10 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
     }
     return map;
   }, [poolData]);
+
+  const walletBaseToken = wallet?.baseToken || null;
+  const walletLoading = Boolean(wallet?.loading);
+  const walletBaseTokenBalance = resolveBaseTokenBalance(walletBaseToken);
 
   const [fromAsset, setFromAsset] = useState(tokenOptions[0]?.symbol || "");
   const [toAsset, setToAsset] = useState(tokenOptions[1]?.symbol || "");
@@ -728,7 +842,15 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
                         Clear
                       </button>
                     </div>
-                    <div className="balance-line">Balance: —</div>
+                    <div className="balance-line">
+                      {walletLoading
+                        ? "Balance: Loading..."
+                        : walletBaseToken &&
+                          symbolsEqual(fromAsset, walletBaseToken.symbol) &&
+                          walletBaseTokenBalance != null
+                        ? `Balance: ${walletBaseTokenBalance} ${walletBaseToken.symbol}`
+                        : "Balance: —"}
+                    </div>
                   </div>
                 </div>
 
@@ -756,19 +878,28 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
                     <label className="field-label" htmlFor="swap-to-amount">
                       Amount
                     </label>
-                    <div className="amount-field">
-                      <input
-                        id="swap-to-amount"
-                        type="text"
-                        inputMode="decimal"
-                        placeholder="0.00"
-                        value={toAmount}
-                        onChange={(event) => setToAmount(event.target.value)}
-                      />
-                    </div>
-                    <div className="balance-line">Pool price updates automatically</div>
+                  <div className="amount-field">
+                    <input
+                      id="swap-to-amount"
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="0.00"
+                      value={toAmount}
+                      onChange={(event) => setToAmount(event.target.value)}
+                    />
                   </div>
+                  {walletBaseToken && symbolsEqual(toAsset, walletBaseToken.symbol) && (
+                    <div className="balance-line">
+                      {walletLoading
+                        ? "Balance: Loading..."
+                        : walletBaseTokenBalance != null
+                        ? `Balance: ${walletBaseTokenBalance} ${walletBaseToken.symbol}`
+                        : "Balance: —"}
+                    </div>
+                  )}
+                  <div className="balance-line">Pool price updates automatically</div>
                 </div>
+              </div>
               </div>
 
               <div className="info-rows">
@@ -898,6 +1029,10 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
     refresh,
     overrides: poolOverrides,
   } = poolState;
+
+  const walletBaseToken = wallet?.baseToken || null;
+  const walletLoading = Boolean(wallet?.loading);
+  const walletBaseTokenBalance = resolveBaseTokenBalance(walletBaseToken);
 
   const [amountA, setAmountA] = useState("");
   const [amountB, setAmountB] = useState("");
@@ -1304,6 +1439,15 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
                     min="0"
                     step="any"
                   />
+                  {walletBaseToken && symbolsEqual(tokenA?.symbol, walletBaseToken.symbol) && (
+                    <div className="balance-line">
+                      {walletLoading
+                        ? "Balance: Loading..."
+                        : walletBaseTokenBalance != null
+                        ? `Balance: ${walletBaseTokenBalance} ${walletBaseToken.symbol}`
+                        : "Balance: —"}
+                    </div>
+                  )}
                 </div>
                 <div className="field-group">
                   <span className="field-label">Amount {tokenB?.symbol || "Token B"}</span>
@@ -1315,6 +1459,15 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
                     min="0"
                     step="any"
                   />
+                  {walletBaseToken && symbolsEqual(tokenB?.symbol, walletBaseToken.symbol) && (
+                    <div className="balance-line">
+                      {walletLoading
+                        ? "Balance: Loading..."
+                        : walletBaseTokenBalance != null
+                        ? `Balance: ${walletBaseTokenBalance} ${walletBaseToken.symbol}`
+                        : "Balance: —"}
+                    </div>
+                  )}
                 </div>
                 {mintPreview && (
                   <div className="info-rows">
@@ -1376,7 +1529,7 @@ function App() {
       ? "pools"
       : "swap"
   );
-  const [wallet, setWallet] = useState({ seed: "", index: 0, address: "" });
+  const [wallet, setWallet] = useState(() => ({ ...INITIAL_WALLET_STATE }));
   const poolState = usePoolState();
 
   const scrollToSection = useCallback((id) => {
