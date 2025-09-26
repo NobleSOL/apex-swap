@@ -846,13 +846,8 @@ function Footer({ onNavigate }) {
 }
 
 function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
-  const {
-    data: poolData,
-    loading: poolLoading,
-    error: poolError,
-    refresh,
-    overrides: poolOverrides,
-  } = poolState;
+  const { data: poolData, loading: poolLoading, error: poolError, refresh } =
+    poolState;
   const tokenOptions = useMemo(() => {
     if (!poolData) return [];
     const seen = new Set();
@@ -1005,35 +1000,52 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
       return;
     }
 
+    const tokenIn = tokenMap[fromAsset];
+    const tokenOut = tokenMap[toAsset];
+    const poolAddress = poolData?.pool?.address;
+
+    if (!tokenIn || !tokenOut) {
+      setStatus("Selected token pair is not supported");
+      return;
+    }
+
+    if (!poolAddress) {
+      setStatus("Pool is unavailable. Refresh and try again.");
+      return;
+    }
+
+    const amountInRaw = toRawAmount(fromAmount, tokenIn.decimals);
+    if (amountInRaw <= 0n) {
+      setStatus("Swap amount must be greater than zero");
+      return;
+    }
+
     setStatus("Preparing swap...");
     setQuoteDetails(null);
 
     try {
-      const tokenOverrides = poolOverrides?.tokenAddresses
-        ? { ...poolOverrides.tokenAddresses }
-        : {};
       const response = await fetch("/.netlify/functions/swap", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          from: fromAsset,
-          to: toAsset,
-          amount: fromAmount,
           seed: wallet.seed,
+          poolId: poolAddress,
+          tokenIn: tokenIn.address,
+          tokenOut: tokenOut.address,
+          amountIn: amountInRaw.toString(),
           accountIndex: wallet.index || 0,
-          slippageBps: Math.max(0, Math.round(Number(slippageBps))),
-          tokenAddresses: tokenOverrides,
-          fromAddress: tokenOverrides[fromAsset],
-          toAddress: tokenOverrides[toAsset],
         }),
       });
       const payload = await response.json();
       if (!response.ok) {
         throw new Error(payload.error || "Swap failed");
       }
-      setQuoteDetails(payload);
-      setToAmount(payload.tokens?.to?.expectedFormatted || toAmount);
-      setStatus(payload.message || "Swap prepared");
+      setQuoteDetails(null);
+      setStatus(
+        payload.txHash
+          ? `Swap submitted. Tx hash: ${payload.txHash}`
+          : "Swap submitted"
+      );
       refresh();
     } catch (error) {
       setStatus(`Swap failed: ${error.message}`);
