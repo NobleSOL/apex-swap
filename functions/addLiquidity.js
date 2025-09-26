@@ -1,3 +1,4 @@
+import * as KeetaNet from "@keetanetwork/keetanet-client";
 import { withCors } from "./cors.js";
 import {
   EXECUTE_TRANSACTIONS,
@@ -15,6 +16,22 @@ function parseBody(body) {
   } catch (error) {
     throw new Error("Invalid JSON body");
   }
+}
+
+async function executeAddLiquidity(client, context, params) {
+  const poolAccount = KeetaNet.lib.Account.toAccount(context.pool.address);
+  const tokenAAccount = KeetaNet.lib.Account.toAccount(params.tokenA.address);
+  const tokenBAccount = KeetaNet.lib.Account.toAccount(params.tokenB.address);
+  const lpTokenAccount = KeetaNet.lib.Account.toAccount(context.lpToken.address);
+
+  const builder = client.initBuilder();
+  builder.send(poolAccount, params.amountARaw, tokenAAccount);
+  builder.send(poolAccount, params.amountBRaw, tokenBAccount);
+  builder.receive(poolAccount, params.mintedRaw, lpTokenAccount, true);
+
+  const blocks = await client.computeBuilderBlocks(builder);
+  const published = await client.publishBuilder(builder);
+  return { blocks, published };
 }
 
 async function handler(event) {
@@ -95,6 +112,12 @@ async function handler(event) {
       totalSupply
     );
 
+    if (minted <= 0n) {
+      throw new Error(
+        "Deposit is too small to mint LP tokens. Increase the amount and try again."
+      );
+    }
+
     const optimalBRaw = reserveA === 0n ? amountBRaw : (amountARaw * reserveB) / (reserveA || 1n);
     const optimalARaw = reserveB === 0n ? amountARaw : (amountBRaw * reserveA) / (reserveB || 1n);
 
@@ -102,13 +125,20 @@ async function handler(event) {
       ? Number((share * 100).toFixed(6))
       : 0;
 
-    const execution = EXECUTE_TRANSACTIONS
-      ? {
-          attempted: false,
-          error:
-            "Automatic liquidity execution is not yet implemented. Submit the instructions manually.",
-        }
-      : { attempted: false };
+    let execution = {};
+    if (EXECUTE_TRANSACTIONS) {
+      try {
+        execution = await executeAddLiquidity(client, context, {
+          amountARaw,
+          amountBRaw,
+          mintedRaw: minted,
+          tokenA: tokenDetailsA,
+          tokenB: tokenDetailsB,
+        });
+      } catch (execError) {
+        execution = { error: execError.message };
+      }
+    }
 
     const response = {
       pool: context.pool,
@@ -136,7 +166,10 @@ async function handler(event) {
         forTokenA: optimalARaw.toString(),
         forTokenB: optimalBRaw.toString(),
       },
-      execution,
+      execution: {
+        attempted: EXECUTE_TRANSACTIONS,
+        ...execution,
+      },
       instructions: {
         deposits: [
           {
