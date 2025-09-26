@@ -290,27 +290,19 @@ function WalletControls({ wallet, onWalletChange }) {
       const index = Number(indexInput) || 0;
       const account = KeetaLib.Account.fromSeed(trimmed, index);
       const address = account.publicKeyString.get();
-codex/refactor-app.js-to-follow-original-structure-bs7yjh
-
-codex/refactor-app.js-to-follow-original-structure
 
       setStatus(`Connecting ${formatAddress(address)}...`);
-master
-master
       onWalletChange({
         seed: trimmed,
         index,
         address,
-codex/refactor-app.js-to-follow-original-structure-bs7yjh
-
-codex/refactor-app.js-to-follow-original-structure
-master
         account,
         balanceError: "",
         balances: [],
       });
       setStatus(`Connected ${formatAddress(address)}`);
 
+      onWalletChange({
         loading: true,
         baseToken: null,
         identifier: "",
@@ -338,7 +330,6 @@ master
         error: "",
       });
       setStatus(`Connected ${formatAddress(payload.address || address)}`);
-master
     } catch (error) {
       onWalletChange({
         ...INITIAL_WALLET_STATE,
@@ -384,6 +375,9 @@ master
           value={indexInput}
           onChange={(event) => setIndexInput(Number(event.target.value) || 0)}
         />
+        <p className="field-caption">
+          Derives alternate accounts from the same seed. Use 0 for the primary account.
+        </p>
       </div>
       <div className="field-group">
         <label className="field-label">Actions</label>
@@ -410,10 +404,6 @@ master
           Connected address: <code className="wallet-address">{wallet.address}</code>
         </div>
       )}
-codex/refactor-app.js-to-follow-original-structure-bs7yjh
-
-codex/refactor-app.js-to-follow-original-structure
-master
       {balanceLoading && <p className="status">Loading balances…</p>}
       {balanceError && <p className="status">{balanceError}</p>}
       {wallet.address && !balanceLoading && !balanceError && (
@@ -431,9 +421,8 @@ master
               ))}
             </ul>
           )}
-codex/refactor-app.js-to-follow-original-structure-bs7yjh
-
-          
+        </div>
+      )}
       {wallet.baseToken && (
         <div className="info-line">
           Balance: {walletLoading
@@ -441,8 +430,6 @@ codex/refactor-app.js-to-follow-original-structure-bs7yjh
             : baseTokenBalance != null
             ? `${baseTokenBalance} ${wallet.baseToken.symbol || ""}`.trim()
             : "—"}
-master
-master
         </div>
       )}
       {status && <p className="status">{status}</p>}
@@ -620,21 +607,56 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
     overrides: poolOverrides,
   } = poolState;
   const tokenOptions = useMemo(() => {
-    if (!poolData?.tokens?.length) return [];
-    return poolData.tokens.map((token) => ({
-      symbol: token.symbol,
-      name: token.info?.name || token.metadata?.name || token.symbol,
-    }));
+    if (!poolData) return [];
+    const seen = new Set();
+    const options = [];
+
+    const addOption = (token) => {
+      if (!token?.symbol) return;
+      const key = token.symbol.toUpperCase();
+      if (seen.has(key)) return;
+      seen.add(key);
+      options.push({
+        symbol: token.symbol,
+        name: token.info?.name || token.metadata?.name || token.symbol,
+      });
+    };
+
+    if (poolData.baseToken) {
+      addOption(poolData.baseToken);
+    }
+
+    (poolData.tokens || []).forEach(addOption);
+
+    return options;
   }, [poolData]);
 
   const tokenMap = useMemo(() => {
     const map = {};
-    if (poolData?.tokens) {
-      poolData.tokens.forEach((token) => {
-        map[token.symbol] = token;
-        map[token.address] = token;
-      });
+    const registerToken = (token) => {
+      if (!token?.symbol) return;
+      const entry = { ...token };
+      map[token.symbol] = entry;
+      if (token.address) {
+        map[token.address] = entry;
+      }
+    };
+
+    (poolData?.tokens || []).forEach(registerToken);
+
+    if (poolData?.baseToken?.symbol) {
+      const key = poolData.baseToken.symbol;
+      if (!map[key]) {
+        const reserve = poolData?.reserves?.[key];
+        registerToken({
+          ...poolData.baseToken,
+          reserveRaw: reserve?.reserveRaw || poolData.baseToken.reserveRaw || "0",
+          reserveFormatted:
+            reserve?.reserveFormatted || poolData.baseToken.reserveFormatted || "0",
+        });
+      }
     }
+
     return map;
   }, [poolData]);
 
@@ -1126,7 +1148,26 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
   const [tokenBSelection, setTokenBSelection] = useState("");
   const [tokenConfigStatus, setTokenConfigStatus] = useState("");
 
-  const tokensInPool = useMemo(() => poolData?.tokens || [], [poolData]);
+  const tokensInPool = useMemo(() => {
+    if (!poolData) {
+      return [];
+    }
+    const tokens = [...(poolData.tokens || [])];
+    if (poolData.baseToken?.symbol) {
+      const key = poolData.baseToken.symbol;
+      const exists = tokens.some((token) => token.symbol === key);
+      if (!exists) {
+        const reserve = poolData.reserves?.[key];
+        tokens.unshift({
+          ...poolData.baseToken,
+          reserveRaw: reserve?.reserveRaw || poolData.baseToken.reserveRaw || "0",
+          reserveFormatted:
+            reserve?.reserveFormatted || poolData.baseToken.reserveFormatted || "0",
+        });
+      }
+    }
+    return tokens;
+  }, [poolData]);
   const tokenA = tokensInPool[0];
   const defaultTokenB = tokensInPool[1];
   const tokenB = useMemo(() => {
@@ -1571,7 +1612,7 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
                   Withdraw {lpToken?.symbol || "LP"} tokens to receive the underlying assets.
                 </p>
                 <div className="field-group">
-                  <span className="field-label">LP Tokens to burn</span>
+                  <span className="field-label">LP Tokens to withdraw</span>
                   <input
                     value={lpAmount}
                     onChange={(event) => setLpAmount(event.target.value)}
@@ -1608,25 +1649,9 @@ function App() {
     typeof window !== "undefined" && window.location.pathname.toLowerCase().includes("pools")
       ? "pools"
       : "swap"
-  );codex/refactor-app.js-to-follow-original-structure-bs7yjh
-  
-codex/refactor-app.js-to-follow-original-structure
-master
-  const [wallet, setWallet] = useState({
-    seed: "",
-    index: 0,
-    address: "",
-    account: null,
-    balances: [],
-    balanceLoading: false,
-    balanceError: "",
-  });
-codex/refactor-app.js-to-follow-original-structure-bs7yjh
+  );
 
-  
   const [wallet, setWallet] = useState(() => ({ ...INITIAL_WALLET_STATE }));
-master
-master
   const poolState = usePoolState();
   const walletSeed = wallet.seed;
   const walletIndex = wallet.index;
@@ -1772,11 +1797,7 @@ master
     return () => {
       cancelled = true;
     };
-    codex/refactor-app.js-to-follow-original-structure-bs7yjh
   }, [walletSeed, walletIndex, walletAddress, walletAccountKey, walletAccount]);
-
-  }, [walletSeed, walletIndex, walletAddress, walletAccountKey]);
-master
 
   return (
     <div className="app">
