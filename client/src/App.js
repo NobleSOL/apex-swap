@@ -191,6 +191,35 @@ function SwapIcon() {
   );
 }
 
+function SettingsIcon() {
+  return (
+    <svg
+      width="100%"
+      height="100%"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      role="img"
+      aria-hidden="true"
+    >
+      <path
+        d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="m19.4 9.5-.74-1.28a1.5 1.5 0 0 0-1.64-.72l-.34.08a1.5 1.5 0 0 1-1.82-1.04l-.1-.33a1.5 1.5 0 0 0-1.45-1.08h-1.48a1.5 1.5 0 0 0-1.45 1.08l-.1.33a1.5 1.5 0 0 1-1.82 1.04l-.34-.08a1.5 1.5 0 0 0-1.64.72L4.6 9.5a1.5 1.5 0 0 0 .54 2.05l.29.17a1.5 1.5 0 0 1 0 2.56l-.29.17a1.5 1.5 0 0 0-.54 2.05l.74 1.28a1.5 1.5 0 0 0 1.64.72l.34-.08a1.5 1.5 0 0 1 1.82 1.04l.1.33a1.5 1.5 0 0 0 1.45 1.08h1.48a1.5 1.5 0 0 0 1.45-1.08l.1-.33a1.5 1.5 0 0 1 1.82-1.04l.34.08a1.5 1.5 0 0 0 1.64-.72l.74-1.28a1.5 1.5 0 0 0-.54-2.05l-.29-.17a1.5 1.5 0 0 1 0-2.56l.29-.17a1.5 1.5 0 0 0 .54-2.05Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function ArrowTopRight() {
   return (
     <svg
@@ -1111,64 +1140,65 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
         <div className="swap-hero__panels" id="swap-panel">
           <div className="swap-panel swap-panel--primary">
             <div className="swap-card swap-card--panel">
-              <div className="swap-card__tabs">
-                <button type="button" className="swap-card__tab is-active">
-                  Swap
-                </button>
-                <button type="button" className="swap-card__tab" disabled>
-                  Limit
-                </button>
-                <button type="button" className="swap-card__tab" disabled>
-                  Liquidity
-                </button>
-              </div>
-              <div className="swap-card__header">
-                <div>
-                  <h2>Swap tokens</h2>
-                  <p className="swap-card__subtitle">Live Keeta pricing with one-tap execution.</p>
-                </div>
-                <button
-                  type="button"
-                  className="slippage-chip"
-                  aria-label="Adjust slippage"
-                  onClick={() => setSlippageOpen((open) => !open)}
-                >
-                  {slippage}%
-                </button>
-              </div>
-              {slippageOpen && (
-                <div className="slippage-popover swap-card__popover">
-                  <div className="slip-row">
-                    {[0.1, 0.5, 1].map((value) => (
-                      <button
-                        key={value}
-                        type="button"
-                        className={`slip-btn${value === slippage ? " is-active" : ""}`}
-                        onClick={() => {
-                          setSlippage(value);
-                          setSlippageOpen(false);
-                        }}
-                      >
-                        {value}%
-                      </button>
-                    ))}
-                    <div className="slip-custom">
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.1"
-                        value={slippage}
-                        onChange={(event) => setSlippage(parseFloat(event.target.value) || 0)}
-                      />
-                      <span>%</span>
-                    </div>
+              <div className="swap-card__top">
+                <div className="swap-card__title-group">
+                  <span className="swap-chip">Swap</span>
+                  <div className="swap-card__market">
+                    <button type="button" className="swap-card__market-btn is-active">
+                      Market (V2)
+                    </button>
+                    <button type="button" className="swap-card__market-btn" disabled>
+                      Market (V3)
+                    </button>
                   </div>
                 </div>
-              )}
+                <div className="swap-card__actions">
+                  <button
+                    type="button"
+                    className="swap-settings"
+                    aria-label="Adjust slippage"
+                    onClick={() => setSlippageOpen((open) => !open)}
+                  >
+                    <span className="swap-settings__icon">
+                      <SettingsIcon />
+                    </span>
+                    <span className="swap-settings__value">{slippage}%</span>
+                  </button>
+                  {slippageOpen && (
+                    <div className="slippage-popover swap-card__popover">
+                      <div className="slip-row">
+                        {[0.1, 0.5, 1].map((value) => (
+                          <button
+                            key={value}
+                            type="button"
+                            className={`slip-btn${value === slippage ? " is-active" : ""}`}
+                            onClick={() => {
+                              setSlippage(value);
+                              setSlippageOpen(false);
+                            }}
+                          >
+                            {value}%
+                          </button>
+                        ))}
+                        <div className="slip-custom">
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.1"
+                            value={slippage}
+                            onChange={(event) => setSlippage(parseFloat(event.target.value) || 0)}
+                          />
+                          <span>%</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
               <div className="swap-card__body">
                 <div className="swap-input-block">
                   <div className="swap-input-block__top">
-                    <span className="swap-input-block__label">You pay</span>
+                    <span className="swap-input-block__label">From</span>
                     {walletBaseToken && symbolsEqual(fromAsset, walletBaseToken.symbol) && (
                       <span className="swap-input-block__balance">
                         {walletLoading
@@ -1201,7 +1231,7 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
                 </button>
                 <div className="swap-input-block">
                   <div className="swap-input-block__top">
-                    <span className="swap-input-block__label">You receive</span>
+                    <span className="swap-input-block__label">To (estimate)</span>
                     {walletBaseToken && symbolsEqual(toAsset, walletBaseToken.symbol) && (
                       <span className="swap-input-block__balance">
                         {walletLoading
