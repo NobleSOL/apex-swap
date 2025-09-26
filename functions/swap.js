@@ -43,10 +43,7 @@ async function executeSwap(client, poolContext, params) {
   return { blocks, published };
 }
 
-codex/verify-amm-liquidity-pool-token-functionality-8fk14o
 async function swapHandler(event) {
-async function handler(event) {
-master
   if (event.httpMethod && event.httpMethod.toUpperCase() === "OPTIONS") {
     return { statusCode: 204, body: "" };
   }
@@ -54,7 +51,6 @@ master
   let client;
   try {
     const payload = parseRequestBody(event.body);
-codex/verify-amm-liquidity-pool-token-functionality-8fk14o
     const {
       from,
       to,
@@ -66,8 +62,6 @@ codex/verify-amm-liquidity-pool-token-functionality-8fk14o
       fromAddress,
       toAddress,
     } = payload;
-    const { from, to, amount, seed, accountIndex = 0, slippageBps } = payload;
-master
 
     if (!from || !to) {
       throw new Error("Both 'from' and 'to' symbols are required");
@@ -79,7 +73,6 @@ master
       throw new Error("A signer seed is required to prepare the swap");
     }
 
-codex/verify-amm-liquidity-pool-token-functionality-8fk14o
     const normalizedOverrides = { ...rawTokenAddresses };
     if (fromAddress) {
       normalizedOverrides[from] = fromAddress;
@@ -104,12 +97,6 @@ codex/verify-amm-liquidity-pool-token-functionality-8fk14o
     const tokenOut =
       findBySymbol(to) ||
       (normalizedOverrides[to] && findByAddress(normalizedOverrides[to]));
-    client = await createClient({ seed, accountIndex });
-    const context = await loadPoolContext(client);
-
-    const tokenIn = context.tokens.find((token) => token.symbol === from);
-    const tokenOut = context.tokens.find((token) => token.symbol === to);
-master
 
     if (!tokenIn || !tokenOut) {
       throw new Error("Selected token pair is not supported by the pool");
@@ -221,7 +208,4 @@ master
   }
 }
 
-codex/verify-amm-liquidity-pool-token-functionality-8fk14o
 export const handler = withCors(swapHandler);
-export const handler = withCors(handler);
-master
