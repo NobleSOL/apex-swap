@@ -290,15 +290,21 @@ function WalletControls({ wallet, onWalletChange }) {
       const index = Number(indexInput) || 0;
       const account = KeetaLib.Account.fromSeed(trimmed, index);
       const address = account.publicKeyString.get();
+codex/refactor-app.js-to-follow-original-structure-bs7yjh
+
 codex/refactor-app.js-to-follow-original-structure
 
       setStatus(`Connecting ${formatAddress(address)}...`);
+master
 master
       onWalletChange({
         seed: trimmed,
         index,
         address,
+codex/refactor-app.js-to-follow-original-structure-bs7yjh
+
 codex/refactor-app.js-to-follow-original-structure
+master
         account,
         balanceError: "",
         balances: [],
@@ -404,7 +410,10 @@ master
           Connected address: <code className="wallet-address">{wallet.address}</code>
         </div>
       )}
+codex/refactor-app.js-to-follow-original-structure-bs7yjh
+
 codex/refactor-app.js-to-follow-original-structure
+master
       {balanceLoading && <p className="status">Loading balances…</p>}
       {balanceError && <p className="status">{balanceError}</p>}
       {wallet.address && !balanceLoading && !balanceError && (
@@ -422,6 +431,8 @@ codex/refactor-app.js-to-follow-original-structure
               ))}
             </ul>
           )}
+codex/refactor-app.js-to-follow-original-structure-bs7yjh
+
           
       {wallet.baseToken && (
         <div className="info-line">
@@ -430,6 +441,7 @@ codex/refactor-app.js-to-follow-original-structure
             : baseTokenBalance != null
             ? `${baseTokenBalance} ${wallet.baseToken.symbol || ""}`.trim()
             : "—"}
+master
 master
         </div>
       )}
@@ -1596,8 +1608,10 @@ function App() {
     typeof window !== "undefined" && window.location.pathname.toLowerCase().includes("pools")
       ? "pools"
       : "swap"
-  );
+  );codex/refactor-app.js-to-follow-original-structure-bs7yjh
+  
 codex/refactor-app.js-to-follow-original-structure
+master
   const [wallet, setWallet] = useState({
     seed: "",
     index: 0,
@@ -1607,8 +1621,11 @@ codex/refactor-app.js-to-follow-original-structure
     balanceLoading: false,
     balanceError: "",
   });
+codex/refactor-app.js-to-follow-original-structure-bs7yjh
+
   
   const [wallet, setWallet] = useState(() => ({ ...INITIAL_WALLET_STATE }));
+master
 master
   const poolState = usePoolState();
   const walletSeed = wallet.seed;
@@ -1755,7 +1772,11 @@ master
     return () => {
       cancelled = true;
     };
+    codex/refactor-app.js-to-follow-original-structure-bs7yjh
+  }, [walletSeed, walletIndex, walletAddress, walletAccountKey, walletAccount]);
+
   }, [walletSeed, walletIndex, walletAddress, walletAccountKey]);
+master
 
   return (
     <div className="app">
