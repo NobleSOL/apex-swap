@@ -940,8 +940,16 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
   const [toAmount, setToAmount] = useState("");
   const [status, setStatus] = useState("");
   const [quoteDetails, setQuoteDetails] = useState(null);
-  const [slippage, setSlippage] = useState(0.5);
+  const [slippageBps, setSlippageBps] = useState(50);
   const [slippageOpen, setSlippageOpen] = useState(false);
+  const [activeSwapTab, setActiveSwapTab] = useState("swap");
+  const slippagePercentDisplay = useMemo(() => {
+    const value = Number(slippageBps);
+    if (!Number.isFinite(value) || value < 0) {
+      return "0%";
+    }
+    return `${(value / 100).toFixed(2)}%`;
+  }, [slippageBps]);
 
   useEffect(() => {
     if (!poolData) {
@@ -1012,7 +1020,7 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
           amount: fromAmount,
           seed: wallet.seed,
           accountIndex: wallet.index || 0,
-          slippageBps: Math.max(0, Math.round(Number(slippage) * 100)),
+          slippageBps: Math.max(0, Math.round(Number(slippageBps))),
           tokenAddresses: tokenOverrides,
           fromAddress: tokenOverrides[fromAsset],
           toAddress: tokenOverrides[toAsset],
@@ -1111,86 +1119,80 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
           </div>
           <div className="hero-panel" id="swap-panel">
             <WalletControls wallet={wallet} onWalletChange={onWalletChange} />
-            <div className="swap-card">
-              <div className="swap-card-header">
-                <div className="swap-card-title">
-                  <span className="swap-chip">Classic</span>
-                  <h2>Swap</h2>
-                </div>
-                <button
-                  type="button"
-                  className="slippage-chip"
-                  aria-label="Adjust slippage"
-                  onClick={() => setSlippageOpen((open) => !open)}
-                >
-                  {slippage}%
-                </button>
-              </div>
-
-              {slippageOpen && (
-                <div className="slippage-popover">
-                  <div className="slip-row">
-                    {[0.1, 0.5, 1].map((value) => (
+            <div className="swap-card swap-card--panel">
+              <div className="swap-card__header">
+                <div>
+                  <div className="swap-card__tabs" role="tablist" aria-label="Swap modes">
+                    {[{ key: "swap", label: "Swap" }, { key: "limit", label: "Limit", disabled: true }, { key: "liquidity", label: "Liquidity", disabled: true }].map((tab) => (
                       <button
-                        key={value}
+                        key={tab.key}
                         type="button"
-                        className={`slip-btn${value === slippage ? " is-active" : ""}`}
+                        role="tab"
+                        aria-selected={activeSwapTab === tab.key}
+                        className={`swap-card__tab${activeSwapTab === tab.key ? " is-active" : ""}`}
                         onClick={() => {
-                          setSlippage(value);
-                          setSlippageOpen(false);
+                          if (!tab.disabled) {
+                            setActiveSwapTab(tab.key);
+                          }
                         }}
+                        disabled={Boolean(tab.disabled)}
                       >
-                        {value}%
+                        {tab.label}
                       </button>
                     ))}
-                    <div className="slip-custom">
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.1"
-                        value={slippage}
-                        onChange={(event) => setSlippage(parseFloat(event.target.value) || 0)}
-                      />
-                      <span>%</span>
-                    </div>
                   </div>
+                  <div className="swap-card__subtitle">Live Keeta pricing with one-tap execution.</div>
                 </div>
-              )}
-
-              <div className="swap-stack">
-                <div className="swap-row">
-                  <div className="field-group">
-                    <label className="field-label" htmlFor="swap-from-token">
-                      Sell token
-                    </label>
-                    <TokenSelect
-                      value={fromAsset}
-                      onChange={setFromAsset}
-                      options={tokenOptions}
-                    />
-                  </div>
-                  <div className="field-group">
-                    <label className="field-label" htmlFor="swap-from-amount">
-                      Amount
-                    </label>
-                    <div className="amount-field">
-                      <input
-                        id="swap-from-amount"
-                        type="text"
-                        inputMode="decimal"
-                        placeholder="0.00"
-                        value={fromAmount}
-                        onChange={(event) => setFromAmount(event.target.value)}
-                      />
-                      <button
-                        type="button"
-                        className="small-action"
-                        onClick={() => setFromAmount("")}
-                      >
-                        Clear
-                      </button>
+                <div className="swap-card__popover">
+                  <button
+                    type="button"
+                    className="slippage-chip"
+                    aria-haspopup="dialog"
+                    aria-expanded={slippageOpen}
+                    onClick={() => setSlippageOpen((open) => !open)}
+                  >
+                    {slippagePercentDisplay}
+                  </button>
+                  {slippageOpen && (
+                    <div className="slippage-popover" role="dialog" aria-label="Slippage settings">
+                      <div className="slip-row">
+                        {[10, 50, 100].map((bps) => (
+                          <button
+                            type="button"
+                            key={bps}
+                            className={`slip-btn${slippageBps === bps ? " is-active" : ""}`}
+                            onClick={() => {
+                              setSlippageBps(bps);
+                              setSlippageOpen(false);
+                            }}
+                          >
+                            {(bps / 100).toFixed(2)}%
+                          </button>
+                        ))}
+                        <label className="slip-custom">
+                          <input
+                            type="number"
+                            min="0"
+                            step="1"
+                            value={slippageBps}
+                            inputMode="numeric"
+                            onChange={(event) =>
+                              setSlippageBps(Math.max(0, Math.floor(Number(event.target.value) || 0)))
+                            }
+                          />
+                          <span>bps</span>
+                        </label>
+                      </div>
                     </div>
-                    <div className="balance-line">
+                  )}
+                </div>
+              </div>
+
+              <div className="swap-card__body">
+                <div className="swap-input-block">
+                  <div className="swap-input-block__top">
+                    <span className="swap-input-block__label">You pay</span>
+                    <span className="swap-input-block__balance">
                       {walletLoading
                         ? "Balance: Loading..."
                         : walletBaseToken &&
@@ -1198,35 +1200,45 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
                           walletBaseTokenBalance != null
                         ? `Balance: ${walletBaseTokenBalance} ${walletBaseToken.symbol}`
                         : "Balance: —"}
-                    </div>
+                    </span>
                   </div>
+                  <div className="swap-input">
+                    <input
+                      id="swap-from-amount"
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="0.00"
+                      value={fromAmount}
+                      onChange={(event) => setFromAmount(event.target.value)}
+                    />
+                    <TokenSelect value={fromAsset} onChange={setFromAsset} options={tokenOptions} />
+                  </div>
+                  <div className="swap-input__caption">Pool price updates automatically</div>
                 </div>
 
                 <button
                   type="button"
-                  className="direction-toggle"
-                  onClick={flipDirection}
+                  className="swap-flip"
                   aria-label="Switch direction"
+                  onClick={flipDirection}
                 >
                   <SwapIcon />
                 </button>
 
-                <div className="swap-row">
-                  <div className="field-group">
-                    <label className="field-label" htmlFor="swap-to-token">
-                      Buy token
-                    </label>
-                    <TokenSelect
-                      value={toAsset}
-                      onChange={setToAsset}
-                      options={tokenOptions}
-                    />
+                <div className="swap-input-block">
+                  <div className="swap-input-block__top">
+                    <span className="swap-input-block__label">You receive</span>
+                    <span className="swap-input-block__balance">
+                      {walletBaseToken && symbolsEqual(toAsset, walletBaseToken.symbol)
+                        ? walletLoading
+                          ? "Balance: Loading..."
+                          : walletBaseTokenBalance != null
+                          ? `Balance: ${walletBaseTokenBalance} ${walletBaseToken.symbol}`
+                          : "Balance: —"
+                        : ""}
+                    </span>
                   </div>
-                  <div className="field-group">
-                    <label className="field-label" htmlFor="swap-to-amount">
-                      Amount
-                    </label>
-                  <div className="amount-field">
+                  <div className="swap-input">
                     <input
                       id="swap-to-amount"
                       type="text"
@@ -1235,48 +1247,46 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
                       value={toAmount}
                       onChange={(event) => setToAmount(event.target.value)}
                     />
+                    <TokenSelect value={toAsset} onChange={setToAsset} options={tokenOptions} />
                   </div>
-                  {walletBaseToken && symbolsEqual(toAsset, walletBaseToken.symbol) && (
-                    <div className="balance-line">
-                      {walletLoading
-                        ? "Balance: Loading..."
-                        : walletBaseTokenBalance != null
-                        ? `Balance: ${walletBaseTokenBalance} ${walletBaseToken.symbol}`
-                        : "Balance: —"}
-                    </div>
-                  )}
-                  <div className="balance-line">Pool price updates automatically</div>
                 </div>
+
+                <div className="swap-summary">
+                  <div className="swap-summary__row">
+                    <span>Expected output</span>
+                    <span>
+                      {quoteDetails?.tokens?.to?.expectedFormatted || "—"} {quoteDetails?.tokens?.to?.symbol || toAsset}
+                    </span>
+                  </div>
+                  <div className="swap-summary__row">
+                    <span>{`Minimum received (${slippagePercentDisplay})`}</span>
+                    <span>{quoteDetails?.tokens?.to?.minimumFormatted || "—"}</span>
+                  </div>
+                  <div className="swap-summary__row">
+                    <span>Fee</span>
+                    <span>
+                      {quoteDetails?.tokens?.from?.feePaidFormatted || `${(poolData?.pool?.feeBps ?? 0) / 100}%`} {" "}
+                      {quoteDetails?.tokens?.from?.symbol || fromAsset}
+                    </span>
+                  </div>
+                  <div className="swap-summary__row">
+                    <span>Price impact</span>
+                    <span>{quoteDetails ? `${quoteDetails.priceImpact} %` : "—"}</span>
+                  </div>
+                  <div className="swap-summary__row route-line">
+                    <span>Route</span>
+                    <span>{poolData?.pool?.address ? formatAddress(poolData.pool.address) : "—"}</span>
+                  </div>
+                </div>
+
+                {poolStatusMessage && <div className="swap-alert">{poolStatusMessage}</div>}
+
+                <button type="button" className="primary-cta full swap-submit" onClick={handleSwap}>
+                  Swap
+                </button>
+
+                {status && <p className="status swap-status">{status}</p>}
               </div>
-              </div>
-
-              <div className="info-rows">
-                <div className="info-line">
-                  Expected output: {quoteDetails?.tokens?.to?.expectedFormatted || "—"} {" "}
-                  {quoteDetails?.tokens?.to?.symbol || toAsset}
-                </div>
-                <div className="info-line">
-                  Minimum received ({slippage}% slippage): {quoteDetails?.tokens?.to?.minimumFormatted || "—"}
-                </div>
-                <div className="info-line">
-                  Fee: {quoteDetails?.tokens?.from?.feePaidFormatted || `${(poolData?.pool?.feeBps ?? 0) / 100}%`} {" "}
-                  {quoteDetails?.tokens?.from?.symbol || fromAsset}
-                </div>
-                <div className="info-line">
-                  Price impact: {quoteDetails ? `${quoteDetails.priceImpact} %` : "—"}
-                </div>
-                <div className="route-line">
-                  Pool: {poolData?.pool?.address ? formatAddress(poolData.pool.address) : "—"}
-                </div>
-              </div>
-
-              {poolStatusMessage && <p className="status">{poolStatusMessage}</p>}
-
-              <button type="button" className="primary-cta full" onClick={handleSwap}>
-                Swap
-              </button>
-
-              {status && <p className="status">{status}</p>}
             </div>
           </div>
         </div>
