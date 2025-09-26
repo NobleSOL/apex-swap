@@ -349,6 +349,103 @@ function formatAddress(address) {
   return `${address.slice(0, 10)}…${address.slice(-6)}`;
 }
 
+function sanitizeBaseToken(token) {
+  if (!token || typeof token !== "object") {
+    return null;
+  }
+  const symbol = typeof token.symbol === "string" ? token.symbol : "";
+  const address = typeof token.address === "string" ? token.address : "";
+  const decimalsRaw = token.decimals;
+  const decimals = Number.isFinite(Number(decimalsRaw)) ? Number(decimalsRaw) : null;
+  const balanceRaw =
+    token.balanceRaw != null && typeof token.balanceRaw.toString === "function"
+      ? token.balanceRaw.toString()
+      : null;
+  const balanceFormatted =
+    typeof token.balanceFormatted === "string" ? token.balanceFormatted : null;
+  const metadata = token.metadata && typeof token.metadata === "object" ? token.metadata : {};
+
+  return {
+    symbol,
+    address,
+    decimals,
+    balanceRaw,
+    balanceFormatted,
+    metadata,
+  };
+}
+
+function sanitizeWalletPayload(payload, fallbackAddress) {
+  if (!payload || typeof payload !== "object") {
+    return {
+      address: fallbackAddress,
+      identifier: "",
+      network: "",
+      baseToken: null,
+    };
+  }
+
+  const normalizedAddress =
+    typeof payload.address === "string" && payload.address.trim()
+      ? payload.address.trim()
+      : fallbackAddress;
+
+  const identifier =
+    typeof payload.identifier === "string" && payload.identifier.trim()
+      ? payload.identifier.trim()
+      : "";
+
+  const network = typeof payload.network === "string" ? payload.network : "";
+
+  return {
+    address: normalizedAddress,
+    identifier,
+    network,
+    baseToken: sanitizeBaseToken(payload.baseToken),
+  };
+}
+
+function parseWalletResponse(text) {
+  if (!text) {
+    return {};
+  }
+
+  const trimmed = text.trim();
+  if (!trimmed) {
+    return {};
+  }
+
+  const candidates = new Set([trimmed]);
+
+  const objectStart = trimmed.indexOf("{");
+  const arrayStart = trimmed.indexOf("[");
+  const starts = [objectStart, arrayStart].filter((index) => index >= 0);
+  const objectEnd = trimmed.lastIndexOf("}");
+  const arrayEnd = trimmed.lastIndexOf("]");
+  const ends = [objectEnd, arrayEnd].filter((index) => index >= 0);
+
+  if (starts.length && ends.length) {
+    const envelopeStart = Math.min(...starts);
+    const envelopeEnd = Math.max(...ends);
+    if (envelopeStart < envelopeEnd) {
+      candidates.add(trimmed.slice(envelopeStart, envelopeEnd + 1));
+    }
+  }
+
+  for (const candidate of candidates) {
+    if (!candidate) {
+      continue;
+    }
+    try {
+      return JSON.parse(candidate);
+    } catch (error) {
+      /* try next candidate */
+    }
+  }
+
+  throw new Error("Invalid wallet response");
+}
+
 function WalletControls({ wallet, onWalletChange }) {
   const [seedInput, setSeedInput] = useState(wallet.seed || "");
   const [indexInput, setIndexInput] = useState(wallet.index || 0);
@@ -376,9 +473,9 @@ function WalletControls({ wallet, onWalletChange }) {
     let payload = {};
     if (text) {
       try {
-        payload = JSON.parse(text);
+        payload = parseWalletResponse(text);
       } catch (error) {
-        throw new Error("Invalid wallet response");
+        throw new Error(error.message || "Invalid wallet response");
       }
     }
 
@@ -406,11 +503,8 @@ function WalletControls({ wallet, onWalletChange }) {
       if (!/^[0-9a-fA-F]{64}$/.test(trimmed)) {
         throw new Error("Provide a 64-character hexadecimal seed");
       }
-codex/fix-website-issue-with-seed-paste-hu2rah
-
-codex/fix-website-issue-with-seed-paste-v98bbq
-
       const index = Number(indexInput) || 0;
+master
 master
 master
       const account = KeetaLib.Account.fromSeed(trimmed, index);
@@ -425,6 +519,15 @@ master
         error: "",
         balanceError: "",
         balances: [],
+codex/fix-website-issue-with-seed-paste-n3ykf1
+        balanceLoading: false,
+        address: "",
+        identifier: "",
+        network: "",
+        baseToken: null,
+        account: null,
+
+master
       });
 
       let payload;
@@ -432,35 +535,71 @@ master
         payload = await requestWalletDetails(trimmed, index);
       } catch (requestError) {
         onWalletChange({
+codex/fix-website-issue-with-seed-paste-n3ykf1
+          seed: trimmed,
+          index,
+          loading: false,
+          error: requestError.message,
+          balanceLoading: false,
+          address: "",
+          identifier: "",
+          network: "",
+          baseToken: null,
+          balances: [],
+          account: null,
+
           ...INITIAL_WALLET_STATE,
           seed: trimmed,
           index,
           error: requestError.message,
+master
         });
         setStatus(`Failed to load wallet details: ${requestError.message}`);
         return;
       }
 
+      const sanitized = sanitizeWalletPayload(payload, address);
       onWalletChange({
         seed: trimmed,
         index,
+codex/fix-website-issue-with-seed-paste-n3ykf1
+        address: sanitized.address,
+        identifier: sanitized.identifier,
+        network: sanitized.network,
+        baseToken: sanitized.baseToken,
+
         address: payload.address || address,
         identifier: payload.identifier || "",
         network: payload.network || "",
         baseToken: payload.baseToken || null,
+master
         balances: [],
         balanceError: "",
         loading: false,
+        balanceLoading: false,
         error: "",
         account,
       });
-      setStatus(`Connected ${formatAddress(payload.address || address)}`);
+      setStatus(`Connected ${formatAddress(sanitized.address)}`);
     } catch (error) {
       onWalletChange({
+codex/fix-website-issue-with-seed-paste-n3ykf1
+        seed: trimmed,
+        index,
+        loading: false,
+        balanceLoading: false,
+
         ...INITIAL_WALLET_STATE,
         seed: trimmed,
         index,
+master
         error: error.message,
+        address: "",
+        identifier: "",
+        network: "",
+        baseToken: null,
+        balances: [],
+        account: null,
       });
       setStatus(error.message);
     }
@@ -1846,12 +1985,13 @@ function App() {
         balanceLoading: true,
         balanceError: "",
       }));
+      let client;
       try {
         let account = walletAccount;
         if (!account) {
           account = KeetaLib.Account.fromSeed(walletSeed, walletIndex || 0);
         }
-        const client = await createKeetaClient(account);
+        client = await createKeetaClient(account);
         let accountInfo;
         try {
           accountInfo = await client.client.getAccountInfo(
@@ -1890,6 +2030,15 @@ function App() {
             balanceLoading: false,
             balanceError: error?.message || "Failed to load balances",
           }));
+        }
+      } finally {
+        if (client && typeof client.destroy === "function") {
+          try {
+            await client.destroy();
+          } catch (destroyError) {
+            // eslint-disable-next-line no-console
+            console.warn("Failed to destroy wallet client", destroyError);
+          }
         }
       }
     };
