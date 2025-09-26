@@ -846,13 +846,8 @@ function Footer({ onNavigate }) {
 }
 
 function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
-  const {
-    data: poolData,
-    loading: poolLoading,
-    error: poolError,
-    refresh,
-    overrides: poolOverrides,
-  } = poolState;
+  const { data: poolData, loading: poolLoading, error: poolError, refresh } =
+    poolState;
   const tokenOptions = useMemo(() => {
     if (!poolData) return [];
     const seen = new Set();
