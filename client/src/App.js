@@ -1770,6 +1770,10 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
   }, [lpAmount, poolData, tokenA, tokenB, lpToken]);
 
   const handleAddLiquidity = async () => {
+    if (!tokenA?.symbol || !tokenB?.symbol) {
+      setAddStatus("Select both tokens before adding liquidity");
+      return;
+    }
     if (!wallet?.seed) {
       setAddStatus("Connect a testnet wallet seed first");
       return;
@@ -1780,23 +1784,25 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
     }
     setAddStatus("Submitting liquidity...");
     try {
+      const tokenASymbol = tokenA.symbol;
+      const tokenBSymbol = tokenB.symbol;
       const tokenOverrides = poolOverrides?.tokenAddresses
         ? { ...poolOverrides.tokenAddresses }
         : {};
       const tokenAAddressValue = (tokenAAddressInput || tokenA?.address || "").trim();
       const tokenBAddressValue = (tokenBAddressInput || tokenB?.address || "").trim();
-      if (tokenA?.symbol && tokenAAddressValue) {
-        tokenOverrides[tokenA.symbol] = tokenAAddressValue;
+      if (tokenAAddressValue) {
+        tokenOverrides[tokenASymbol] = tokenAAddressValue;
       }
-      if (tokenB?.symbol && tokenBAddressValue) {
-        tokenOverrides[tokenB.symbol] = tokenBAddressValue;
+      if (tokenBAddressValue) {
+        tokenOverrides[tokenBSymbol] = tokenBAddressValue;
       }
       const response = await fetch("/.netlify/functions/addLiquidity", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          tokenA: tokenA.symbol,
-          tokenB: tokenB.symbol,
+          tokenA: tokenASymbol,
+          tokenB: tokenBSymbol,
           amountA,
           amountB,
           seed: wallet.seed,
