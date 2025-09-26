@@ -138,6 +138,10 @@ const INITIAL_WALLET_STATE = {
   baseToken: null,
   loading: false,
   error: "",
+  balances: [],
+  balanceLoading: false,
+  balanceError: "",
+  account: null,
 };
 
 function TokenBadge({ symbol }) {
@@ -282,39 +286,39 @@ function WalletControls({ wallet, onWalletChange }) {
   };
 
   const handleConnect = async () => {
+    const trimmed = seedInput.trim();
+    const index = Number(indexInput) || 0;
     try {
-      const trimmed = seedInput.trim();
       if (!trimmed) {
         throw new Error("Provide a 64-character hex seed");
       }
-      const index = Number(indexInput) || 0;
+      if (!/^[0-9a-fA-F]{64}$/.test(trimmed)) {
+        throw new Error("Provide a 64-character hexadecimal seed");
+      }
       const account = KeetaLib.Account.fromSeed(trimmed, index);
       const address = account.publicKeyString.get();
 
       setStatus(`Connecting ${formatAddress(address)}...`);
       onWalletChange({
+        ...INITIAL_WALLET_STATE,
         seed: trimmed,
         index,
-        address,
-        account,
+        loading: true,
+        error: "",
         balanceError: "",
         balances: [],
-      });
-      setStatus(`Connected ${formatAddress(address)}`);
-
-      onWalletChange({
-        loading: true,
-        baseToken: null,
-        identifier: "",
-        network: "",
-        error: "",
       });
 
       let payload;
       try {
         payload = await requestWalletDetails(trimmed, index);
       } catch (requestError) {
-        onWalletChange({ loading: false, error: requestError.message });
+        onWalletChange({
+          ...INITIAL_WALLET_STATE,
+          seed: trimmed,
+          index,
+          error: requestError.message,
+        });
         setStatus(`Failed to load wallet details: ${requestError.message}`);
         return;
       }
@@ -326,13 +330,18 @@ function WalletControls({ wallet, onWalletChange }) {
         identifier: payload.identifier || "",
         network: payload.network || "",
         baseToken: payload.baseToken || null,
+        balances: [],
+        balanceError: "",
         loading: false,
         error: "",
+        account,
       });
       setStatus(`Connected ${formatAddress(payload.address || address)}`);
     } catch (error) {
       onWalletChange({
         ...INITIAL_WALLET_STATE,
+        seed: trimmed,
+        index,
         error: error.message,
       });
       setStatus(error.message);
@@ -376,7 +385,7 @@ function WalletControls({ wallet, onWalletChange }) {
           onChange={(event) => setIndexInput(Number(event.target.value) || 0)}
         />
         <p className="field-caption">
-          Derives alternate accounts from the same seed. Use 0 for the primary account.
+          Derives alternate wallet addresses from the same seed (advanced). Use 0 for the primary account.
         </p>
       </div>
       <div className="field-group">
