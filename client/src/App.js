@@ -2,6 +2,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 import { lib as KeetaLib, UserClient as KeetaUserClient } from "@keetanetwork/keetanet-client";
+import LiquidityCard from "./components/LiquidityCard";
 import { applyBrandTheme } from "./theme";
 import {
   calculateLiquidityQuote,
@@ -1397,6 +1398,7 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
   const [lpAmount, setLpAmount] = useState("");
   const [addStatus, setAddStatus] = useState("");
   const [removeStatus, setRemoveStatus] = useState("");
+  const [liquidityMode, setLiquidityMode] = useState("add");
   const [mintPreview, setMintPreview] = useState(null);
   const [withdrawPreview, setWithdrawPreview] = useState(null);
   const [tokenAAddressInput, setTokenAAddressInput] = useState("");
@@ -1437,9 +1439,76 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
   }, [tokensInPool, tokenBSelection, defaultTokenB]);
   const lpToken = poolData?.lpToken;
 
+  const balanceA = useMemo(() => {
+    if (!tokenA?.symbol || !walletBaseToken?.symbol) {
+      return "";
+    }
+    if (!symbolsEqual(tokenA.symbol, walletBaseToken.symbol)) {
+      return "";
+    }
+    if (walletLoading) {
+      return "Balance: Loading...";
+    }
+    if (walletBaseTokenBalance != null) {
+      return `Balance: ${walletBaseTokenBalance} ${walletBaseToken.symbol}`;
+    }
+    return "Balance: —";
+  }, [tokenA?.symbol, walletBaseToken, walletLoading, walletBaseTokenBalance]);
+
+  const balanceB = useMemo(() => {
+    if (!tokenB?.symbol || !walletBaseToken?.symbol) {
+      return "";
+    }
+    if (!symbolsEqual(tokenB.symbol, walletBaseToken.symbol)) {
+      return "";
+    }
+    if (walletLoading) {
+      return "Balance: Loading...";
+    }
+    if (walletBaseTokenBalance != null) {
+      return `Balance: ${walletBaseTokenBalance} ${walletBaseToken.symbol}`;
+    }
+    return "Balance: —";
+  }, [tokenB?.symbol, walletBaseToken, walletLoading, walletBaseTokenBalance]);
+
+  const canAdd = useMemo(() => {
+    const valueA = parseFloat(amountA);
+    const valueB = parseFloat(amountB);
+    if (!Number.isFinite(valueA) || !Number.isFinite(valueB)) {
+      return false;
+    }
+    return valueA > 0 && valueB > 0;
+  }, [amountA, amountB]);
+
+  const canRemove = useMemo(() => {
+    const value = parseFloat(lpAmount);
+    return Number.isFinite(value) && value > 0;
+  }, [lpAmount]);
+
+  const addStatusMessage = addStatus || tokenConfigStatus;
+
+  const handleLiquidityModeChange = useCallback(
+    (mode) => {
+      setLiquidityMode(mode);
+      if (mode === "add") {
+        setRemoveStatus("");
+      } else {
+        setAddStatus("");
+      }
+    },
+    [setAddStatus, setRemoveStatus]
+  );
+
   useEffect(() => {
     setTokenAAddressInput(tokenA?.address || "");
   }, [tokenA?.address]);
+
+  useEffect(() => {
+    setLiquidityMode("add");
+    setRemoveStatus("");
+    setAddStatus("");
+    setTokenConfigStatus("");
+  }, [tokenA?.symbol, tokenB?.symbol]);
 
   const baseToken = poolData?.baseToken;
 
@@ -1486,19 +1555,8 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
     baseToken?.symbol,
   ]);
 
-  const handleTokenBSelect = useCallback(
-    (symbol) => {
-      setTokenBSelection(symbol);
-      const option = tokenConfigOptions.find((item) => item.symbol === symbol);
-      if (option?.address) {
-        setTokenBAddressInput(option.address);
-      }
-      setTokenConfigStatus("");
-    },
-    [tokenConfigOptions]
-  );
-
   const handleApplyTokenConfig = useCallback(async () => {
+    setAddStatus("");
     if (!tokenA && !tokenB && !tokenBSelection) {
       setTokenConfigStatus("Load pool data before configuring tokens");
       return;
@@ -1522,7 +1580,15 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
     } else {
       setTokenConfigStatus("Token mapping updated");
     }
-  }, [refresh, tokenA, tokenB, tokenAAddressInput, tokenBAddressInput, tokenBSelection]);
+  }, [
+    refresh,
+    tokenA,
+    tokenB,
+    tokenAAddressInput,
+    tokenBAddressInput,
+    tokenBSelection,
+    setAddStatus,
+  ]);
 
   useEffect(() => {
     if (!poolData || !tokenA || !tokenB) {
@@ -1762,137 +1828,41 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
             </div>
 
             <div className="dual-card">
-              <div className="swap-card liquidity-card">
-                <h3>Add Liquidity</h3>
-                <p className="wallet-copy">
-                  Provide both assets to receive {lpToken?.symbol || "LP"} tokens. Quotes are computed before broadcasting.
-                </p>
-                <div className="field-group">
-                  <span className="field-label">Token A contract</span>
-                  <input
-                    value={tokenAAddressInput}
-                    onChange={(event) => {
-                      setTokenAAddressInput(event.target.value);
-                      setTokenConfigStatus("");
-                    }}
-                    placeholder="Enter token A contract"
-                    type="text"
-                    spellCheck={false}
-                  />
-                </div>
-                <div className="field-group">
-                  <span className="field-label">Token B</span>
-                  {tokenConfigOptions.length > 0 && (
-                    <TokenSelect
-                      value={tokenBSelection || tokenB?.symbol || ""}
-                      onChange={handleTokenBSelect}
-                      options={tokenConfigOptions}
-                    />
-                  )}
-                  <input
-                    value={tokenBAddressInput}
-                    onChange={(event) => {
-                      setTokenBAddressInput(event.target.value);
-                      setTokenConfigStatus("");
-                    }}
-                    placeholder="Enter token B contract"
-                    type="text"
-                    spellCheck={false}
-                  />
-                </div>
-                <div className="field-group">
-                  <button type="button" className="ghost-cta full" onClick={handleApplyTokenConfig}>
-                    Apply token addresses
-                  </button>
-                </div>
-                {tokenConfigStatus && <p className="status">{tokenConfigStatus}</p>}
-                <div className="field-group">
-                  <span className="field-label">Amount {tokenA?.symbol || "Token A"}</span>
-                  <input
-                    value={amountA}
-                    onChange={(event) => setAmountA(event.target.value)}
-                    placeholder="0.0"
-                    type="number"
-                    min="0"
-                    step="any"
-                  />
-                  {walletBaseToken && symbolsEqual(tokenA?.symbol, walletBaseToken.symbol) && (
-                    <div className="balance-line">
-                      {walletLoading
-                        ? "Balance: Loading..."
-                        : walletBaseTokenBalance != null
-                        ? `Balance: ${walletBaseTokenBalance} ${walletBaseToken.symbol}`
-                        : "Balance: —"}
-                    </div>
-                  )}
-                </div>
-                <div className="field-group">
-                  <span className="field-label">Amount {tokenB?.symbol || "Token B"}</span>
-                  <input
-                    value={amountB}
-                    onChange={(event) => setAmountB(event.target.value)}
-                    placeholder="0.0"
-                    type="number"
-                    min="0"
-                    step="any"
-                  />
-                  {walletBaseToken && symbolsEqual(tokenB?.symbol, walletBaseToken.symbol) && (
-                    <div className="balance-line">
-                      {walletLoading
-                        ? "Balance: Loading..."
-                        : walletBaseTokenBalance != null
-                        ? `Balance: ${walletBaseTokenBalance} ${walletBaseToken.symbol}`
-                        : "Balance: —"}
-                    </div>
-                  )}
-                </div>
-                {mintPreview && (
-                  <div className="info-rows">
-                    <div className="info-line">
-                      Est. mint: {mintPreview.formatted} {lpToken.symbol}
-                    </div>
-                    <div className="info-line">
-                      Pool share: {(mintPreview.share * 100).toFixed(4)}%
-                    </div>
-                  </div>
-                )}
-                <button type="button" className="primary-cta full" onClick={handleAddLiquidity}>
-                  Supply liquidity
-                </button>
-                {addStatus && <p className="status">{addStatus}</p>}
-              </div>
-
-              <div className="swap-card liquidity-card">
-                <h3>Remove Liquidity</h3>
-                <p className="wallet-copy">
-                  Withdraw {lpToken?.symbol || "LP"} tokens to receive the underlying assets.
-                </p>
-                <div className="field-group">
-                  <span className="field-label">LP Tokens to withdraw</span>
-                  <input
-                    value={lpAmount}
-                    onChange={(event) => setLpAmount(event.target.value)}
-                    placeholder="0.0"
-                    type="number"
-                    min="0"
-                    step="any"
-                  />
-                </div>
-                {withdrawPreview && (
-                  <div className="info-rows">
-                    <div className="info-line">
-                      Est. return: {withdrawPreview.formattedA} {tokenA.symbol} & {withdrawPreview.formattedB} {tokenB.symbol}
-                    </div>
-                    <div className="info-line">
-                      Pool share: {(withdrawPreview.share * 100).toFixed(4)}%
-                    </div>
-                  </div>
-                )}
-                <button type="button" className="ghost-cta full" onClick={handleRemoveLiquidity}>
-                  Withdraw liquidity
-                </button>
-                {removeStatus && <p className="status">{removeStatus}</p>}
-              </div>
+              <LiquidityCard
+                key={`${tokenA?.symbol || ""}-${tokenB?.symbol || ""}`}
+                mode={liquidityMode}
+                onModeChange={handleLiquidityModeChange}
+                tokenA={tokenA}
+                tokenB={tokenB}
+                lpToken={lpToken}
+                tokenAAddress={tokenAAddressInput}
+                tokenBAddress={tokenBAddressInput}
+                onChangeTokenAAddress={(value) => {
+                  setTokenAAddressInput(value);
+                  setTokenConfigStatus("");
+                }}
+                onChangeTokenBAddress={(value) => {
+                  setTokenBAddressInput(value);
+                  setTokenConfigStatus("");
+                }}
+                onApplyTokenAddresses={handleApplyTokenConfig}
+                amountA={amountA}
+                amountB={amountB}
+                onChangeAmountA={setAmountA}
+                onChangeAmountB={setAmountB}
+                lpAmount={lpAmount}
+                onChangeLpAmount={setLpAmount}
+                balanceA={balanceA}
+                balanceB={balanceB}
+                mintPreview={mintPreview}
+                withdrawPreview={withdrawPreview}
+                addStatus={addStatusMessage}
+                removeStatus={removeStatus}
+                canAdd={canAdd}
+                canRemove={canRemove}
+                onAddLiquidity={handleAddLiquidity}
+                onRemoveLiquidity={handleRemoveLiquidity}
+              />
             </div>
           </div>
         </div>
