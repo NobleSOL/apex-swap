@@ -90,14 +90,15 @@ function calculateSwapQuote(amountIn, reserveIn, reserveOut, feeBps) {
   const amountOut = denominator === 0n ? 0n : numerator / denominator;
   const feePaid = amountIn - (amountInWithFee / feeDenominator);
 
-  // Approximate price impact as percentage change in spot price
   const spotPrice = Number(reserveOut) / Number(reserveIn);
   const newReserveIn = reserveIn + amountIn;
   const newReserveOut = reserveOut - amountOut;
-  const newPrice = newReserveIn > 0n && newReserveOut > 0n
-    ? Number(newReserveOut) / Number(newReserveIn)
-    : spotPrice;
-  const priceImpact = spotPrice === 0 ? 0 : Math.max(0, (spotPrice - newPrice) / spotPrice);
+  const newPrice =
+    newReserveIn > 0n && newReserveOut > 0n
+      ? Number(newReserveOut) / Number(newReserveIn)
+      : spotPrice;
+  const priceImpact =
+    spotPrice === 0 ? 0 : Math.max(0, (spotPrice - newPrice) / spotPrice);
 
   return {
     amountOut,
@@ -144,8 +145,12 @@ async function createClient(options = {}) {
   return KeetaNet.UserClient.fromNetwork(DEFAULT_NETWORK, signer);
 }
 
-codex/verify-amm-liquidity-pool-token-functionality-8fk14o
-async function resolveTokenAccount(client, symbol, fallback, overrideAddress) {
+async function resolveTokenAccount(
+  client,
+  symbol,
+  fallback,
+  overrideAddress
+) {
   if (!symbol) return fallback || null;
   if (overrideAddress) {
     try {
@@ -154,9 +159,6 @@ async function resolveTokenAccount(client, symbol, fallback, overrideAddress) {
       throw new Error(`Invalid override address provided for ${symbol}`);
     }
   }
-async function resolveTokenAccount(client, symbol, fallback) {
-  if (!symbol) return fallback || null;
-master
   if (symbol.toUpperCase() === "KTA") {
     return client.baseToken;
   }
@@ -171,7 +173,8 @@ async function loadTokenDetails(client, account) {
   const accountInfo = await client.client.getAccountInfo(account);
   const metadata = decodeMetadata(accountInfo.info.metadata);
   const decimals = metadata.decimalPlaces ?? metadata.decimals ?? 0;
-  const symbol = metadata.symbol || accountInfo.info.name || account.publicKeyString.get();
+  const symbol =
+    metadata.symbol || accountInfo.info.name || account.publicKeyString.get();
   return {
     address: account.publicKeyString.get(),
     account,
@@ -182,9 +185,21 @@ async function loadTokenDetails(client, account) {
   };
 }
 
+function normalizeTokenOverrides(overrides = {}) {
+  const normalized = {};
+  for (const [key, value] of Object.entries(overrides)) {
+    if (!key || !value) continue;
+    normalized[key] = value;
+    if (typeof key === "string") {
+      normalized[key.toUpperCase()] = value;
+    }
+  }
+  return normalized;
+}
+
 async function loadPoolContext(client, overrides = {}) {
-  const poolAccount = overrides.poolAccount || DEFAULT_POOL_ACCOUNT;
-  const pool = KeetaNet.lib.Account.toAccount(poolAccount);
+  const poolAccountAddress = overrides.poolAccount || DEFAULT_POOL_ACCOUNT;
+  const pool = KeetaNet.lib.Account.toAccount(poolAccountAddress);
   const poolInfo = await client.client.getAccountInfo(pool);
   const poolMetadata = decodeMetadata(poolInfo.info.metadata);
   const tokenSymbols = [poolMetadata.tokenA, poolMetadata.tokenB].filter(Boolean);
@@ -195,12 +210,16 @@ async function loadPoolContext(client, overrides = {}) {
   const lpTokenInfo = await loadTokenDetails(client, lpTokenAccount);
   const lpSupply = await client.client.getTokenSupply(lpTokenAccount);
 
-codex/verify-amm-liquidity-pool-token-functionality-8fk14o
-  const tokenAddressOverrides = { ...(overrides.tokenAddresses || {}) };
+  const tokenAddressOverrides = normalizeTokenOverrides(
+    overrides.tokenAddresses || {}
+  );
 
   const baseTokenDetails = await loadTokenDetails(client, client.baseToken);
   const baseToken = {
-    symbol: baseTokenDetails.metadata.symbol || baseTokenDetails.info.name || "KTA",
+    symbol:
+      baseTokenDetails.metadata.symbol ||
+      baseTokenDetails.info.name ||
+      "KTA",
     address: baseTokenDetails.address,
     decimals: baseTokenDetails.decimals,
     info: baseTokenDetails.info,
@@ -210,13 +229,15 @@ codex/verify-amm-liquidity-pool-token-functionality-8fk14o
   const tokenDetails = [];
   for (const symbol of tokenSymbols) {
     const fallbackAccount = null;
-    const overrideAddress = tokenAddressOverrides[symbol] || tokenAddressOverrides[symbol?.toUpperCase?.()];
-    const tokenAccount = await resolveTokenAccount(client, symbol, fallbackAccount, overrideAddress);
-  const tokenDetails = [];
-  for (const symbol of tokenSymbols) {
-    const fallbackAccount = null;
-    const tokenAccount = await resolveTokenAccount(client, symbol, fallbackAccount);
-master
+    const overrideAddress =
+      tokenAddressOverrides[symbol] ||
+      tokenAddressOverrides[symbol?.toUpperCase?.()];
+    const tokenAccount = await resolveTokenAccount(
+      client,
+      symbol,
+      fallbackAccount,
+      overrideAddress
+    );
     if (!tokenAccount) {
       throw new Error(
         `Token address for symbol ${symbol} is not configured. Set KEETA_TOKEN_${symbol.toUpperCase()}`
@@ -250,7 +271,7 @@ master
     network: DEFAULT_NETWORK,
     executeTransactions: EXECUTE_TRANSACTIONS,
     pool: {
-      address: poolAccount,
+      address: poolAccountAddress,
       name: poolInfo.info.name,
       description: poolInfo.info.description,
       metadata: poolMetadata,
@@ -270,9 +291,7 @@ master
       supplyRaw: lpSupply.toString(),
       supplyFormatted: formatAmount(lpSupply, lpTokenInfo.decimals),
     },
-codex/verify-amm-liquidity-pool-token-functionality-8fk14o
     baseToken,
-master
     timestamp: new Date().toISOString(),
   };
 }
@@ -286,7 +305,9 @@ export {
   calculateSwapQuote,
   calculateWithdrawal,
   createClient,
+  decodeMetadata,
   formatAmount,
   loadPoolContext,
+  loadTokenDetails,
   toRawAmount,
 };
