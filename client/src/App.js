@@ -58,6 +58,117 @@ function formatKeetaBalance(rawBalance) {
   }
 }
 
+function extractAccountAddress(value, seen = new Set()) {
+  if (!value) {
+    return "";
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed;
+  }
+
+  if (typeof value !== "object") {
+    return "";
+  }
+
+  if (seen.has(value)) {
+    return "";
+  }
+  seen.add(value);
+
+  if (typeof value.publicKeyString === "string") {
+    const trimmed = value.publicKeyString.trim();
+    if (trimmed) {
+      return trimmed;
+    }
+  }
+
+  if (value.publicKeyString && typeof value.publicKeyString.get === "function") {
+    try {
+      const resolved = value.publicKeyString.get();
+      if (typeof resolved === "string" && resolved.trim()) {
+        return resolved.trim();
+      }
+    } catch (error) {
+      /* ignore getter errors */
+    }
+  }
+
+  if (typeof value.address === "string" && value.address.trim()) {
+    return value.address.trim();
+  }
+
+  if (value.address && typeof value.address.get === "function") {
+    try {
+      const resolved = value.address.get();
+      if (typeof resolved === "string" && resolved.trim()) {
+        return resolved.trim();
+      }
+    } catch (error) {
+      /* ignore getter errors */
+    }
+  }
+
+  const candidateKeys = [
+    "address",
+    "account",
+    "accountAddress",
+    "publicKey",
+    "public_key",
+    "publicKeyString",
+    "tokenAccount",
+    "token",
+    "id",
+    "value",
+  ];
+
+  for (const key of candidateKeys) {
+    if (!Object.prototype.hasOwnProperty.call(value, key)) {
+      continue;
+    }
+    const nested = value[key];
+    const resolved = extractAccountAddress(nested, seen);
+    if (resolved) {
+      return resolved;
+    }
+  }
+
+  return "";
+}
+
+function resolveBalanceMetadata(entry, index) {
+  const seen = new Set();
+  const candidates = [
+    entry?.accountId,
+    entry?.account,
+    entry?.tokenAccount,
+    entry?.token,
+    entry?.address,
+  ];
+
+  for (const candidate of candidates) {
+    const resolved = extractAccountAddress(candidate, seen);
+    if (resolved) {
+      return { address: resolved, label: resolved };
+    }
+  }
+
+  const labelCandidates = [
+    entry?.symbol,
+    entry?.tokenSymbol,
+    entry?.tokenName,
+    entry?.name,
+  ];
+  for (const label of labelCandidates) {
+    if (typeof label === "string" && label.trim()) {
+      return { address: "", label: label.trim() };
+    }
+  }
+
+  return { address: "", label: `Balance ${index + 1}` };
+}
+
 function SwapIcon() {
   return (
     <svg
@@ -138,6 +249,10 @@ const INITIAL_WALLET_STATE = {
   baseToken: null,
   loading: false,
   error: "",
+  balances: [],
+  balanceLoading: false,
+  balanceError: "",
+  account: null,
 };
 
 function TokenBadge({ symbol }) {
@@ -234,6 +349,62 @@ function formatAddress(address) {
   return `${address.slice(0, 10)}…${address.slice(-6)}`;
 }
 
+function sanitizeBaseToken(token) {
+  if (!token || typeof token !== "object") {
+    return null;
+  }
+  const symbol = typeof token.symbol === "string" ? token.symbol : "";
+  const address = typeof token.address === "string" ? token.address : "";
+  const decimalsRaw = token.decimals;
+  const decimals = Number.isFinite(Number(decimalsRaw)) ? Number(decimalsRaw) : null;
+  const balanceRaw =
+    token.balanceRaw != null && typeof token.balanceRaw.toString === "function"
+      ? token.balanceRaw.toString()
+      : null;
+  const balanceFormatted =
+    typeof token.balanceFormatted === "string" ? token.balanceFormatted : null;
+  const metadata = token.metadata && typeof token.metadata === "object" ? token.metadata : {};
+
+  return {
+    symbol,
+    address,
+    decimals,
+    balanceRaw,
+    balanceFormatted,
+    metadata,
+  };
+}
+
+function sanitizeWalletPayload(payload, fallbackAddress) {
+  if (!payload || typeof payload !== "object") {
+    return {
+      address: fallbackAddress,
+      identifier: "",
+      network: "",
+      baseToken: null,
+    };
+  }
+
+  const normalizedAddress =
+    typeof payload.address === "string" && payload.address.trim()
+      ? payload.address.trim()
+      : fallbackAddress;
+
+  const identifier =
+    typeof payload.identifier === "string" && payload.identifier.trim()
+      ? payload.identifier.trim()
+      : "";
+
+  const network = typeof payload.network === "string" ? payload.network : "";
+
+  return {
+    address: normalizedAddress,
+    identifier,
+    network,
+    baseToken: sanitizeBaseToken(payload.baseToken),
+  };
+}
+
 function WalletControls({ wallet, onWalletChange }) {
   const [seedInput, setSeedInput] = useState(wallet.seed || "");
   const [indexInput, setIndexInput] = useState(wallet.index || 0);
@@ -282,12 +453,15 @@ function WalletControls({ wallet, onWalletChange }) {
   };
 
   const handleConnect = async () => {
+    const trimmed = seedInput.trim();
+    const index = Number(indexInput) || 0;
     try {
-      const trimmed = seedInput.trim();
       if (!trimmed) {
         throw new Error("Provide a 64-character hex seed");
       }
-      const index = Number(indexInput) || 0;
+      if (!/^[0-9a-fA-F]{64}$/.test(trimmed)) {
+        throw new Error("Provide a 64-character hexadecimal seed");
+      }
       const account = KeetaLib.Account.fromSeed(trimmed, index);
       const address = account.publicKeyString.get();
 
@@ -295,45 +469,68 @@ function WalletControls({ wallet, onWalletChange }) {
       onWalletChange({
         seed: trimmed,
         index,
-        address,
-        account,
+        loading: true,
+        error: "",
         balanceError: "",
         balances: [],
-      });
-      setStatus(`Connected ${formatAddress(address)}`);
-
-      onWalletChange({
-        loading: true,
-        baseToken: null,
+        balanceLoading: false,
+        address: "",
         identifier: "",
         network: "",
-        error: "",
+        baseToken: null,
+        account: null,
       });
 
       let payload;
       try {
         payload = await requestWalletDetails(trimmed, index);
       } catch (requestError) {
-        onWalletChange({ loading: false, error: requestError.message });
+        onWalletChange({
+          seed: trimmed,
+          index,
+          loading: false,
+          error: requestError.message,
+          balanceLoading: false,
+          address: "",
+          identifier: "",
+          network: "",
+          baseToken: null,
+          balances: [],
+          account: null,
+        });
         setStatus(`Failed to load wallet details: ${requestError.message}`);
         return;
       }
 
+      const sanitized = sanitizeWalletPayload(payload, address);
       onWalletChange({
         seed: trimmed,
         index,
-        address: payload.address || address,
-        identifier: payload.identifier || "",
-        network: payload.network || "",
-        baseToken: payload.baseToken || null,
+        address: sanitized.address,
+        identifier: sanitized.identifier,
+        network: sanitized.network,
+        baseToken: sanitized.baseToken,
+        balances: [],
+        balanceError: "",
         loading: false,
+        balanceLoading: false,
         error: "",
+        account,
       });
-      setStatus(`Connected ${formatAddress(payload.address || address)}`);
+      setStatus(`Connected ${formatAddress(sanitized.address)}`);
     } catch (error) {
       onWalletChange({
-        ...INITIAL_WALLET_STATE,
+        seed: trimmed,
+        index,
+        loading: false,
+        balanceLoading: false,
         error: error.message,
+        address: "",
+        identifier: "",
+        network: "",
+        baseToken: null,
+        balances: [],
+        account: null,
       });
       setStatus(error.message);
     }
@@ -376,7 +573,7 @@ function WalletControls({ wallet, onWalletChange }) {
           onChange={(event) => setIndexInput(Number(event.target.value) || 0)}
         />
         <p className="field-caption">
-          Derives alternate accounts from the same seed. Use 0 for the primary account.
+          Derives alternate wallet addresses from the same seed (advanced). Use 0 for the primary account.
         </p>
       </div>
       <div className="field-group">
@@ -413,12 +610,16 @@ function WalletControls({ wallet, onWalletChange }) {
             <p className="empty">No balances found</p>
           ) : (
             <ul>
-              {balances.map((entry) => (
-                <li key={entry.accountId || entry.address}>
-                  <span className="token-id">{entry.accountId || entry.address}</span>
-                  <span className="token-value">{entry.formatted}</span>
-                </li>
-              ))}
+              {balances.map((entry, index) => {
+                const label = entry.accountLabel || entry.accountId || `Balance ${index + 1}`;
+                const key = entry.balanceKey || entry.accountId || `${label}-${index}`;
+                return (
+                  <li key={key}>
+                    <span className="token-id">{label}</span>
+                    <span className="token-value">{entry.formatted}</span>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>
@@ -1742,12 +1943,13 @@ function App() {
         balanceLoading: true,
         balanceError: "",
       }));
+      let client;
       try {
         let account = walletAccount;
         if (!account) {
           account = KeetaLib.Account.fromSeed(walletSeed, walletIndex || 0);
         }
-        const client = await createKeetaClient(account);
+        client = await createKeetaClient(account);
         let accountInfo;
         try {
           accountInfo = await client.client.getAccountInfo(
@@ -1757,22 +1959,18 @@ function App() {
           accountInfo = await client.client.getAccountInfo(account);
         }
         const balances = Array.isArray(accountInfo?.balances) ? accountInfo.balances : [];
-        const normalized = balances
-          .map((entry) => {
-            const raw = entry?.balance ?? entry?.amount ?? entry?.raw ?? 0;
-            const accountId =
-              entry?.accountId ||
-              entry?.account ||
-              entry?.tokenAccount ||
-              entry?.token ||
-              (entry?.address ? entry.address : "");
-            return {
-              ...entry,
-              accountId,
-              formatted: formatKeetaBalance(raw),
-            };
-          })
-          .filter((entry) => entry.accountId);
+        const normalized = balances.map((entry, index) => {
+          const raw = entry?.balance ?? entry?.amount ?? entry?.raw ?? 0;
+          const { address, label } = resolveBalanceMetadata(entry, index);
+          const uniqueKey = address || `${label}-${index}`;
+          return {
+            ...entry,
+            accountId: address,
+            accountLabel: label,
+            balanceKey: uniqueKey,
+            formatted: formatKeetaBalance(raw),
+          };
+        });
         if (!cancelled) {
           setWallet((prev) => ({
             ...prev,
@@ -1790,6 +1988,15 @@ function App() {
             balanceLoading: false,
             balanceError: error?.message || "Failed to load balances",
           }));
+        }
+      } finally {
+        if (client && typeof client.destroy === "function") {
+          try {
+            await client.destroy();
+          } catch (destroyError) {
+            // eslint-disable-next-line no-console
+            console.warn("Failed to destroy wallet client", destroyError);
+          }
         }
       }
     };
