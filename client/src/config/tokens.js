@@ -1,4 +1,3 @@
-codex/update-swap-and-liquidity-cards-for-kta-n6vr50
 const KTA_LOGO_BASE64 = [
   "iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAAQMElEQVR42u2d6YMURRLF86PuKuKBiMohh4wCwxyAMIKueIAusPuv718020dlV2Tki8iXWV09PXZ9iC/S",
   "Pc7U+8WLF9lHhc+e//f0PNWnP/5H1LvTT09kve3rma43laWeL3+2/H/OfwfxO523",
@@ -91,17 +90,11 @@ const KTA_LOGO_BASE64 = [
 
 export const KTA_LOGO_DATA_URL = `data:image/png;base64,${KTA_LOGO_BASE64}`;
 
-master
 export const TOKENS = {
   KTA: {
     symbol: "KTA",
     name: "Keeta Native Token",
-codex/update-swap-and-liquidity-cards-for-kta-n6vr50
     logo: KTA_LOGO_DATA_URL,
-
-    logo: "/tokens/kta.svg",
-master
     isNative: true,
   },
-  // Additional tokens can be added here later
 };
