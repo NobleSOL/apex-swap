@@ -836,47 +836,57 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
     ];
   }, [poolData]);
   return (
-    <main className="page" id="swap">
-      <section className="hero-section">
-        <div className="hero-grid">
-          <div className="hero-content">
-            <span className="eyebrow">Keeta Liquidity Layer</span>
-            <h1 className="hero-heading">Swap at apex speed with Silverback.</h1>
-            <p className="hero-subtitle">
-              Deep liquidity, MEV-aware routing, and a premium trading experience built for the Keeta ecosystem.
-            </p>
-            <div className="hero-actions">
-              <button
-                type="button"
-                className="primary-cta"
-                onClick={() => onNavigate("swap", "/", "swap-panel")}
-              >
-                Start swapping
-              </button>
-              <button
-                type="button"
-                className="ghost-cta"
-                onClick={() => onNavigate("pools", "/pools", "pools")}
-              >
-                View pools
-              </button>
-            </div>
-            <div className="metric-row" id="stats">
-              {heroStats.map((item) => (
-                <div className="metric-card" key={item.label}>
-                  <span className="metric-label">{item.label}</span>
-                  <span className="metric-value">{item.value}</span>
-                </div>
-              ))}
-            </div>
+    <main className="swap-screen" id="swap">
+      <section className="swap-hero">
+        <div className="swap-hero__content">
+          <span className="eyebrow">Keeta Liquidity Layer</span>
+          <h1 className="swap-title">Swap at apex speed with Silverback.</h1>
+          <p className="swap-subtitle">
+            Deep liquidity, MEV-aware routing, and a premium trading experience built for the Keeta ecosystem.
+          </p>
+          <div className="swap-cta-row">
+            <button
+              type="button"
+              className="primary-cta"
+              onClick={() => onNavigate("swap", "/", "swap-panel")}
+            >
+              Start swapping
+            </button>
+            <button
+              type="button"
+              className="ghost-cta"
+              onClick={() => onNavigate("pools", "/pools", "pools")}
+            >
+              View pools
+            </button>
           </div>
-          <div className="hero-panel" id="swap-panel">
-            <WalletControls wallet={wallet} onWalletChange={onWalletChange} />
-            <div className="swap-card">
-              <div className="swap-card-header">
-                <div className="swap-card-title">
-                  <span className="swap-chip">Classic</span>
-                  <h2>Swap</h2>
+          <div className="swap-metrics" id="stats">
+            {heroStats.map((item) => (
+              <div className="metric-card" key={item.label}>
+                <span className="metric-label">{item.label}</span>
+                <span className="metric-value">{item.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="swap-hero__panels" id="swap-panel">
+          <div className="swap-panel swap-panel--primary">
+            <div className="swap-card swap-card--panel">
+              <div className="swap-card__tabs">
+                <button type="button" className="swap-card__tab is-active">
+                  Swap
+                </button>
+                <button type="button" className="swap-card__tab" disabled>
+                  Limit
+                </button>
+                <button type="button" className="swap-card__tab" disabled>
+                  Liquidity
+                </button>
+              </div>
+              <div className="swap-card__header">
+                <div>
+                  <h2>Swap tokens</h2>
+                  <p className="swap-card__subtitle">Live Keeta pricing with one-tap execution.</p>
                 </div>
                 <button
                   type="button"
@@ -887,9 +897,8 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
                   {slippage}%
                 </button>
               </div>
-
               {slippageOpen && (
-                <div className="slippage-popover">
+                <div className="slippage-popover swap-card__popover">
                   <div className="slip-row">
                     {[0.1, 0.5, 1].map((value) => (
                       <button
@@ -917,77 +926,54 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
                   </div>
                 </div>
               )}
-
-              <div className="swap-stack">
-                <div className="swap-row">
-                  <div className="field-group">
-                    <label className="field-label" htmlFor="swap-from-token">
-                      Sell token
-                    </label>
-                    <TokenSelect
-                      value={fromAsset}
-                      onChange={setFromAsset}
-                      options={tokenOptions}
-                    />
+              <div className="swap-card__body">
+                <div className="swap-input-block">
+                  <div className="swap-input-block__top">
+                    <span className="swap-input-block__label">You pay</span>
+                    {walletBaseToken && symbolsEqual(fromAsset, walletBaseToken.symbol) && (
+                      <span className="swap-input-block__balance">
+                        {walletLoading
+                          ? "Loading..."
+                          : walletBaseTokenBalance != null
+                          ? `${walletBaseTokenBalance} ${walletBaseToken.symbol}`
+                          : "—"}
+                      </span>
+                    )}
                   </div>
-                  <div className="field-group">
-                    <label className="field-label" htmlFor="swap-from-amount">
-                      Amount
-                    </label>
-                    <div className="amount-field">
-                      <input
-                        id="swap-from-amount"
-                        type="text"
-                        inputMode="decimal"
-                        placeholder="0.00"
-                        value={fromAmount}
-                        onChange={(event) => setFromAmount(event.target.value)}
-                      />
-                      <button
-                        type="button"
-                        className="small-action"
-                        onClick={() => setFromAmount("")}
-                      >
-                        Clear
-                      </button>
-                    </div>
-                    <div className="balance-line">
-                      {walletLoading
-                        ? "Balance: Loading..."
-                        : walletBaseToken &&
-                          symbolsEqual(fromAsset, walletBaseToken.symbol) &&
-                          walletBaseTokenBalance != null
-                        ? `Balance: ${walletBaseTokenBalance} ${walletBaseToken.symbol}`
-                        : "Balance: —"}
-                    </div>
+                  <div className="swap-input">
+                    <input
+                      id="swap-from-amount"
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="0.00"
+                      value={fromAmount}
+                      onChange={(event) => setFromAmount(event.target.value)}
+                    />
+                    <TokenSelect value={fromAsset} onChange={setFromAsset} options={tokenOptions} />
                   </div>
                 </div>
-
                 <button
                   type="button"
-                  className="direction-toggle"
+                  className="swap-flip"
                   onClick={flipDirection}
                   aria-label="Switch direction"
                 >
                   <SwapIcon />
                 </button>
-
-                <div className="swap-row">
-                  <div className="field-group">
-                    <label className="field-label" htmlFor="swap-to-token">
-                      Buy token
-                    </label>
-                    <TokenSelect
-                      value={toAsset}
-                      onChange={setToAsset}
-                      options={tokenOptions}
-                    />
+                <div className="swap-input-block">
+                  <div className="swap-input-block__top">
+                    <span className="swap-input-block__label">You receive</span>
+                    {walletBaseToken && symbolsEqual(toAsset, walletBaseToken.symbol) && (
+                      <span className="swap-input-block__balance">
+                        {walletLoading
+                          ? "Loading..."
+                          : walletBaseTokenBalance != null
+                          ? `${walletBaseTokenBalance} ${walletBaseToken.symbol}`
+                          : "—"}
+                      </span>
+                    )}
                   </div>
-                  <div className="field-group">
-                    <label className="field-label" htmlFor="swap-to-amount">
-                      Amount
-                    </label>
-                  <div className="amount-field">
+                  <div className="swap-input">
                     <input
                       id="swap-to-amount"
                       type="text"
@@ -996,83 +982,67 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
                       value={toAmount}
                       onChange={(event) => setToAmount(event.target.value)}
                     />
+                    <TokenSelect value={toAsset} onChange={setToAsset} options={tokenOptions} />
                   </div>
-                  {walletBaseToken && symbolsEqual(toAsset, walletBaseToken.symbol) && (
-                    <div className="balance-line">
-                      {walletLoading
-                        ? "Balance: Loading..."
-                        : walletBaseTokenBalance != null
-                        ? `Balance: ${walletBaseTokenBalance} ${walletBaseToken.symbol}`
-                        : "Balance: —"}
-                    </div>
-                  )}
-                  <div className="balance-line">Pool price updates automatically</div>
+                  <div className="swap-input__caption">Pool price updates automatically</div>
                 </div>
+                <div className="swap-summary">
+                  <div className="swap-summary__row">
+                    <span>Expected output</span>
+                    <span>
+                      {quoteDetails?.tokens?.to?.expectedFormatted || "—"}{" "}
+                      {quoteDetails?.tokens?.to?.symbol || toAsset}
+                    </span>
+                  </div>
+                  <div className="swap-summary__row">
+                    <span>Minimum received ({slippage}%)</span>
+                    <span>{quoteDetails?.tokens?.to?.minimumFormatted || "—"}</span>
+                  </div>
+                  <div className="swap-summary__row">
+                    <span>Fee</span>
+                    <span>
+                      {quoteDetails?.tokens?.from?.feePaidFormatted || `${(poolData?.pool?.feeBps ?? 0) / 100}%`}{" "}
+                      {quoteDetails?.tokens?.from?.symbol || fromAsset}
+                    </span>
+                  </div>
+                  <div className="swap-summary__row">
+                    <span>Price impact</span>
+                    <span>{quoteDetails ? `${quoteDetails.priceImpact} %` : "—"}</span>
+                  </div>
+                  <div className="swap-summary__row">
+                    <span>Route</span>
+                    <span>{poolData?.pool?.address ? formatAddress(poolData.pool.address) : "—"}</span>
+                  </div>
+                </div>
+                {poolStatusMessage && <div className="swap-alert">{poolStatusMessage}</div>}
+                <button type="button" className="primary-cta full swap-submit" onClick={handleSwap}>
+                  Swap
+                </button>
+                {status && <p className="status">{status}</p>}
               </div>
-              </div>
-
-              <div className="info-rows">
-                <div className="info-line">
-                  Expected output: {quoteDetails?.tokens?.to?.expectedFormatted || "—"} {" "}
-                  {quoteDetails?.tokens?.to?.symbol || toAsset}
-                </div>
-                <div className="info-line">
-                  Minimum received ({slippage}% slippage): {quoteDetails?.tokens?.to?.minimumFormatted || "—"}
-                </div>
-                <div className="info-line">
-                  Fee: {quoteDetails?.tokens?.from?.feePaidFormatted || `${(poolData?.pool?.feeBps ?? 0) / 100}%`} {" "}
-                  {quoteDetails?.tokens?.from?.symbol || fromAsset}
-                </div>
-                <div className="info-line">
-                  Price impact: {quoteDetails ? `${quoteDetails.priceImpact} %` : "—"}
-                </div>
-                <div className="route-line">
-                  Pool: {poolData?.pool?.address ? formatAddress(poolData.pool.address) : "—"}
-                </div>
-              </div>
-
-              {poolStatusMessage && <p className="status">{poolStatusMessage}</p>}
-
-              <button type="button" className="primary-cta full" onClick={handleSwap}>
-                Swap
-              </button>
-
-              {status && <p className="status">{status}</p>}
             </div>
+          </div>
+          <div className="swap-panel swap-panel--wallet">
+            <WalletControls wallet={wallet} onWalletChange={onWalletChange} />
           </div>
         </div>
       </section>
-
-      <section className="market-section">
-        <div className="section-header">
-          <div>
-            <span className="eyebrow">Featured markets</span>
-            <h2>Discover deep liquidity pairs</h2>
-            <p className="section-subtitle">
-              Deploy capital into the highest performing pools backed by Silverback routing.
-            </p>
-          </div>
-          <button
-            type="button"
-            className="ghost-cta"
-            onClick={() => onNavigate("pools", "/pools", "pools")}
-          >
-            Explore pools
+      <section className="swap-featured" id="pools">
+        <div className="swap-featured__head">
+          <h2>Featured pools</h2>
+          <button type="button" className="pill-link" onClick={() => onNavigate("pools", "/pools", "pools")}>
+            Manage positions <ArrowTopRight />
           </button>
         </div>
-        <div className="pool-grid">
-          {featuredPools.length === 0 && (
-            <article className="pool-card" key="placeholder">
+        <div className="swap-featured__grid">
+          {poolLoading && (
+            <article className="pool-card">
               <div className="pool-card-head">
                 <div className="pool-token-icons">
-                  <span className="token-icon token-icon-lg">
-                    <TokenBadge symbol="KTA" />
-                  </span>
-                  <span className="token-icon token-icon-lg">
-                    <TokenBadge symbol="TEST" />
-                  </span>
+                  <span className="token-icon token-icon-lg" />
+                  <span className="token-icon token-icon-lg" />
                 </div>
-                <span className="pool-pair">KTA/TEST</span>
+                <span className="pool-pair">Loading pools...</span>
               </div>
               <div className="pool-card-body">
                 <div className="pool-metric">
@@ -1084,13 +1054,6 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
                   <span className="metric-value">—</span>
                 </div>
               </div>
-              <button
-                type="button"
-                className="pill-link"
-                onClick={() => onNavigate("pools", "/pools", "pools")}
-              >
-                Manage position <ArrowTopRight />
-              </button>
             </article>
           )}
           {featuredPools.map((pool) => (
@@ -1116,15 +1079,25 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
                   <span className="metric-value">{pool.reserves}</span>
                 </div>
               </div>
-              <button
-                type="button"
-                className="pill-link"
-                onClick={() => onNavigate("pools", "/pools", "pools")}
-              >
-                Manage position <ArrowTopRight />
-              </button>
             </article>
           ))}
+          {!poolLoading && featuredPools.length === 0 && (
+            <article className="pool-card">
+              <div className="pool-card-head">
+                <span className="pool-pair">No pools available</span>
+              </div>
+              <div className="pool-card-body">
+                <div className="pool-metric">
+                  <span className="metric-label">Fee</span>
+                  <span className="metric-value">—</span>
+                </div>
+                <div className="pool-metric">
+                  <span className="metric-label">Reserves</span>
+                  <span className="metric-value">—</span>
+                </div>
+              </div>
+            </article>
+          )}
         </div>
       </section>
     </main>
