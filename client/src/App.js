@@ -138,6 +138,10 @@ const INITIAL_WALLET_STATE = {
   baseToken: null,
   loading: false,
   error: "",
+  balances: [],
+  balanceLoading: false,
+  balanceError: "",
+  account: null,
 };
 
 function TokenBadge({ symbol }) {
@@ -287,6 +291,9 @@ function WalletControls({ wallet, onWalletChange }) {
       if (!trimmed) {
         throw new Error("Provide a 64-character hex seed");
       }
+      if (!/^[0-9a-fA-F]{64}$/.test(trimmed)) {
+        throw new Error("Provide a 64-character hexadecimal seed");
+      }
       const index = Number(indexInput) || 0;
       const account = KeetaLib.Account.fromSeed(trimmed, index);
       const address = account.publicKeyString.get();
@@ -376,7 +383,7 @@ function WalletControls({ wallet, onWalletChange }) {
           onChange={(event) => setIndexInput(Number(event.target.value) || 0)}
         />
         <p className="field-caption">
-          Derives alternate accounts from the same seed. Use 0 for the primary account.
+          Derives alternate wallet addresses from the same seed (advanced). Use 0 for the primary account.
         </p>
       </div>
       <div className="field-group">
