@@ -1,3 +1,4 @@
+import * as KeetaNet from "@keetanetwork/keetanet-client";
 import { withCors } from "./cors.js";
 import {
   EXECUTE_TRANSACTIONS,
@@ -15,6 +16,26 @@ function parseBody(body) {
   } catch (error) {
     throw new Error("Invalid JSON body");
   }
+}
+
+async function executeRemoveLiquidity(client, context, params) {
+  const poolAccount = KeetaNet.lib.Account.toAccount(context.pool.address);
+  const tokenAAccount = KeetaNet.lib.Account.toAccount(params.tokenA.address);
+  const tokenBAccount = KeetaNet.lib.Account.toAccount(params.tokenB.address);
+  const lpTokenAccount = KeetaNet.lib.Account.toAccount(context.lpToken.address);
+
+  const builder = client.initBuilder();
+  builder.send(poolAccount, params.lpAmountRaw, lpTokenAccount);
+  if (params.amountARaw > 0n) {
+    builder.receive(poolAccount, params.amountARaw, tokenAAccount, true);
+  }
+  if (params.amountBRaw > 0n) {
+    builder.receive(poolAccount, params.amountBRaw, tokenBAccount, true);
+  }
+
+  const blocks = await client.computeBuilderBlocks(builder);
+  const published = await client.publishBuilder(builder);
+  return { blocks, published };
 }
 
 async function handler(event) {
@@ -95,13 +116,24 @@ async function handler(event) {
       totalSupply
     );
 
-    const execution = EXECUTE_TRANSACTIONS
-      ? {
-          attempted: false,
-          error:
-            "Automatic liquidity withdrawal is not yet implemented. Submit the instructions manually.",
-        }
-      : { attempted: false };
+    if (amountA <= 0n && amountB <= 0n) {
+      throw new Error("Withdrawal amounts are zero. Increase the LP amount or check pool reserves.");
+    }
+
+    let execution = {};
+    if (EXECUTE_TRANSACTIONS) {
+      try {
+        execution = await executeRemoveLiquidity(client, context, {
+          lpAmountRaw,
+          amountARaw: amountA,
+          amountBRaw: amountB,
+          tokenA: tokenDetailsA,
+          tokenB: tokenDetailsB,
+        });
+      } catch (execError) {
+        execution = { error: execError.message };
+      }
+    }
 
     const response = {
       pool: context.pool,
@@ -125,23 +157,34 @@ async function handler(event) {
           amountFormatted: formatAmount(amountB, tokenDetailsB.decimals),
         },
       },
-      execution,
+      execution: {
+        attempted: EXECUTE_TRANSACTIONS,
+        ...execution,
+      },
       instructions: {
         burn: {
           token: context.lpToken.address,
           amountRaw: lpAmountRaw.toString(),
         },
         payouts: [
-          {
-            from: context.pool.address,
-            token: tokenDetailsA.address,
-            amountRaw: amountA.toString(),
-          },
-          {
-            from: context.pool.address,
-            token: tokenDetailsB.address,
-            amountRaw: amountB.toString(),
-          },
+          ...(amountA > 0n
+            ? [
+                {
+                  from: context.pool.address,
+                  token: tokenDetailsA.address,
+                  amountRaw: amountA.toString(),
+                },
+              ]
+            : []),
+          ...(amountB > 0n
+            ? [
+                {
+                  from: context.pool.address,
+                  token: tokenDetailsB.address,
+                  amountRaw: amountB.toString(),
+                },
+              ]
+            : []),
         ],
       },
       message: EXECUTE_TRANSACTIONS
