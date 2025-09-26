@@ -1541,6 +1541,29 @@ body {
 }
 
 @media (max-width: 600px) {
+  .swap-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .swap-hero__content {
+    align-items: center;
+    text-align: center;
+  }
+
+  .swap-cta-row {
+    justify-content: center;
+  }
+
+  .swap-metrics {
+    width: 100%;
+  }
+
+  .swap-hero__panels {
+    width: min(100%, 420px);
+  }
+
   .swap-screen {
     padding: 24px 16px 72px;
     gap: 56px;
