@@ -11,6 +11,7 @@ import {
   formatAmount,
   toRawAmount,
 } from "./utils/tokenMath";
+import { TOKENS } from "./config/tokens";
 
 const BRAND_LOGO =
   "https://cdn.builder.io/api/v1/image/assets%2Fd70091a6f5494e0195b033a72f7e79ae%2F116ddd439df04721809dcdc66245e3fa?format=webp&width=800";
@@ -219,6 +220,30 @@ function getTokenIconUrl(symbol) {
   return TOKEN_ICON_PATHS[key] || "/tokens/default.svg";
 }
 
+function getKnownTokenConfig(symbol) {
+  const key = String(symbol || "").toUpperCase();
+  return TOKENS[key];
+}
+
+function withTokenLogo(token) {
+  if (!token || !token.symbol) {
+    return token;
+  }
+  const config = getKnownTokenConfig(token.symbol);
+  if (config?.logo && token.logo !== config.logo) {
+    return { ...token, logo: config.logo };
+  }
+  return token;
+}
+
+function getTokenLogoSource(symbol) {
+  const config = getKnownTokenConfig(symbol);
+  if (config?.logo) {
+    return config.logo;
+  }
+  return getTokenIconUrl(symbol);
+}
+
 const FALLBACK_TOKEN_ICON = "/tokens/default.svg";
 
 function symbolsEqual(a, b) {
@@ -256,15 +281,15 @@ const INITIAL_WALLET_STATE = {
   account: null,
 };
 
-function TokenBadge({ symbol }) {
+function TokenBadge({ symbol, logo }) {
   const [errored, setErrored] = useState(false);
-  useEffect(() => setErrored(false), [symbol]);
-  const src = errored ? FALLBACK_TOKEN_ICON : getTokenIconUrl(symbol);
+  useEffect(() => setErrored(false), [symbol, logo]);
+  const src = errored ? FALLBACK_TOKEN_ICON : logo || getTokenLogoSource(symbol);
   return (
     <img
       className="token-img"
       src={src}
-      alt={`${symbol} logo`}
+      alt={symbol ? `${symbol} logo` : "Token logo"}
       onError={() => {
         if (!errored) {
           setErrored(true);
@@ -277,6 +302,18 @@ function TokenBadge({ symbol }) {
 function TokenSelect({ value, onChange, options }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const selectedSymbol = useMemo(() => {
+    if (value && typeof value === "object") {
+      return value.symbol || "";
+    }
+    return typeof value === "string" ? value : "";
+  }, [value]);
+  const selectedLogo = useMemo(() => {
+    if (value && typeof value === "object") {
+      return value.logo;
+    }
+    return undefined;
+  }, [value]);
   const filtered = useMemo(() => {
     const lower = query.toLowerCase();
     return options.filter(
@@ -292,7 +329,12 @@ function TokenSelect({ value, onChange, options }) {
   };
 
   const handleSelect = (symbol) => {
-    onChange(symbol);
+    if (!onChange) {
+      closePopover();
+      return;
+    }
+    const next = options.find((option) => symbolsEqual(option.symbol, symbol)) || null;
+    onChange(next);
     closePopover();
   };
 
@@ -306,9 +348,9 @@ function TokenSelect({ value, onChange, options }) {
         aria-expanded={open}
       >
         <span className="token-trigger-icon">
-          <TokenBadge symbol={value} />
+          <TokenBadge symbol={selectedSymbol} logo={selectedLogo} />
         </span>
-        <span className="token-trigger-symbol">{value}</span>
+        <span className="token-trigger-symbol">{selectedSymbol || "Select"}</span>
       </button>
       {open && (
         <div className="token-popover" role="listbox">
@@ -324,12 +366,12 @@ function TokenSelect({ value, onChange, options }) {
                 key={option.symbol}
                 type="button"
                 className={`token-item${
-                  option.symbol === value ? " is-active" : ""
+                  symbolsEqual(option.symbol, selectedSymbol) ? " is-active" : ""
                 }`}
                 onClick={() => handleSelect(option.symbol)}
               >
                 <span className="token-icon">
-                  <TokenBadge symbol={option.symbol} />
+                  <TokenBadge symbol={option.symbol} logo={option.logo} />
                 </span>
                 <div className="token-info">
                   <span className="token-symbol">{option.symbol}</span>
@@ -849,7 +891,6 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
   const { data: poolData, loading: poolLoading, error: poolError, refresh } =
     poolState;
   const tokenOptions = useMemo(() => {
-    if (!poolData) return [];
     const seen = new Set();
     const options = [];
 
@@ -858,17 +899,27 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
       const key = token.symbol.toUpperCase();
       if (seen.has(key)) return;
       seen.add(key);
+      const enriched = withTokenLogo(token);
+      const config = getKnownTokenConfig(token.symbol);
       options.push({
-        symbol: token.symbol,
-        name: token.info?.name || token.metadata?.name || token.symbol,
+        symbol: enriched.symbol,
+        name:
+          token.info?.name ||
+          token.metadata?.name ||
+          enriched.name ||
+          config?.name ||
+          enriched.symbol,
+        logo: enriched.logo || config?.logo,
       });
     };
 
-    if (poolData.baseToken) {
+    addOption(TOKENS.KTA);
+
+    if (poolData?.baseToken) {
       addOption(poolData.baseToken);
     }
 
-    (poolData.tokens || []).forEach(addOption);
+    (poolData?.tokens || []).forEach(addOption);
 
     return options;
   }, [poolData]);
@@ -877,10 +928,11 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
     const map = {};
     const registerToken = (token) => {
       if (!token?.symbol) return;
-      const entry = { ...token };
-      map[token.symbol] = entry;
-      if (token.address) {
-        map[token.address] = entry;
+      const enriched = withTokenLogo(token);
+      const entry = { ...enriched };
+      map[entry.symbol] = entry;
+      if (enriched.address) {
+        map[enriched.address] = entry;
       }
     };
 
@@ -906,31 +958,76 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
   const walletLoading = Boolean(wallet?.loading);
   const walletBaseTokenBalance = resolveBaseTokenBalance(walletBaseToken);
 
-  const [fromAsset, setFromAsset] = useState(tokenOptions[0]?.symbol || "");
-  const [toAsset, setToAsset] = useState(tokenOptions[1]?.symbol || "");
+  const [fromToken, setFromToken] = useState(TOKENS.KTA);
+  const [toToken, setToToken] = useState(null);
+
+  const fromAsset = fromToken?.symbol || "";
+  const toAsset = toToken?.symbol || "";
 
   useEffect(() => {
     if (!tokenOptions.length) {
-      setFromAsset("");
-      setToAsset("");
+      if (!symbolsEqual(fromAsset, TOKENS.KTA.symbol)) {
+        setFromToken(TOKENS.KTA);
+      }
+      if (toToken) {
+        setToToken(null);
+      }
       return;
     }
-    setFromAsset((prev) =>
-      tokenOptions.some((option) => option.symbol === prev)
-        ? prev
-        : tokenOptions[0].symbol
-    );
-  }, [tokenOptions]);
 
-  useEffect(() => {
-    if (!tokenOptions.length) return;
-    const defaultTo = tokenOptions.find((token) => token.symbol !== fromAsset) || tokenOptions[0];
-    setToAsset((prev) =>
-      prev && prev !== fromAsset && tokenOptions.some((option) => option.symbol === prev)
-        ? prev
-        : defaultTo.symbol
-    );
-  }, [tokenOptions, fromAsset]);
+    const findOption = (symbol) =>
+      tokenOptions.find((option) => symbolsEqual(option.symbol, symbol));
+
+    const prioritizedFrom = [fromAsset, TOKENS.KTA.symbol, tokenOptions[0]?.symbol];
+    let nextFrom = null;
+    for (const candidate of prioritizedFrom) {
+      if (!candidate) continue;
+      const match = findOption(candidate);
+      if (match) {
+        nextFrom = match;
+        break;
+      }
+    }
+    if (!nextFrom) {
+      nextFrom = tokenOptions[0];
+    }
+    if (!fromToken || fromToken !== nextFrom) {
+      if (!fromToken || !symbolsEqual(fromToken.symbol, nextFrom.symbol) || fromToken.logo !== nextFrom.logo) {
+        setFromToken(nextFrom);
+      }
+    }
+
+    const prioritizedTo = [toAsset];
+    let nextTo = null;
+    for (const candidate of prioritizedTo) {
+      if (!candidate) continue;
+      const match = findOption(candidate);
+      if (match) {
+        nextTo = match;
+        break;
+      }
+    }
+    if (!nextTo || symbolsEqual(nextTo.symbol, nextFrom.symbol)) {
+      nextTo = tokenOptions.find((option) => !symbolsEqual(option.symbol, nextFrom.symbol)) || null;
+    }
+
+    if (toToken !== nextTo) {
+      const shouldUpdate =
+        (!toToken && nextTo) ||
+        (toToken && (!nextTo || !symbolsEqual(toToken.symbol, nextTo.symbol) || toToken.logo !== nextTo.logo));
+      if (shouldUpdate) {
+        setToToken(nextTo);
+      }
+    }
+  }, [tokenOptions, fromAsset, toAsset, fromToken, toToken]);
+
+  const handleFromTokenChange = useCallback((option) => {
+    setFromToken(option || null);
+  }, []);
+
+  const handleToTokenChange = useCallback((option) => {
+    setToToken(option || null);
+  }, []);
 
   const [fromAmount, setFromAmount] = useState("");
   const [toAmount, setToAmount] = useState("");
@@ -983,8 +1080,10 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
   }, [fromAmount, fromAsset, toAsset, poolData, tokenMap]);
 
   const flipDirection = () => {
-    setFromAsset(toAsset);
-    setToAsset(fromAsset);
+    const previousFrom = fromToken;
+    const previousTo = toToken;
+    setFromToken(previousTo || previousFrom || null);
+    setToToken(previousFrom || previousTo || null);
     setFromAmount(toAmount);
     setToAmount(fromAmount);
     setQuoteDetails(null);
@@ -1224,7 +1323,11 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
                       value={fromAmount}
                       onChange={(event) => setFromAmount(event.target.value)}
                     />
-                    <TokenSelect value={fromAsset} onChange={setFromAsset} options={tokenOptions} />
+                    <TokenSelect
+                      value={fromToken}
+                      onChange={handleFromTokenChange}
+                      options={tokenOptions}
+                    />
                   </div>
                   <div className="swap-input__caption">Pool price updates automatically</div>
                 </div>
@@ -1260,7 +1363,11 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
                       value={toAmount}
                       onChange={(event) => setToAmount(event.target.value)}
                     />
-                    <TokenSelect value={toAsset} onChange={setToAsset} options={tokenOptions} />
+                    <TokenSelect
+                      value={toToken}
+                      onChange={handleToTokenChange}
+                      options={tokenOptions}
+                    />
                   </div>
                 </div>
 
@@ -1422,18 +1529,20 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
     if (!poolData) {
       return [];
     }
-    const tokens = [...(poolData.tokens || [])];
+    const tokens = [...(poolData.tokens || [])].map(withTokenLogo);
     if (poolData.baseToken?.symbol) {
       const key = poolData.baseToken.symbol;
       const exists = tokens.some((token) => token.symbol === key);
       if (!exists) {
         const reserve = poolData.reserves?.[key];
-        tokens.unshift({
-          ...poolData.baseToken,
-          reserveRaw: reserve?.reserveRaw || poolData.baseToken.reserveRaw || "0",
-          reserveFormatted:
-            reserve?.reserveFormatted || poolData.baseToken.reserveFormatted || "0",
-        });
+        tokens.unshift(
+          withTokenLogo({
+            ...poolData.baseToken,
+            reserveRaw: reserve?.reserveRaw || poolData.baseToken.reserveRaw || "0",
+            reserveFormatted:
+              reserve?.reserveFormatted || poolData.baseToken.reserveFormatted || "0",
+          })
+        );
       }
     }
     return tokens;

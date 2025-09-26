@@ -1,12 +1,22 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
+import { TOKENS } from "../config/tokens";
 
 function cx(...a) {
   return a.filter(Boolean).join(" ");
 }
-function tokenIconSrc(symbol) {
-  const key = (symbol || "").toLowerCase();
+function getTokenLogo(token) {
+  if (token?.logo) {
+    return token.logo;
+  }
+  const symbol = token?.symbol || token;
+  const key = String(symbol || "");
+  const config = TOKENS[key.toUpperCase()];
+  if (config?.logo) {
+    return config.logo;
+  }
   const known = new Set(["kta", "kusd", "btc", "eth", "usdc", "sol"]);
-  return known.has(key) ? `/tokens/${key}.svg` : "/tokens/default.svg";
+  const lower = key.toLowerCase();
+  return known.has(lower) ? `/tokens/${lower}.svg` : "/tokens/default.svg";
 }
 
 export default function LiquidityCard({
@@ -50,6 +60,28 @@ export default function LiquidityCard({
     setMode(m);
     onModeChange && onModeChange(m);
   };
+
+  const displayTokenA = useMemo(() => {
+    if (tokenA?.symbol) {
+      const config = TOKENS[tokenA.symbol.toUpperCase()];
+      if (config?.logo && tokenA.logo !== config.logo) {
+        return { ...tokenA, logo: config.logo };
+      }
+      return tokenA;
+    }
+    return TOKENS.KTA;
+  }, [tokenA]);
+
+  const displayTokenB = useMemo(() => {
+    if (tokenB?.symbol) {
+      const config = TOKENS[tokenB.symbol.toUpperCase()];
+      if (config?.logo && tokenB.logo !== config.logo) {
+        return { ...tokenB, logo: config.logo };
+      }
+      return tokenB;
+    }
+    return tokenB;
+  }, [tokenB]);
 
   return (
     <div className={cx("swap-card", "swap-card--panel", "liquidity-card")}>
@@ -120,7 +152,7 @@ export default function LiquidityCard({
 
             <div className="swap-input-block">
               <div className="swap-input-block__top">
-                <span className="swap-input-block__label">Amount {tokenA?.symbol || "Token A"}</span>
+                <span className="swap-input-block__label">Amount {displayTokenA?.symbol || "Token A"}</span>
                 <span className="swap-input-block__balance">{balanceA || ""}</span>
               </div>
               <div className="swap-input">
@@ -134,8 +166,12 @@ export default function LiquidityCard({
                 />
                 <div className="token-select">
                   <button type="button" className="token-trigger" onClick={onSelectTokenA}>
-                    <img className="token-trigger-icon" src={tokenIconSrc(tokenA?.symbol)} alt="token" />
-                    <span className="token-trigger-symbol">{tokenA?.symbol || "—"}</span>
+                    <img
+                      className="token-trigger-icon"
+                      src={getTokenLogo(displayTokenA)}
+                      alt={displayTokenA?.symbol || "Token A"}
+                    />
+                    <span className="token-trigger-symbol">{displayTokenA?.symbol || "—"}</span>
                   </button>
                 </div>
               </div>
@@ -157,8 +193,12 @@ export default function LiquidityCard({
                 />
                 <div className="token-select">
                   <button type="button" className="token-trigger" onClick={onSelectTokenB}>
-                    <img className="token-trigger-icon" src={tokenIconSrc(tokenB?.symbol)} alt="token" />
-                    <span className="token-trigger-symbol">{tokenB?.symbol || "—"}</span>
+                    <img
+                      className="token-trigger-icon"
+                      src={getTokenLogo(displayTokenB)}
+                      alt={displayTokenB?.symbol || "Token B"}
+                    />
+                    <span className="token-trigger-symbol">{displayTokenB?.symbol || "—"}</span>
                   </button>
                 </div>
               </div>
