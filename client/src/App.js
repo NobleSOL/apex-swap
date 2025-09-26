@@ -58,6 +58,117 @@ function formatKeetaBalance(rawBalance) {
   }
 }
 
+function extractAccountAddress(value, seen = new Set()) {
+  if (!value) {
+    return "";
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed;
+  }
+
+  if (typeof value !== "object") {
+    return "";
+  }
+
+  if (seen.has(value)) {
+    return "";
+  }
+  seen.add(value);
+
+  if (typeof value.publicKeyString === "string") {
+    const trimmed = value.publicKeyString.trim();
+    if (trimmed) {
+      return trimmed;
+    }
+  }
+
+  if (value.publicKeyString && typeof value.publicKeyString.get === "function") {
+    try {
+      const resolved = value.publicKeyString.get();
+      if (typeof resolved === "string" && resolved.trim()) {
+        return resolved.trim();
+      }
+    } catch (error) {
+      /* ignore getter errors */
+    }
+  }
+
+  if (typeof value.address === "string" && value.address.trim()) {
+    return value.address.trim();
+  }
+
+  if (value.address && typeof value.address.get === "function") {
+    try {
+      const resolved = value.address.get();
+      if (typeof resolved === "string" && resolved.trim()) {
+        return resolved.trim();
+      }
+    } catch (error) {
+      /* ignore getter errors */
+    }
+  }
+
+  const candidateKeys = [
+    "address",
+    "account",
+    "accountAddress",
+    "publicKey",
+    "public_key",
+    "publicKeyString",
+    "tokenAccount",
+    "token",
+    "id",
+    "value",
+  ];
+
+  for (const key of candidateKeys) {
+    if (!Object.prototype.hasOwnProperty.call(value, key)) {
+      continue;
+    }
+    const nested = value[key];
+    const resolved = extractAccountAddress(nested, seen);
+    if (resolved) {
+      return resolved;
+    }
+  }
+
+  return "";
+}
+
+function resolveBalanceMetadata(entry, index) {
+  const seen = new Set();
+  const candidates = [
+    entry?.accountId,
+    entry?.account,
+    entry?.tokenAccount,
+    entry?.token,
+    entry?.address,
+  ];
+
+  for (const candidate of candidates) {
+    const resolved = extractAccountAddress(candidate, seen);
+    if (resolved) {
+      return { address: resolved, label: resolved };
+    }
+  }
+
+  const labelCandidates = [
+    entry?.symbol,
+    entry?.tokenSymbol,
+    entry?.tokenName,
+    entry?.name,
+  ];
+  for (const label of labelCandidates) {
+    if (typeof label === "string" && label.trim()) {
+      return { address: "", label: label.trim() };
+    }
+  }
+
+  return { address: "", label: `Balance ${index + 1}` };
+}
+
 function SwapIcon() {
   return (
     <svg
@@ -295,9 +406,12 @@ function WalletControls({ wallet, onWalletChange }) {
       if (!/^[0-9a-fA-F]{64}$/.test(trimmed)) {
         throw new Error("Provide a 64-character hexadecimal seed");
       }
+codex/fix-website-issue-with-seed-paste-hu2rah
+
 codex/fix-website-issue-with-seed-paste-v98bbq
 
       const index = Number(indexInput) || 0;
+master
 master
       const account = KeetaLib.Account.fromSeed(trimmed, index);
       const address = account.publicKeyString.get();
@@ -426,12 +540,16 @@ master
             <p className="empty">No balances found</p>
           ) : (
             <ul>
-              {balances.map((entry) => (
-                <li key={entry.accountId || entry.address}>
-                  <span className="token-id">{entry.accountId || entry.address}</span>
-                  <span className="token-value">{entry.formatted}</span>
-                </li>
-              ))}
+              {balances.map((entry, index) => {
+                const label = entry.accountLabel || entry.accountId || `Balance ${index + 1}`;
+                const key = entry.balanceKey || entry.accountId || `${label}-${index}`;
+                return (
+                  <li key={key}>
+                    <span className="token-id">{label}</span>
+                    <span className="token-value">{entry.formatted}</span>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>
@@ -1743,22 +1861,18 @@ function App() {
           accountInfo = await client.client.getAccountInfo(account);
         }
         const balances = Array.isArray(accountInfo?.balances) ? accountInfo.balances : [];
-        const normalized = balances
-          .map((entry) => {
-            const raw = entry?.balance ?? entry?.amount ?? entry?.raw ?? 0;
-            const accountId =
-              entry?.accountId ||
-              entry?.account ||
-              entry?.tokenAccount ||
-              entry?.token ||
-              (entry?.address ? entry.address : "");
-            return {
-              ...entry,
-              accountId,
-              formatted: formatKeetaBalance(raw),
-            };
-          })
-          .filter((entry) => entry.accountId);
+        const normalized = balances.map((entry, index) => {
+          const raw = entry?.balance ?? entry?.amount ?? entry?.raw ?? 0;
+          const { address, label } = resolveBalanceMetadata(entry, index);
+          const uniqueKey = address || `${label}-${index}`;
+          return {
+            ...entry,
+            accountId: address,
+            accountLabel: label,
+            balanceKey: uniqueKey,
+            formatted: formatKeetaBalance(raw),
+          };
+        });
         if (!cancelled) {
           setWallet((prev) => ({
             ...prev,
