@@ -1,14 +1,36 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <defs>
-    <linearGradient id="keeta-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#00ffd1" />
-      <stop offset="100%" stop-color="#00b2ff" />
-    </linearGradient>
-  </defs>
-  <circle cx="32" cy="32" r="30" fill="url(#keeta-gradient)" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <circle cx="256" cy="256" r="248" fill="#121212" />
   <path
-    d="M23 18h6l5.8 9.4L42 18h7l-9.2 14L49 46h-7l-9.2-14.3L29 46h-6l7.8-14z"
-    fill="#0a0f1a"
-    fill-rule="evenodd"
+    d="M96 320c48-88 160-176 288-128 40 16 72 48 96 88"
+    fill="none"
+    stroke="#ffffff"
+    stroke-width="32"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M224 304c24 40 96 88 176 32 24-16 32-48 8-72-24-24-64-24-88-8"
+    fill="none"
+    stroke="#ffffff"
+    stroke-width="32"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M344 224c32-32 80-32 104 0"
+    fill="none"
+    stroke="#ffffff"
+    stroke-width="32"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M120 336c24 16 56 24 88 16"
+    fill="none"
+    stroke="#ffffff"
+    stroke-width="20"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    opacity="0.6"
   />
 </svg>
