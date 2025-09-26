@@ -47,7 +47,35 @@ async function loadBaseTokenDetails(client) {
   };
 }
 
-async function ensureIdentifier(client, account) {
+async function loadIdentifier(client, account) {
+  try {
+    const info = await client.client.getAccountInfo(account);
+    const metadata = info?.info?.metadata;
+    const possibleValues = [
+      metadata?.identifierAccount,
+      metadata?.identifier,
+      metadata?.account,
+    ];
+    for (const value of possibleValues) {
+      if (!value) {
+        continue;
+      }
+      if (typeof value === "string") {
+        return value;
+      }
+      if (typeof value === "object") {
+        if (typeof value?.address === "string") {
+          return value.address;
+        }
+        if (typeof value?.publicKeyString === "string") {
+          return value.publicKeyString;
+        }
+      }
+    }
+  } catch (infoError) {
+    console.warn("Failed to read identifier metadata", infoError);
+  }
+
   try {
     const pending = await client.generateIdentifier(
       KeetaNet.lib.Account.AccountKeyAlgorithm.NETWORK,
@@ -55,21 +83,7 @@ async function ensureIdentifier(client, account) {
     );
     return pending.account.publicKeyString.get();
   } catch (error) {
-    const code =
-      error?.code ||
-      error?.data?.code ||
-      error?.response?.code ||
-      error?.name ||
-      "";
-    const message = error?.message || "";
-    const alreadyExists =
-      /already exists/i.test(message) ||
-      (typeof code === "string" &&
-        /IDENTIFIER|ACCOUNT/i.test(code) &&
-        /EXIST/i.test(code));
-    if (!alreadyExists) {
-      throw error;
-    }
+    console.warn("Falling back to account address for identifier", error);
     return account.publicKeyString.get();
   }
 }
@@ -90,7 +104,7 @@ async function walletHandler(event) {
     const accountIndex = parseAccountIndex(rawIndex);
     const account = KeetaNet.lib.Account.fromSeed(normalizedSeed, accountIndex);
     client = KeetaNet.UserClient.fromNetwork(DEFAULT_NETWORK, account);
-    const identifierAddress = await ensureIdentifier(client, account);
+    const identifierAddress = await loadIdentifier(client, account);
 
     const baseToken = await loadBaseTokenDetails(client);
     const balanceRaw = await client.balance(client.baseToken, { account });

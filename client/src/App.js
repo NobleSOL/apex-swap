@@ -1382,7 +1382,7 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
       return;
     }
     if (!lpAmount) {
-      setRemoveStatus("Enter an LP amount to burn");
+      setRemoveStatus("Enter an LP amount to withdraw");
       return;
     }
     setRemoveStatus("Submitting withdrawal...");
@@ -1750,9 +1750,11 @@ function App() {
         const client = await createKeetaClient(account);
         let accountInfo;
         try {
-          accountInfo = await client.getAccountInfo(account.publicKeyString.get());
+          accountInfo = await client.client.getAccountInfo(
+            account.publicKeyString.get()
+          );
         } catch (infoError) {
-          accountInfo = await client.getAccountInfo(account);
+          accountInfo = await client.client.getAccountInfo(account);
         }
         const balances = Array.isArray(accountInfo?.balances) ? accountInfo.balances : [];
         const normalized = balances
