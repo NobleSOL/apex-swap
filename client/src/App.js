@@ -1,7 +1,7 @@
 /* global BigInt */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
-import { lib as KeetaLib } from "@keetanetwork/keetanet-client";
+import { lib as KeetaLib, UserClient as KeetaUserClient } from "@keetanetwork/keetanet-client";
 import { applyBrandTheme } from "./theme";
 import {
   calculateLiquidityQuote,
@@ -23,6 +23,40 @@ const TOKEN_ICON_PATHS = {
   kta: "/tokens/kta.svg",
   test: "/tokens/default.svg",
 };
+
+const KEETA_NETWORK_PREFERENCES = ["testnet", "test"];
+
+async function createKeetaClient(account) {
+  let lastError = null;
+  for (const network of KEETA_NETWORK_PREFERENCES) {
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      return await KeetaUserClient.fromNetwork(network, account || undefined);
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  if (lastError) {
+    throw lastError;
+  }
+  throw new Error("Unable to initialize Keeta client");
+}
+
+function formatKeetaBalance(rawBalance) {
+  try {
+    const balance = BigInt(rawBalance ?? 0);
+    const divisor = 1_000_000_000n;
+    const negative = balance < 0n;
+    const absolute = negative ? -balance : balance;
+    const whole = absolute / divisor;
+    const fraction = (absolute % divisor).toString().padStart(9, "0");
+    const trimmedFraction = fraction.replace(/0+$/, "");
+    const prefix = negative ? "-" : "";
+    return trimmedFraction ? `${prefix}${whole}.${trimmedFraction}` : `${prefix}${whole}`;
+  } catch (error) {
+    return "0";
+  }
+}
 
 function SwapIcon() {
   return (
@@ -173,6 +207,9 @@ function WalletControls({ wallet, onWalletChange }) {
   const [seedInput, setSeedInput] = useState(wallet.seed || "");
   const [indexInput, setIndexInput] = useState(wallet.index || 0);
   const [status, setStatus] = useState("");
+  const balances = wallet.balances || [];
+  const balanceLoading = Boolean(wallet.balanceLoading);
+  const balanceError = wallet.balanceError || "";
 
   useEffect(() => {
     setSeedInput(wallet.seed || "");
@@ -195,7 +232,14 @@ function WalletControls({ wallet, onWalletChange }) {
       const index = Number(indexInput) || 0;
       const account = KeetaLib.Account.fromSeed(trimmed, index);
       const address = account.publicKeyString.get();
-      onWalletChange({ seed: trimmed, index, address });
+      onWalletChange({
+        seed: trimmed,
+        index,
+        address,
+        account,
+        balanceError: "",
+        balances: [],
+      });
       setStatus(`Connected ${formatAddress(address)}`);
     } catch (error) {
       setStatus(error.message);
@@ -253,6 +297,25 @@ function WalletControls({ wallet, onWalletChange }) {
       {wallet.address && (
         <div className="info-line">
           Connected address: <code className="wallet-address">{wallet.address}</code>
+        </div>
+      )}
+      {balanceLoading && <p className="status">Loading balances…</p>}
+      {balanceError && <p className="status">{balanceError}</p>}
+      {wallet.address && !balanceLoading && !balanceError && (
+        <div className="wallet-balances">
+          <h3>Balances</h3>
+          {balances.length === 0 ? (
+            <p className="empty">No balances found</p>
+          ) : (
+            <ul>
+              {balances.map((entry) => (
+                <li key={entry.accountId || entry.address}>
+                  <span className="token-id">{entry.accountId || entry.address}</span>
+                  <span className="token-value">{entry.formatted}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
       {status && <p className="status">{status}</p>}
@@ -1376,8 +1439,27 @@ function App() {
       ? "pools"
       : "swap"
   );
-  const [wallet, setWallet] = useState({ seed: "", index: 0, address: "" });
+  const [wallet, setWallet] = useState({
+    seed: "",
+    index: 0,
+    address: "",
+    account: null,
+    balances: [],
+    balanceLoading: false,
+    balanceError: "",
+  });
   const poolState = usePoolState();
+  const walletSeed = wallet.seed;
+  const walletIndex = wallet.index;
+  const walletAddress = wallet.address;
+  const walletAccount = wallet.account;
+  const walletAccountKey = (() => {
+    try {
+      return walletAccount?.publicKeyString?.get?.() || null;
+    } catch (error) {
+      return null;
+    }
+  })();
 
   const scrollToSection = useCallback((id) => {
     if (typeof window === "undefined") return;
@@ -1429,6 +1511,89 @@ function App() {
   const handleConnectClick = useCallback(() => {
     scrollToSection("wallet-panel");
   }, [scrollToSection]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadBalances = async () => {
+      if (!walletSeed || !walletAddress) {
+        setWallet((prev) => {
+          if (
+            (!prev.balances || prev.balances.length === 0) &&
+            !prev.balanceLoading &&
+            !prev.balanceError
+          ) {
+            return prev;
+          }
+          return {
+            ...prev,
+            balances: [],
+            balanceError: "",
+            balanceLoading: false,
+          };
+        });
+        return;
+      }
+      setWallet((prev) => ({
+        ...prev,
+        balanceLoading: true,
+        balanceError: "",
+      }));
+      try {
+        let account = walletAccount;
+        if (!account) {
+          account = KeetaLib.Account.fromSeed(walletSeed, walletIndex || 0);
+        }
+        const client = await createKeetaClient(account);
+        let accountInfo;
+        try {
+          accountInfo = await client.getAccountInfo(account.publicKeyString.get());
+        } catch (infoError) {
+          accountInfo = await client.getAccountInfo(account);
+        }
+        const balances = Array.isArray(accountInfo?.balances) ? accountInfo.balances : [];
+        const normalized = balances
+          .map((entry) => {
+            const raw = entry?.balance ?? entry?.amount ?? entry?.raw ?? 0;
+            const accountId =
+              entry?.accountId ||
+              entry?.account ||
+              entry?.tokenAccount ||
+              entry?.token ||
+              (entry?.address ? entry.address : "");
+            return {
+              ...entry,
+              accountId,
+              formatted: formatKeetaBalance(raw),
+            };
+          })
+          .filter((entry) => entry.accountId);
+        if (!cancelled) {
+          setWallet((prev) => ({
+            ...prev,
+            account,
+            balances: normalized,
+            balanceLoading: false,
+            balanceError: "",
+          }));
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setWallet((prev) => ({
+            ...prev,
+            balances: [],
+            balanceLoading: false,
+            balanceError: error?.message || "Failed to load balances",
+          }));
+        }
+      }
+    };
+
+    loadBalances();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [walletSeed, walletIndex, walletAddress, walletAccountKey, walletAccount]);
 
   return (
     <div className="app">
