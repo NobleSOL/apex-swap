@@ -503,6 +503,7 @@ function WalletControls({ wallet, onWalletChange }) {
       if (!/^[0-9a-fA-F]{64}$/.test(trimmed)) {
         throw new Error("Provide a 64-character hexadecimal seed");
       }
+
 codex/fix-website-issue-with-seed-paste-n3ykf1
 
 codex/fix-website-issue-with-seed-paste-hu2rah
