@@ -53,6 +53,7 @@ function deriveAccount(seed, accountIndex, allowOfflineFallback) {
   };
 }
 
+codex/update-addliquidity-and-removeliquidity-functions-ipb5ij
 function parseOverrides(payload) {
   if (!payload || typeof payload !== "object") {
     return {};
@@ -75,6 +76,8 @@ function parseOverrides(payload) {
   return overrides;
 }
 
+
+master
 function parseAccountIndex(index) {
   if (index === undefined || index === null || index === "") {
     return 0;
@@ -186,6 +189,7 @@ async function walletHandler(event) {
 
   let client;
   try {
+codex/update-addliquidity-and-removeliquidity-functions-ipb5ij
     const payload = parseBody(event.body);
     const { seed, accountIndex: rawIndex } = payload;
     const accountIndex = parseAccountIndex(rawIndex);
@@ -205,12 +209,45 @@ async function walletHandler(event) {
         message: "Wallet details fetched from offline fixture",
       });
 
+    const { seed, accountIndex: rawIndex } = parseBody(event.body);
+    const accountIndex = parseAccountIndex(rawIndex);
+    const offlineContext = await loadOfflinePoolContext();
+    const { normalizedSeed, account } = deriveAccount(
+      seed,
+      accountIndex,
+      Boolean(offlineContext)
+    );
+    if (offlineContext) {
+      const baseToken = offlineContext.baseToken || {};
+      const network = offlineContext.network || DEFAULT_NETWORK;
+      const address = account.publicKeyString.get();
+      const decimalsValue = Number(baseToken.decimals);
+      const decimals = Number.isFinite(decimalsValue) && decimalsValue >= 0 ? decimalsValue : 0;
+      const response = {
+        seed: normalizedSeed,
+        accountIndex,
+        address,
+        identifier: address,
+        network,
+        baseToken: {
+          symbol: baseToken.symbol || "KTA",
+          address: baseToken.address || "",
+          decimals,
+          metadata: baseToken.metadata || {},
+          balanceRaw: "0",
+          balanceFormatted: "0",
+        },
+        message: "Wallet details fetched from offline fixture",
+      };
+master
+
       return {
         statusCode: 200,
         body: JSON.stringify(response),
       };
     }
 
+codex/update-addliquidity-and-removeliquidity-functions-ipb5ij
     try {
       client = KeetaNet.UserClient.fromNetwork(DEFAULT_NETWORK, account);
       const identifierAddress = await loadIdentifier(client, account);
@@ -223,6 +260,54 @@ async function walletHandler(event) {
         console.warn("Falling back to zero balance for wallet", balanceError);
         balanceRaw = 0n;
       }
+
+codex/update-addliquidity-and-removeliquidity-functions-gkkb6z
+
+    const accountIndex = parseAccountIndex(rawIndex);
+    const account = KeetaNet.lib.Account.fromSeed(normalizedSeed, accountIndex);
+    const offlineContext = await loadOfflinePoolContext();
+    if (offlineContext) {
+      const baseToken = offlineContext.baseToken || {};
+      const network = offlineContext.network || DEFAULT_NETWORK;
+      const address = account.publicKeyString.get();
+      const decimalsValue = Number(baseToken.decimals);
+      const decimals = Number.isFinite(decimalsValue) && decimalsValue >= 0 ? decimalsValue : 0;
+      const response = {
+        seed: normalizedSeed,
+        accountIndex,
+        address,
+        identifier: address,
+        network,
+        baseToken: {
+          symbol: baseToken.symbol || "KTA",
+          address: baseToken.address || "",
+          decimals,
+          metadata: baseToken.metadata || {},
+          balanceRaw: "0",
+          balanceFormatted: "0",
+        },
+        message: "Wallet details fetched from offline fixture",
+      };
+
+      return {
+        statusCode: 200,
+        body: JSON.stringify(response),
+      };
+    }
+
+master
+    client = KeetaNet.UserClient.fromNetwork(DEFAULT_NETWORK, account);
+    const identifierAddress = await loadIdentifier(client, account);
+
+    const baseToken = await loadBaseTokenDetails(client);
+    let balanceRaw;
+    try {
+      balanceRaw = await client.balance(client.baseToken, { account });
+    } catch (balanceError) {
+      console.warn("Falling back to zero balance for wallet", balanceError);
+      balanceRaw = 0n;
+    }
+master
 
       const response = {
         seed: normalizedSeed,
