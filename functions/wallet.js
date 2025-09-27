@@ -167,7 +167,13 @@ async function walletHandler(event) {
     const identifierAddress = await loadIdentifier(client, account);
 
     const baseToken = await loadBaseTokenDetails(client);
-    const balanceRaw = await client.balance(client.baseToken, { account });
+    let balanceRaw;
+    try {
+      balanceRaw = await client.balance(client.baseToken, { account });
+    } catch (balanceError) {
+      console.warn("Falling back to zero balance for wallet", balanceError);
+      balanceRaw = 0n;
+    }
 
     const response = {
       seed: normalizedSeed,
