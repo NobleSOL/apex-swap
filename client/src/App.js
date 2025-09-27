@@ -996,8 +996,13 @@ function Footer({ onNavigate }) {
 }
 
 function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
-  const { data: poolData, loading: poolLoading, error: poolError, refresh } =
-    poolState;
+  const {
+    data: poolData,
+    loading: poolLoading,
+    error: poolError,
+    refresh,
+    overrides: poolOverrides,
+  } = poolState;
   const tokenOptions = useMemo(() => {
     const seen = new Set();
     const options = [];
@@ -1232,28 +1237,42 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
     setQuoteDetails(null);
 
     try {
+      const tokenOverrides = poolOverrides?.tokenAddresses
+        ? { ...poolOverrides.tokenAddresses }
+        : undefined;
+      const poolOverrideAccount = (poolOverrides?.poolAccount || "").trim();
+      const requestPayload = {
+        seed: wallet.seed,
+        poolId: poolAddress,
+        poolAccount: poolOverrideAccount || poolAddress,
+        tokenIn: tokenIn.address,
+        tokenInSymbol: tokenIn.symbol,
+        tokenOut: tokenOut.address,
+        tokenOutSymbol: tokenOut.symbol,
+        amountIn: amountInRaw.toString(),
+        accountIndex: wallet.index || 0,
+      };
+      if (tokenOverrides && Object.keys(tokenOverrides).length > 0) {
+        requestPayload.tokenAddresses = tokenOverrides;
+      }
       const response = await fetch("/.netlify/functions/swap", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          seed: wallet.seed,
-          poolId: poolAddress,
-          tokenIn: tokenIn.address,
-          tokenOut: tokenOut.address,
-          amountIn: amountInRaw.toString(),
-          accountIndex: wallet.index || 0,
-        }),
+        body: JSON.stringify(requestPayload),
       });
       const payload = await response.json();
       if (!response.ok) {
         throw new Error(payload.error || "Swap failed");
       }
       setQuoteDetails(null);
-      setStatus(
-        payload.txHash
-          ? `Swap submitted. Tx hash: ${payload.txHash}`
-          : "Swap submitted"
-      );
+      const toAmountFormatted = payload?.tokens?.to?.amountFormatted;
+      const toSymbolLabel = payload?.tokens?.to?.symbol || tokenOut.symbol;
+      const baseMessage = payload?.message || "Swap prepared.";
+      const summary =
+        toAmountFormatted && toSymbolLabel
+          ? `Swap prepared: ${toAmountFormatted} ${toSymbolLabel}. ${baseMessage}`
+          : baseMessage;
+      setStatus(summary);
       refresh();
     } catch (error) {
       setStatus(`Swap failed: ${error.message}`);
