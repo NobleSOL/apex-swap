@@ -12,6 +12,6 @@ export const TOKENS = {
     symbol: "SBCK",
     name: "SILVERBACK",
     logo:
-      "https://cdn.builder.io/api/v1/image/assets%2Fd70091a6f5494e0195b033a72f7e79ae%2F316c172f5440403d88a503ff80e72bbd?format=webp&width=256",
+      "https://cdn.builder.io/api/v1/image/assets%2Fd70091a6f5494e0195b033a72f7e79ae%2F116ddd439df04721809dcdc66245e3fa?format=webp&width=256",
   },
 };
