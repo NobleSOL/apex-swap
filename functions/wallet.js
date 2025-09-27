@@ -1,10 +1,14 @@
+import { createHash } from "node:crypto";
 import * as KeetaNet from "@keetanetwork/keetanet-client";
 import { withCors } from "./cors.js";
 import {
   DEFAULT_NETWORK,
   decodeMetadata,
   formatAmount,
+  loadOfflinePoolContext,
 } from "./utils/keeta.js";
+
+const HEX_SEED_REGEX = /^[0-9a-f]{64}$/i;
 
 function parseBody(body) {
   if (!body) return {};
@@ -20,6 +24,33 @@ function normalizeSeed(seed) {
     return "";
   }
   return String(seed).trim();
+}
+
+function hashSeedForOffline(seed) {
+  const hashed = createHash("sha256").update(seed).digest("hex");
+  return hashed.padEnd(64, "0").slice(0, 64);
+}
+
+function deriveAccount(seed, accountIndex, allowOfflineFallback) {
+  const normalizedSeed = normalizeSeed(seed);
+  if (!normalizedSeed) {
+    throw new Error("A wallet seed is required");
+  }
+
+  const usableSeed = HEX_SEED_REGEX.test(normalizedSeed)
+    ? normalizedSeed
+    : allowOfflineFallback
+    ? hashSeedForOffline(normalizedSeed)
+    : null;
+
+  if (!usableSeed) {
+    throw new Error("Provide a 64-character hexadecimal seed");
+  }
+
+  return {
+    normalizedSeed,
+    account: KeetaNet.lib.Account.fromSeed(usableSeed, accountIndex),
+  };
 }
 
 function parseAccountIndex(index) {
@@ -96,13 +127,42 @@ async function walletHandler(event) {
   let client;
   try {
     const { seed, accountIndex: rawIndex } = parseBody(event.body);
-    const normalizedSeed = normalizeSeed(seed);
-    if (!normalizedSeed) {
-      throw new Error("A wallet seed is required");
+    const accountIndex = parseAccountIndex(rawIndex);
+    const offlineContext = await loadOfflinePoolContext();
+    const { normalizedSeed, account } = deriveAccount(
+      seed,
+      accountIndex,
+      Boolean(offlineContext)
+    );
+    if (offlineContext) {
+      const baseToken = offlineContext.baseToken || {};
+      const network = offlineContext.network || DEFAULT_NETWORK;
+      const address = account.publicKeyString.get();
+      const decimalsValue = Number(baseToken.decimals);
+      const decimals = Number.isFinite(decimalsValue) && decimalsValue >= 0 ? decimalsValue : 0;
+      const response = {
+        seed: normalizedSeed,
+        accountIndex,
+        address,
+        identifier: address,
+        network,
+        baseToken: {
+          symbol: baseToken.symbol || "KTA",
+          address: baseToken.address || "",
+          decimals,
+          metadata: baseToken.metadata || {},
+          balanceRaw: "0",
+          balanceFormatted: "0",
+        },
+        message: "Wallet details fetched from offline fixture",
+      };
+
+      return {
+        statusCode: 200,
+        body: JSON.stringify(response),
+      };
     }
 
-    const accountIndex = parseAccountIndex(rawIndex);
-    const account = KeetaNet.lib.Account.fromSeed(normalizedSeed, accountIndex);
     client = KeetaNet.UserClient.fromNetwork(DEFAULT_NETWORK, account);
     const identifierAddress = await loadIdentifier(client, account);
 
