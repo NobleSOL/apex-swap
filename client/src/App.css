@@ -674,6 +674,12 @@ body {
   color: var(--brand-primary);
 }
 
+.config-hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
 .token-select {
   position: relative;
 }
