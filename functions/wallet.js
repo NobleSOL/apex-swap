@@ -10,6 +10,7 @@ import {
 
 const HEX_SEED_REGEX = /^[0-9a-f]{64}$/i;
 
+codex/update-addliquidity-and-removeliquidity-functions-no9t62
 const DEFAULT_WALLET_TIMEOUT_MS = (() => {
   const candidates = [
     process.env.KEETA_WALLET_TIMEOUT_MS,
@@ -27,6 +28,8 @@ const DEFAULT_WALLET_TIMEOUT_MS = (() => {
   return 5000;
 })();
 
+
+master
 function parseBody(body) {
   if (!body) return {};
   try {
@@ -48,6 +51,7 @@ function hashSeedForOffline(seed) {
   return hashed.padEnd(64, "0").slice(0, 64);
 }
 
+codex/update-addliquidity-and-removeliquidity-functions-no9t62
 async function attemptWithTimeout(operation, options = {}) {
   const { label = "network operation", timeoutMs = DEFAULT_WALLET_TIMEOUT_MS } =
     options;
@@ -78,6 +82,8 @@ async function attemptWithTimeout(operation, options = {}) {
   }
 }
 
+
+master
 function deriveAccount(seed, accountIndex, allowOfflineFallback) {
   const normalizedSeed = normalizeSeed(seed);
   if (!normalizedSeed) {
@@ -100,6 +106,10 @@ function deriveAccount(seed, accountIndex, allowOfflineFallback) {
   };
 }
 
+codex/update-addliquidity-and-removeliquidity-functions-no9t62
+
+codex/update-addliquidity-and-removeliquidity-functions-ipb5ij
+master
 function parseOverrides(payload) {
   if (!payload || typeof payload !== "object") {
     return {};
@@ -122,6 +132,10 @@ function parseOverrides(payload) {
   return overrides;
 }
 
+codex/update-addliquidity-and-removeliquidity-functions-no9t62
+
+master
+master
 function parseAccountIndex(index) {
   if (index === undefined || index === null || index === "") {
     return 0;
@@ -233,6 +247,10 @@ async function walletHandler(event) {
 
   let client;
   try {
+codex/update-addliquidity-and-removeliquidity-functions-no9t62
+
+codex/update-addliquidity-and-removeliquidity-functions-ipb5ij
+master
     const payload = parseBody(event.body);
     const { seed, accountIndex: rawIndex } = payload;
     const accountIndex = parseAccountIndex(rawIndex);
@@ -252,12 +270,48 @@ async function walletHandler(event) {
         message: "Wallet details fetched from offline fixture",
       });
 
+codex/update-addliquidity-and-removeliquidity-functions-no9t62
+
+    const { seed, accountIndex: rawIndex } = parseBody(event.body);
+    const accountIndex = parseAccountIndex(rawIndex);
+    const offlineContext = await loadOfflinePoolContext();
+    const { normalizedSeed, account } = deriveAccount(
+      seed,
+      accountIndex,
+      Boolean(offlineContext)
+    );
+    if (offlineContext) {
+      const baseToken = offlineContext.baseToken || {};
+      const network = offlineContext.network || DEFAULT_NETWORK;
+      const address = account.publicKeyString.get();
+      const decimalsValue = Number(baseToken.decimals);
+      const decimals = Number.isFinite(decimalsValue) && decimalsValue >= 0 ? decimalsValue : 0;
+      const response = {
+        seed: normalizedSeed,
+        accountIndex,
+        address,
+        identifier: address,
+        network,
+        baseToken: {
+          symbol: baseToken.symbol || "KTA",
+          address: baseToken.address || "",
+          decimals,
+          metadata: baseToken.metadata || {},
+          balanceRaw: "0",
+          balanceFormatted: "0",
+        },
+        message: "Wallet details fetched from offline fixture",
+      };
+master
+
+master
       return {
         statusCode: 200,
         body: JSON.stringify(response),
       };
     }
 
+codex/update-addliquidity-and-removeliquidity-functions-no9t62
     try {
       client = KeetaNet.UserClient.fromNetwork(DEFAULT_NETWORK, account);
       const [identifierLookup, baseTokenLookup, balanceLookup] = await Promise.all([
@@ -326,6 +380,86 @@ async function walletHandler(event) {
         )}`;
       }
 
+
+codex/update-addliquidity-and-removeliquidity-functions-ipb5ij
+    try {
+      client = KeetaNet.UserClient.fromNetwork(DEFAULT_NETWORK, account);
+      const identifierAddress = await loadIdentifier(client, account);
+
+      const baseToken = await loadBaseTokenDetails(client);
+      let balanceRaw;
+      try {
+        balanceRaw = await client.balance(client.baseToken, { account });
+      } catch (balanceError) {
+        console.warn("Falling back to zero balance for wallet", balanceError);
+        balanceRaw = 0n;
+      }
+
+codex/update-addliquidity-and-removeliquidity-functions-gkkb6z
+
+    const accountIndex = parseAccountIndex(rawIndex);
+    const account = KeetaNet.lib.Account.fromSeed(normalizedSeed, accountIndex);
+    const offlineContext = await loadOfflinePoolContext();
+    if (offlineContext) {
+      const baseToken = offlineContext.baseToken || {};
+      const network = offlineContext.network || DEFAULT_NETWORK;
+      const address = account.publicKeyString.get();
+      const decimalsValue = Number(baseToken.decimals);
+      const decimals = Number.isFinite(decimalsValue) && decimalsValue >= 0 ? decimalsValue : 0;
+      const response = {
+        seed: normalizedSeed,
+        accountIndex,
+        address,
+        identifier: address,
+        network,
+        baseToken: {
+          symbol: baseToken.symbol || "KTA",
+          address: baseToken.address || "",
+          decimals,
+          metadata: baseToken.metadata || {},
+          balanceRaw: "0",
+          balanceFormatted: "0",
+        },
+        message: "Wallet details fetched from offline fixture",
+      };
+
+      return {
+        statusCode: 200,
+        body: JSON.stringify(response),
+      };
+    }
+
+master
+    client = KeetaNet.UserClient.fromNetwork(DEFAULT_NETWORK, account);
+    const identifierAddress = await loadIdentifier(client, account);
+
+    const baseToken = await loadBaseTokenDetails(client);
+    let balanceRaw;
+    try {
+      balanceRaw = await client.balance(client.baseToken, { account });
+    } catch (balanceError) {
+      console.warn("Falling back to zero balance for wallet", balanceError);
+      balanceRaw = 0n;
+    }
+master
+
+      const response = {
+        seed: normalizedSeed,
+        accountIndex,
+        address: account.publicKeyString.get(),
+        identifier: identifierAddress,
+        network: DEFAULT_NETWORK,
+        baseToken: {
+          symbol: baseToken.symbol,
+          address: baseToken.address,
+          decimals: baseToken.decimals,
+          metadata: baseToken.metadata,
+          balanceRaw: balanceRaw.toString(),
+          balanceFormatted: formatAmount(balanceRaw, baseToken.decimals),
+        },
+      };
+
+master
       return {
         statusCode: 200,
         body: JSON.stringify(response),
