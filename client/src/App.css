@@ -1015,6 +1015,12 @@ body {
 }
 
 @media (max-width: 1024px) {
+  .hero-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
   .swap-row {
     grid-template-columns: 1fr;
   }
