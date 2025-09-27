@@ -5,4 +5,9 @@ export const TOKENS = {
     logo: "/tokens/kta.svg",
     isNative: true,
   },
+  RIDE: {
+    symbol: "RIDE",
+    name: "Riding Liquid",
+    logo: "/tokens/ride.svg",
+  },
 };

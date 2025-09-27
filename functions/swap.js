@@ -1,5 +1,6 @@
 import { UserClient, lib as KeetaNetLib } from "@keetanetwork/keetanet-client";
 import { withCors } from "./cors.js";
+import { normalizeNetworkName } from "./utils/keeta.js";
 
 function parseRequest(event) {
   if (!event?.body) {
@@ -49,7 +50,7 @@ async function swap(event) {
     }
 
     const account = KeetaNetLib.Account.fromSeed(seed, accountIndex);
-    const network = process.env.KEETA_NETWORK || "test";
+    const network = normalizeNetworkName(process.env.KEETA_NETWORK || "test");
     client = UserClient.fromNetwork(network);
 
     const tx = await client.buildBlock({
