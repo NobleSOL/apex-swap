@@ -12,16 +12,15 @@ export async function createPool(quoteTokenIdRaw: string) {
 
   const lpIdentifier = `SILVERBACK_LP_${baseTokenId}_${quoteTokenId}_${Date.now()}`;
 
-  const builder = dexClient.initBuilder();
-  builder
-    .block()
-    .addAccount(dexAccount)
-    .addOperation(
-      new KeetaNet.Referenced.BlockOperationCREATE_IDENTIFIER({
-        identifier: lpIdentifier,
-      }),
-    )
-    .seal();
+  const builder: any = dexClient.initBuilder();
+  builder.block?.();
+  builder.addAccount?.(dexAccount);
+  builder.addOperation?.(
+    new (KeetaNet as any).Referenced.BlockOperationCREATE_IDENTIFIER({
+      identifier: lpIdentifier,
+    }),
+  );
+  builder.seal?.();
 
   await dexClient.publishBuilder(builder);
 
@@ -31,10 +30,10 @@ export async function createPool(quoteTokenIdRaw: string) {
     metadata: JSON.stringify({ silverback: true, base: baseTokenId, quote: quoteTokenId }),
   });
 
-  await dexClient.updatePermissions(
+  await (dexClient as any).updatePermissions(
     dexAccount,
     { base: { TOKEN_ADMIN_SUPPLY: true } },
-    KeetaNet.lib.Account.fromPublicKeyString(lpIdentifier),
+    (KeetaNet as any).lib.Account.fromPublicKeyString(lpIdentifier),
   );
 
   return { baseTokenId, quoteTokenId, lpIdentifier };
