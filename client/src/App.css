@@ -380,10 +380,6 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: var(--brand-surface);
-  padding: 6px;
 }
 
 .swap-input .token-select {
@@ -391,20 +387,18 @@ body {
 }
 
 .swap-input .token-trigger {
-  background: transparent;
-  border: none;
-  height: auto;
-  padding: 8px 12px;
+  height: 100%;
 }
 
 .swap-input input {
   flex: 1;
-  border: none;
-  background: transparent;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
   color: var(--text-primary);
   font-size: 22px;
   font-weight: 600;
-  padding: 12px 14px;
+  padding: 16px 18px;
 }
 
 .swap-input input::placeholder {
@@ -744,8 +738,8 @@ body {
   overflow: hidden;
 }
 .token-backdrop__inner {
-  width: 80%;
-  height: 80%;
+  width: 68%;
+  height: 68%;
   background: #ffffff;
   border-radius: 50%;
   display: flex;
