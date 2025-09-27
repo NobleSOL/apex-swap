@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "smoke-offline": "node ./tests/offline-smoke.mjs",
+    "smoke-wallet-fallback": "node ./tests/wallet-fallback.mjs",
+    "test": "npm run smoke-offline && npm run smoke-wallet-fallback"
   },
   "repository": {
     "type": "git",
