@@ -170,6 +170,11 @@ export default function LiquidityCard({
                       className="token-trigger-icon"
                       src={getTokenLogo(displayTokenA)}
                       alt={displayTokenA?.symbol || "Token A"}
+                      onError={(e) => {
+                        if (e && e.target && e.target.src) {
+                          e.target.src = "/tokens/default.svg";
+                        }
+                      }}
                     />
                     <span className="token-trigger-symbol">{displayTokenA?.symbol || "—"}</span>
                   </button>
@@ -197,6 +202,11 @@ export default function LiquidityCard({
                       className="token-trigger-icon"
                       src={getTokenLogo(displayTokenB)}
                       alt={displayTokenB?.symbol || "Token B"}
+                      onError={(e) => {
+                        if (e && e.target && e.target.src) {
+                          e.target.src = "/tokens/default.svg";
+                        }
+                      }}
                     />
                     <span className="token-trigger-symbol">{displayTokenB?.symbol || "—"}</span>
                   </button>
