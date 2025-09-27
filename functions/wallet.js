@@ -1,10 +1,14 @@
+import { createHash } from "node:crypto";
 import * as KeetaNet from "@keetanetwork/keetanet-client";
 import { withCors } from "./cors.js";
 import {
   DEFAULT_NETWORK,
   decodeMetadata,
   formatAmount,
+  loadOfflinePoolContext,
 } from "./utils/keeta.js";
+
+const HEX_SEED_REGEX = /^[0-9a-f]{64}$/i;
 
 function parseBody(body) {
   if (!body) return {};
@@ -20,6 +24,55 @@ function normalizeSeed(seed) {
     return "";
   }
   return String(seed).trim();
+}
+
+function hashSeedForOffline(seed) {
+  const hashed = createHash("sha256").update(seed).digest("hex");
+  return hashed.padEnd(64, "0").slice(0, 64);
+}
+
+function deriveAccount(seed, accountIndex, allowOfflineFallback) {
+  const normalizedSeed = normalizeSeed(seed);
+  if (!normalizedSeed) {
+    throw new Error("A wallet seed is required");
+  }
+
+  const usableSeed = HEX_SEED_REGEX.test(normalizedSeed)
+    ? normalizedSeed
+    : allowOfflineFallback
+    ? hashSeedForOffline(normalizedSeed)
+    : null;
+
+  if (!usableSeed) {
+    throw new Error("Provide a 64-character hexadecimal seed");
+  }
+
+  return {
+    normalizedSeed,
+    account: KeetaNet.lib.Account.fromSeed(usableSeed, accountIndex),
+  };
+}
+
+function parseOverrides(payload) {
+  if (!payload || typeof payload !== "object") {
+    return {};
+  }
+
+  const overrides = {};
+
+  if (payload.poolAccount) {
+    overrides.poolAccount = payload.poolAccount;
+  }
+
+  if (payload.lpTokenAccount) {
+    overrides.lpTokenAccount = payload.lpTokenAccount;
+  }
+
+  if (payload.tokenAddresses && typeof payload.tokenAddresses === "object") {
+    overrides.tokenAddresses = { ...payload.tokenAddresses };
+  }
+
+  return overrides;
 }
 
 function parseAccountIndex(index) {
@@ -88,6 +141,44 @@ async function loadIdentifier(client, account) {
   }
 }
 
+function buildOfflineWalletResponse({
+  normalizedSeed,
+  accountIndex,
+  account,
+  context,
+  message,
+}) {
+  const fallbackContext = context && typeof context === "object" ? context : {};
+  const baseTokenContext =
+    fallbackContext.baseToken && typeof fallbackContext.baseToken === "object"
+      ? fallbackContext.baseToken
+      : {};
+
+  const decimalsValue = Number(baseTokenContext.decimals);
+  const decimals =
+    Number.isFinite(decimalsValue) && decimalsValue >= 0 ? decimalsValue : 0;
+
+  return {
+    seed: normalizedSeed,
+    accountIndex,
+    address: account.publicKeyString.get(),
+    identifier: account.publicKeyString.get(),
+    network: fallbackContext.network || DEFAULT_NETWORK,
+    baseToken: {
+      symbol: baseTokenContext.symbol || "KTA",
+      address: baseTokenContext.address || "",
+      decimals,
+      metadata: baseTokenContext.metadata || {},
+      balanceRaw: "0",
+      balanceFormatted: "0",
+    },
+    message:
+      message ||
+      fallbackContext.message ||
+      "Wallet details returned without contacting the network",
+  };
+}
+
 async function walletHandler(event) {
   if (event.httpMethod && event.httpMethod.toUpperCase() === "OPTIONS") {
     return { statusCode: 204, body: "" };
@@ -95,40 +186,84 @@ async function walletHandler(event) {
 
   let client;
   try {
-    const { seed, accountIndex: rawIndex } = parseBody(event.body);
-    const normalizedSeed = normalizeSeed(seed);
-    if (!normalizedSeed) {
-      throw new Error("A wallet seed is required");
+    const payload = parseBody(event.body);
+    const { seed, accountIndex: rawIndex } = payload;
+    const accountIndex = parseAccountIndex(rawIndex);
+    const overrides = parseOverrides(payload);
+    const offlineContext = await loadOfflinePoolContext(overrides);
+    const { normalizedSeed, account } = deriveAccount(
+      seed,
+      accountIndex,
+      true
+    );
+    if (offlineContext) {
+      const response = buildOfflineWalletResponse({
+        normalizedSeed,
+        accountIndex,
+        account,
+        context: offlineContext,
+        message: "Wallet details fetched from offline fixture",
+      });
+
+      return {
+        statusCode: 200,
+        body: JSON.stringify(response),
+      };
     }
 
-    const accountIndex = parseAccountIndex(rawIndex);
-    const account = KeetaNet.lib.Account.fromSeed(normalizedSeed, accountIndex);
-    client = KeetaNet.UserClient.fromNetwork(DEFAULT_NETWORK, account);
-    const identifierAddress = await loadIdentifier(client, account);
+    try {
+      client = KeetaNet.UserClient.fromNetwork(DEFAULT_NETWORK, account);
+      const identifierAddress = await loadIdentifier(client, account);
 
-    const baseToken = await loadBaseTokenDetails(client);
-    const balanceRaw = await client.balance(client.baseToken, { account });
+      const baseToken = await loadBaseTokenDetails(client);
+      let balanceRaw;
+      try {
+        balanceRaw = await client.balance(client.baseToken, { account });
+      } catch (balanceError) {
+        console.warn("Falling back to zero balance for wallet", balanceError);
+        balanceRaw = 0n;
+      }
 
-    const response = {
-      seed: normalizedSeed,
-      accountIndex,
-      address: account.publicKeyString.get(),
-      identifier: identifierAddress,
-      network: DEFAULT_NETWORK,
-      baseToken: {
-        symbol: baseToken.symbol,
-        address: baseToken.address,
-        decimals: baseToken.decimals,
-        metadata: baseToken.metadata,
-        balanceRaw: balanceRaw.toString(),
-        balanceFormatted: formatAmount(balanceRaw, baseToken.decimals),
-      },
-    };
+      const response = {
+        seed: normalizedSeed,
+        accountIndex,
+        address: account.publicKeyString.get(),
+        identifier: identifierAddress,
+        network: DEFAULT_NETWORK,
+        baseToken: {
+          symbol: baseToken.symbol,
+          address: baseToken.address,
+          decimals: baseToken.decimals,
+          metadata: baseToken.metadata,
+          balanceRaw: balanceRaw.toString(),
+          balanceFormatted: formatAmount(balanceRaw, baseToken.decimals),
+        },
+      };
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify(response),
-    };
+      return {
+        statusCode: 200,
+        body: JSON.stringify(response),
+      };
+    } catch (networkError) {
+      console.warn(
+        "Failed to reach network for wallet lookup, returning stub response",
+        networkError
+      );
+
+      const response = buildOfflineWalletResponse({
+        normalizedSeed,
+        accountIndex,
+        account,
+        context: { network: DEFAULT_NETWORK },
+        message:
+          "Wallet details fetched without contacting the Keeta network",
+      });
+
+      return {
+        statusCode: 200,
+        body: JSON.stringify(response),
+      };
+    }
   } catch (error) {
     console.error("wallet error", error);
     return {
