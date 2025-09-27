@@ -4,9 +4,19 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+codex/update-addliquidity-and-removeliquidity-functions-blqnrv
     "smoke-offline": "node ./tests/offline-smoke.mjs",
     "smoke-wallet-fallback": "node ./tests/wallet-fallback.mjs",
     "test": "npm run smoke-offline && npm run smoke-wallet-fallback"
+
+    "smoke:offline": "node ./tests/offline-smoke.mjs",
+codex/update-addliquidity-and-removeliquidity-functions-u8dz3r
+    "smoke:wallet-fallback": "node ./tests/wallet-fallback.mjs",
+    "test": "npm run smoke:offline && npm run smoke:wallet-fallback"
+
+    "test": "npm run smoke:offline"
+master
+master
   },
   "repository": {
     "type": "git",
