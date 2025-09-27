@@ -4,6 +4,10 @@ process.env.KEETA_USE_OFFLINE_FIXTURE = "1";
 
 const { handler: addLiquidityHandler } = await import("../functions/addLiquidity.js");
 const { handler: removeLiquidityHandler } = await import("../functions/removeLiquidity.js");
+codex/update-addliquidity-and-removeliquidity-functions-gkkb6z
+const { handler: walletHandler } = await import("../functions/wallet.js");
+
+master
 
 function buildEvent(payload) {
   return {
@@ -44,4 +48,17 @@ const removeResult = parseBody(await removeLiquidityHandler(buildEvent(removePay
 assert.ok(removeResult.pool?.address, "Remove liquidity response should include pool information");
 assert.ok(removeResult.withdrawals?.tokenA?.amountRaw, "Remove liquidity response should include token A withdrawal");
 
+codex/update-addliquidity-and-removeliquidity-functions-gkkb6z
+const walletPayload = {
+  seed: "test-seed",
+  accountIndex: 0,
+};
+
+const walletResult = parseBody(await walletHandler(buildEvent(walletPayload)));
+assert.equal(walletResult.seed, walletPayload.seed, "Wallet response should echo the input seed");
+assert.ok(walletResult.address, "Wallet response should include a derived address");
+assert.equal(walletResult.baseToken?.symbol, "KTA", "Wallet response should include base token metadata");
+
+
+master
 console.log("Offline smoke test passed");
