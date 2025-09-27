@@ -4,6 +4,10 @@ process.env.KEETA_USE_OFFLINE_FIXTURE = "1";
 
 const { handler: addLiquidityHandler } = await import("../functions/addLiquidity.js");
 const { handler: removeLiquidityHandler } = await import("../functions/removeLiquidity.js");
+codex/update-addliquidity-and-removeliquidity-functions-blqnrv
+const { handler: walletHandler } = await import("../functions/wallet.js");
+
+
 codex/update-addliquidity-and-removeliquidity-functions-u8dz3r
 const { handler: walletHandler } = await import("../functions/wallet.js");
 
@@ -21,6 +25,7 @@ const { handler: walletHandler } = await import("../functions/wallet.js");
 
 master
 
+master
 master
 master
 master
@@ -63,6 +68,8 @@ const removeResult = parseBody(await removeLiquidityHandler(buildEvent(removePay
 assert.ok(removeResult.pool?.address, "Remove liquidity response should include pool information");
 assert.ok(removeResult.withdrawals?.tokenA?.amountRaw, "Remove liquidity response should include token A withdrawal");
 
+codex/update-addliquidity-and-removeliquidity-functions-blqnrv
+
 codex/update-addliquidity-and-removeliquidity-functions-u8dz3r
 
 codex/update-addliquidity-and-removeliquidity-functions-no9t62
@@ -70,6 +77,7 @@ codex/update-addliquidity-and-removeliquidity-functions-no9t62
 codex/update-addliquidity-and-removeliquidity-functions-ipb5ij
 
 codex/update-addliquidity-and-removeliquidity-functions-gkkb6z
+master
 master
 master
 master
@@ -83,6 +91,8 @@ assert.equal(walletResult.seed, walletPayload.seed, "Wallet response should echo
 assert.ok(walletResult.address, "Wallet response should include a derived address");
 assert.equal(walletResult.baseToken?.symbol, "KTA", "Wallet response should include base token metadata");
 
+codex/update-addliquidity-and-removeliquidity-functions-blqnrv
+
 codex/update-addliquidity-and-removeliquidity-functions-u8dz3r
 
 codex/update-addliquidity-and-removeliquidity-functions-no9t62
@@ -90,6 +100,7 @@ codex/update-addliquidity-and-removeliquidity-functions-no9t62
 codex/update-addliquidity-and-removeliquidity-functions-ipb5ij
 
 
+master
 master
 master
 master
