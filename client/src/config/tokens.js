@@ -11,6 +11,7 @@ export const TOKENS = {
     symbol: "RIDE",
     name: "Riding Liquid",
     logo: "/tokens/ride.svg",
+    decimals: 5,
   },
   SBCK: {
     symbol: "SBCK",

@@ -296,15 +296,36 @@ function getKnownTokenConfig(symbol) {
   return TOKENS[key];
 }
 
+function normalizeConfigDecimals(value) {
+  if (value === undefined || value === null) {
+    return null;
+  }
+  const numeric = Number(value);
+  return Number.isFinite(numeric) && numeric >= 0 ? numeric : null;
+}
+
 function withTokenLogo(token) {
   if (!token || !token.symbol) {
     return token;
   }
   const config = getKnownTokenConfig(token.symbol);
-  if (config?.logo && token.logo !== config.logo) {
-    return { ...token, logo: config.logo };
+  if (!config) {
+    return token;
   }
-  return token;
+
+  let next = token;
+  if (config.logo && token.logo !== config.logo) {
+    next = next === token ? { ...token } : next;
+    next.logo = config.logo;
+  }
+
+  const overrideDecimals = normalizeConfigDecimals(config.decimals);
+  if (overrideDecimals !== null && token.decimals !== overrideDecimals) {
+    next = next === token ? { ...token } : next;
+    next.decimals = overrideDecimals;
+  }
+
+  return next;
 }
 
 function getTokenLogoSource(symbol) {
@@ -478,7 +499,7 @@ function sanitizeBaseToken(token) {
   const symbol = typeof token.symbol === "string" ? token.symbol : "";
   const address = typeof token.address === "string" ? token.address : "";
   const decimalsRaw = token.decimals;
-  const decimals = Number.isFinite(Number(decimalsRaw)) ? Number(decimalsRaw) : null;
+  let decimals = Number.isFinite(Number(decimalsRaw)) ? Number(decimalsRaw) : null;
   const balanceRaw =
     token.balanceRaw != null && typeof token.balanceRaw.toString === "function"
       ? token.balanceRaw.toString()
@@ -486,6 +507,12 @@ function sanitizeBaseToken(token) {
   const balanceFormatted =
     typeof token.balanceFormatted === "string" ? token.balanceFormatted : null;
   const metadata = token.metadata && typeof token.metadata === "object" ? token.metadata : {};
+
+  const config = getKnownTokenConfig(symbol);
+  const overrideDecimals = normalizeConfigDecimals(config?.decimals);
+  if (overrideDecimals !== null) {
+    decimals = overrideDecimals;
+  }
 
   return {
     symbol,
