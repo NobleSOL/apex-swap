@@ -1,0 +1,114 @@
+{
+  "network": "test",
+  "executeTransactions": false,
+  "pool": {
+    "address": "keeta_atki2vx75726w2ez75dbl662t7rhlcbhhvgsps4srwymwzvldrydhzkrl4fng",
+    "name": "Offline Fixture Pool",
+    "description": "Static pool data for offline development",
+    "metadata": {
+      "tokenA": "RIDE",
+      "tokenB": "USDC",
+      "feeBps": 30
+    },
+    "feeBps": 30
+  },
+  "tokens": [
+    {
+      "symbol": "RIDE",
+      "address": "keeta_anchh4m5ukgvnx5jcwe56k3ltgo4x4kppicdjgcaftx4525gdvknf73fotmdo",
+      "decimals": 6,
+      "info": {
+        "name": "Ride Token",
+        "symbol": "RIDE"
+      },
+      "metadata": {
+        "symbol": "RIDE",
+        "decimalPlaces": 6
+      },
+      "reserveRaw": "250000000000",
+      "reserveFormatted": "250000",
+      "requiresConfiguration": false
+    },
+    {
+      "symbol": "USDC",
+      "address": "keeta_amft4nqv7ur5m52t0rfthslbd2j2aa10czspx5uz3nzz8jfxh7gscdgp3tc8",
+      "decimals": 6,
+      "info": {
+        "name": "USD Coin",
+        "symbol": "USDC"
+      },
+      "metadata": {
+        "symbol": "USDC",
+        "decimalPlaces": 6
+      },
+      "reserveRaw": "100000000000",
+      "reserveFormatted": "100000",
+      "requiresConfiguration": false
+    }
+  ],
+  "reserves": {
+    "RIDE": {
+      "symbol": "RIDE",
+      "address": "keeta_anchh4m5ukgvnx5jcwe56k3ltgo4x4kppicdjgcaftx4525gdvknf73fotmdo",
+      "decimals": 6,
+      "info": {
+        "name": "Ride Token",
+        "symbol": "RIDE"
+      },
+      "metadata": {
+        "symbol": "RIDE",
+        "decimalPlaces": 6
+      },
+      "reserveRaw": "250000000000",
+      "reserveFormatted": "250000",
+      "requiresConfiguration": false
+    },
+    "USDC": {
+      "symbol": "USDC",
+      "address": "keeta_amft4nqv7ur5m52t0rfthslbd2j2aa10czspx5uz3nzz8jfxh7gscdgp3tc8",
+      "decimals": 6,
+      "info": {
+        "name": "USD Coin",
+        "symbol": "USDC"
+      },
+      "metadata": {
+        "symbol": "USDC",
+        "decimalPlaces": 6
+      },
+      "reserveRaw": "100000000000",
+      "reserveFormatted": "100000",
+      "requiresConfiguration": false
+    }
+  },
+  "lpToken": {
+    "symbol": "KLP",
+    "address": "keeta_amdjie4di55jfnbh7vhsiophjo27dwv5s4qd5qf7p3q7rppgwbwowwjw6zsfs",
+    "decimals": 6,
+    "info": {
+      "name": "Keeta LP Token",
+      "symbol": "KLP"
+    },
+    "metadata": {
+      "symbol": "KLP",
+      "decimalPlaces": 6
+    },
+    "supplyRaw": "1000000000000",
+    "supplyFormatted": "1000000"
+  },
+  "baseToken": {
+    "symbol": "KTA",
+    "address": "keeta_ak2fbj8q2hrd2ux7dygrk9hqgx6kvzvh3nqmjqxhlqetzwe7s9g22u6n7exq",
+    "decimals": 6,
+    "info": {
+      "name": "Keeta Token",
+      "symbol": "KTA"
+    },
+    "metadata": {
+      "symbol": "KTA",
+      "decimalPlaces": 6
+    }
+  },
+  "timestamp": "2024-01-01T00:00:00.000Z",
+  "requiresTokenConfiguration": false,
+  "missingTokenSymbols": []
+}

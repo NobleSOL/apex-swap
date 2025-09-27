@@ -1,5 +1,9 @@
 import { withCors } from "./cors.js";
-import { createClient, loadPoolContext } from "./utils/keeta.js";
+import {
+  createClient,
+  loadPoolContext,
+  loadOfflinePoolContext,
+} from "./utils/keeta.js";
 
 function parseOverrides(event) {
   if (!event || !event.body) {
@@ -36,8 +40,16 @@ async function getPoolHandler(event) {
 
   let client;
   try {
-    client = await createClient();
     const overrides = parseOverrides(event);
+    const offlineContext = await loadOfflinePoolContext(overrides);
+    if (offlineContext) {
+      return {
+        statusCode: 200,
+        body: JSON.stringify(offlineContext),
+      };
+    }
+
+    client = await createClient();
     const context = await loadPoolContext(client, overrides);
     return {
       statusCode: 200,

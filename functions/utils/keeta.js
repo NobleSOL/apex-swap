@@ -1,9 +1,23 @@
 /* global BigInt */
+import fs from "fs/promises";
+import path from "path";
+import { fileURLToPath } from "url";
 import * as KeetaNet from "@keetanetwork/keetanet-client";
 
 const NETWORK_ALIASES = {
   testnet: "test",
 };
+
+const FILE_MODULE_PATH = fileURLToPath(import.meta.url);
+const FILE_MODULE_DIR = path.dirname(FILE_MODULE_PATH);
+const DEFAULT_OFFLINE_FIXTURE_PATH = path.resolve(
+  FILE_MODULE_DIR,
+  "../fixtures/poolContext.json"
+);
+
+const USE_OFFLINE_FIXTURE = /^1|true$/i.test(
+  process.env.KEETA_USE_OFFLINE_FIXTURE || ""
+);
 
 function normalizeNetworkName(network) {
   if (!network) {
@@ -33,6 +47,143 @@ const TOKEN_DECIMAL_OVERRIDES = {};
 const EXECUTE_TRANSACTIONS = /^1|true$/i.test(
   process.env.KEETA_EXECUTE_TRANSACTIONS || ""
 );
+
+let cachedOfflineFixture = null;
+let cachedOfflineFixturePath = null;
+
+function deepClone(value) {
+  if (value === undefined || value === null) {
+    return value;
+  }
+  return JSON.parse(JSON.stringify(value));
+}
+
+function normalizeSymbol(symbol) {
+  return typeof symbol === "string" && symbol ? symbol.toUpperCase() : "";
+}
+
+function resolveOfflineFixturePath() {
+  const configured = process.env.KEETA_OFFLINE_FIXTURE;
+  if (!configured) {
+    return DEFAULT_OFFLINE_FIXTURE_PATH;
+  }
+  if (path.isAbsolute(configured)) {
+    return configured;
+  }
+  return path.resolve(process.cwd(), configured);
+}
+
+async function readOfflineFixture() {
+  const fixturePath = resolveOfflineFixturePath();
+  if (
+    cachedOfflineFixture &&
+    cachedOfflineFixturePath &&
+    cachedOfflineFixturePath === fixturePath
+  ) {
+    return cachedOfflineFixture;
+  }
+  try {
+    const contents = await fs.readFile(fixturePath, "utf8");
+    const parsed = JSON.parse(contents);
+    cachedOfflineFixture = parsed;
+    cachedOfflineFixturePath = fixturePath;
+    return parsed;
+  } catch (error) {
+    console.warn("Failed to load offline Keeta fixture", error);
+    cachedOfflineFixture = null;
+    cachedOfflineFixturePath = null;
+    return null;
+  }
+}
+
+function applyOfflineOverrides(baseContext, overrides = {}) {
+  const context = deepClone(baseContext) || {};
+  context.timestamp = new Date().toISOString();
+
+  if (!context.pool) {
+    context.pool = {};
+  }
+  if (overrides.poolAccount) {
+    context.pool.address = overrides.poolAccount;
+  }
+
+  if (!context.lpToken) {
+    context.lpToken = {};
+  }
+  if (overrides.lpTokenAccount) {
+    context.lpToken.address = overrides.lpTokenAccount;
+  }
+
+  const tokenOverrides = normalizeTokenOverrides(overrides.tokenAddresses || {});
+  const seenSymbols = new Set();
+
+  context.tokens = Array.isArray(context.tokens) ? context.tokens : [];
+  context.tokens = context.tokens.map((token) => {
+    const symbolKey = normalizeSymbol(token.symbol);
+    seenSymbols.add(symbolKey);
+    if (symbolKey && tokenOverrides[symbolKey]) {
+      return {
+        ...token,
+        address: tokenOverrides[symbolKey],
+        requiresConfiguration: false,
+      };
+    }
+    return token;
+  });
+
+  for (const [rawSymbol, address] of Object.entries(tokenOverrides)) {
+    if (!rawSymbol || !address) {
+      continue;
+    }
+    const symbolKey = normalizeSymbol(rawSymbol);
+    if (seenSymbols.has(symbolKey)) {
+      continue;
+    }
+    const symbol = rawSymbol.toString();
+    const token = {
+      symbol,
+      address,
+      decimals: 0,
+      info: {},
+      metadata: {},
+      reserveRaw: "0",
+      reserveFormatted: "0",
+      requiresConfiguration: false,
+    };
+    context.tokens.push(token);
+    seenSymbols.add(symbolKey);
+  }
+
+  context.reserves = context.tokens.reduce((acc, token) => {
+    if (token && token.symbol) {
+      acc[token.symbol] = token;
+    }
+    return acc;
+  }, {});
+
+  const missing = context.tokens
+    .filter((token) => token && token.requiresConfiguration)
+    .map((token) => token.symbol)
+    .filter(Boolean);
+
+  context.missingTokenSymbols = missing;
+  context.requiresTokenConfiguration = missing.length > 0;
+  context.message =
+    context.message || "Pool state fetched from offline fixture";
+
+  return context;
+}
+
+async function loadOfflinePoolContext(overrides = {}) {
+  if (!USE_OFFLINE_FIXTURE) {
+    return null;
+  }
+  const fixture = await readOfflineFixture();
+  if (!fixture) {
+    return null;
+  }
+  return applyOfflineOverrides(fixture, overrides);
+}
 
 function getEnvTokenAddress(symbol) {
   if (!symbol) return null;
@@ -551,6 +702,7 @@ export {
   calculateSwapQuote,
   calculateWithdrawal,
   createClient,
+  loadOfflinePoolContext,
   decodeMetadata,
   formatAmount,
   loadPoolContext,
