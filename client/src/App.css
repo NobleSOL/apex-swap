@@ -727,6 +727,12 @@ body {
   object-fit: contain;
 }
 
+/* SBCK: white background to ensure contrast for round mark */
+.token-img--white {
+  background: #ffffff;
+  border-radius: 50%;
+}
+
 .token-popover {
   position: absolute;
   z-index: 20;
