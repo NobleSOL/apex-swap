@@ -25,11 +25,8 @@ const TOKEN_ICON_PATHS = {
   btc: "/tokens/btc.svg",
   kusd: "/tokens/kusd.svg",
   kta: TOKENS.KTA.logo,
-codex/identify-tasks-for-pools-and-swaps-setup-j06fdo
   ride: TOKENS.RIDE.logo,
-
   sbck: TOKENS.SBCK?.logo || "/tokens/default.svg",
-master
   test: "/tokens/default.svg",
 };
 
