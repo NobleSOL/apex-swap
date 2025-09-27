@@ -23,6 +23,7 @@ const TOKEN_ICON_PATHS = {
   btc: "/tokens/btc.svg",
   kusd: "/tokens/kusd.svg",
   kta: TOKENS.KTA.logo,
+  sbck: TOKENS.SBCK?.logo || "/tokens/default.svg",
   test: "/tokens/default.svg",
 };
 
@@ -914,6 +915,7 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
     };
 
     addOption(TOKENS.KTA);
+    addOption(TOKENS.SBCK);
 
     if (poolData?.baseToken) {
       addOption(poolData.baseToken);
@@ -959,7 +961,7 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
   const walletBaseTokenBalance = resolveBaseTokenBalance(walletBaseToken);
 
   const [fromToken, setFromToken] = useState(TOKENS.KTA);
-  const [toToken, setToToken] = useState(null);
+  const [toToken, setToToken] = useState(TOKENS.SBCK);
 
   const fromAsset = fromToken?.symbol || "";
   const toAsset = toToken?.symbol || "";
@@ -997,7 +999,7 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
       }
     }
 
-    const prioritizedTo = [toAsset];
+    const prioritizedTo = [toAsset, TOKENS.SBCK?.symbol];
     let nextTo = null;
     for (const candidate of prioritizedTo) {
       if (!candidate) continue;
@@ -1522,7 +1524,7 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
   const [withdrawPreview, setWithdrawPreview] = useState(null);
   const [tokenAAddressInput, setTokenAAddressInput] = useState("");
   const [tokenBAddressInput, setTokenBAddressInput] = useState("");
-  const [tokenBSelection, setTokenBSelection] = useState("");
+  const [tokenBSelection, setTokenBSelection] = useState("SBCK");
   const [tokenConfigStatus, setTokenConfigStatus] = useState("");
   const autoTokenStatusRef = useRef("");
 

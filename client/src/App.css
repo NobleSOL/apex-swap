@@ -392,6 +392,7 @@ body {
 
 .swap-input input {
   flex: 1;
+  min-width: 0;
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.04);
@@ -727,6 +728,8 @@ body {
   object-fit: contain;
 }
 
+
+
 .token-popover {
   position: absolute;
   z-index: 20;
@@ -988,7 +991,37 @@ body {
   color: rgba(255, 255, 255, 0.45);
 }
 
+@media (min-width: 1024px) {
+  /* Pull hero up and center heading */
+  .page {
+    padding-top: 40px;
+  }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 32px;
+  }
+  .hero-content {
+    align-items: center;
+    text-align: center;
+  }
+  /* Place wallet (left) and swap (right) side-by-side */
+  .hero-panel {
+    display: grid;
+    grid-template-columns: minmax(280px, 360px) minmax(360px, 560px);
+    align-items: start;
+    gap: 24px;
+  }
+}
+
 @media (max-width: 1024px) {
+  .hero-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
   .swap-row {
     grid-template-columns: 1fr;
   }
@@ -1049,5 +1082,24 @@ body {
   .ghost-cta {
     width: 100%;
     justify-content: center;
+  }
+
+  /* Keep token selector inline with amount field on narrow screens */
+  .swap-input {
+    gap: 10px;
+  }
+  .swap-input input {
+    font-size: 18px;
+    padding: 12px 14px;
+  }
+  .token-trigger-icon {
+    width: 20px;
+    height: 20px;
+  }
+  .token-trigger-symbol {
+    font-size: 14px;
+  }
+  .swap-input .token-trigger {
+    padding: 8px 10px;
   }
 }
