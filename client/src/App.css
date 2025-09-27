@@ -380,6 +380,10 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--brand-surface);
+  padding: 6px;
 }
 
 .swap-input .token-select {
@@ -387,18 +391,20 @@ body {
 }
 
 .swap-input .token-trigger {
-  height: 100%;
+  background: transparent;
+  border: none;
+  height: auto;
+  padding: 8px 12px;
 }
 
 .swap-input input {
   flex: 1;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.04);
+  border: none;
+  background: transparent;
   color: var(--text-primary);
   font-size: 22px;
   font-weight: 600;
-  padding: 16px 18px;
+  padding: 12px 14px;
 }
 
 .swap-input input::placeholder {
