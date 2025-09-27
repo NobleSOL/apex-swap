@@ -286,9 +286,10 @@ function TokenBadge({ symbol, logo }) {
   const [errored, setErrored] = useState(false);
   useEffect(() => setErrored(false), [symbol, logo]);
   const src = errored ? FALLBACK_TOKEN_ICON : logo || getTokenLogoSource(symbol);
+  const whiteBg = symbolsEqual(symbol, "SBCK");
   return (
     <img
-      className="token-img"
+      className={`token-img${whiteBg ? " token-img--white" : ""}`}
       src={src}
       alt={symbol ? `${symbol} logo` : "Token logo"}
       onError={() => {
