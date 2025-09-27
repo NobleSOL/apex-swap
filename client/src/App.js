@@ -1524,7 +1524,7 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
   const [withdrawPreview, setWithdrawPreview] = useState(null);
   const [tokenAAddressInput, setTokenAAddressInput] = useState("");
   const [tokenBAddressInput, setTokenBAddressInput] = useState("");
-  const [tokenBSelection, setTokenBSelection] = useState("");
+  const [tokenBSelection, setTokenBSelection] = useState("SBCK");
   const [tokenConfigStatus, setTokenConfigStatus] = useState("");
 
   const tokensInPool = useMemo(() => {
