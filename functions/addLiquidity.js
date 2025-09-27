@@ -52,6 +52,8 @@ async function handler(event) {
       tokenAddresses: rawTokenAddresses = {},
       tokenAAddress,
       tokenBAddress,
+      poolAccount,
+      lpTokenAccount,
     } = payload;
 
     if (!tokenA || !tokenB) {
@@ -66,14 +68,23 @@ async function handler(event) {
 
     const normalizedOverrides = { ...rawTokenAddresses };
     if (tokenAAddress) {
-      normalizedOverrides[tokenA] = tokenAAddress;
+      normalizedOverrides[tokenA] = tokenAAddress.trim();
     }
     if (tokenBAddress) {
-      normalizedOverrides[tokenB] = tokenBAddress;
+      normalizedOverrides[tokenB] = tokenBAddress.trim();
     }
+
+    const poolOverride =
+      typeof poolAccount === "string" && poolAccount.trim() ? poolAccount.trim() : undefined;
+    const lpTokenOverride =
+      typeof lpTokenAccount === "string" && lpTokenAccount.trim()
+        ? lpTokenAccount.trim()
+        : undefined;
 
     client = await createClient({ seed, accountIndex });
     const context = await loadPoolContext(client, {
+      poolAccount: poolOverride,
+      lpTokenAccount: lpTokenOverride,
       tokenAddresses: normalizedOverrides,
     });
 

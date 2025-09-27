@@ -23,10 +23,78 @@ const TOKEN_ICON_PATHS = {
   btc: "/tokens/btc.svg",
   kusd: "/tokens/kusd.svg",
   kta: TOKENS.KTA.logo,
+  ride: TOKENS.RIDE.logo,
   test: "/tokens/default.svg",
 };
 
 const KEETA_NETWORK_PREFERENCES = ["testnet", "test"];
+
+const RIDE_TOKEN_ADDRESS = "keeta_anchh4m5ukgvnx5jcwe56k3ltgo4x4kppicdjgcaftx4525gdvknf73fotmdo";
+const DEFAULT_POOL_OVERRIDES = Object.freeze({
+  tokenAddresses: Object.freeze({
+    RIDE: RIDE_TOKEN_ADDRESS,
+  }),
+});
+const POOL_OVERRIDE_STORAGE_KEY = "silverback.pool.overrides";
+
+function cloneOverrides(overrides = {}) {
+  const clone = {};
+  if (overrides.poolAccount) {
+    clone.poolAccount = overrides.poolAccount;
+  }
+  if (overrides.lpTokenAccount) {
+    clone.lpTokenAccount = overrides.lpTokenAccount;
+  }
+  if (overrides.tokenAddresses && typeof overrides.tokenAddresses === "object") {
+    clone.tokenAddresses = { ...overrides.tokenAddresses };
+  }
+  return clone;
+}
+
+function mergeOverrideObjects(base = {}, updates = {}) {
+  const merged = cloneOverrides(base);
+
+  if (Object.prototype.hasOwnProperty.call(updates, "poolAccount")) {
+    const value = typeof updates.poolAccount === "string" ? updates.poolAccount.trim() : updates.poolAccount;
+    if (value) {
+      merged.poolAccount = value;
+    } else {
+      delete merged.poolAccount;
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(updates, "lpTokenAccount")) {
+    const value = typeof updates.lpTokenAccount === "string" ? updates.lpTokenAccount.trim() : updates.lpTokenAccount;
+    if (value) {
+      merged.lpTokenAccount = value;
+    } else {
+      delete merged.lpTokenAccount;
+    }
+  }
+
+  if (updates.tokenAddresses && typeof updates.tokenAddresses === "object") {
+    const current = merged.tokenAddresses ? { ...merged.tokenAddresses } : {};
+    for (const [key, rawValue] of Object.entries(updates.tokenAddresses)) {
+      if (!key) continue;
+      const normalizedKey = String(key).toUpperCase();
+      const value = typeof rawValue === "string" ? rawValue.trim() : rawValue;
+      if (value) {
+        current[normalizedKey] = value;
+      } else {
+        delete current[normalizedKey];
+      }
+    }
+    if (Object.keys(current).length > 0) {
+      merged.tokenAddresses = current;
+    } else {
+      delete merged.tokenAddresses;
+    }
+  } else if (merged.tokenAddresses) {
+    merged.tokenAddresses = { ...merged.tokenAddresses };
+  }
+
+  return merged;
+}
 
 async function createKeetaClient(account) {
   let lastError = null;
@@ -727,30 +795,53 @@ function WalletControls({ wallet, onWalletChange }) {
 }
 
 function usePoolState() {
+  const getInitialOverrides = () => {
+    const base = cloneOverrides(DEFAULT_POOL_OVERRIDES);
+    if (typeof window === "undefined") {
+      return base;
+    }
+    try {
+      const stored = window.localStorage.getItem(POOL_OVERRIDE_STORAGE_KEY);
+      if (!stored) {
+        return base;
+      }
+      const parsed = JSON.parse(stored);
+      if (!parsed || typeof parsed !== "object") {
+        return base;
+      }
+      return mergeOverrideObjects(base, parsed);
+    } catch (error) {
+      return base;
+    }
+  };
+
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [overrideSnapshot, setOverrideSnapshot] = useState({});
-  const overridesRef = useRef({});
+  const [overrideSnapshot, setOverrideSnapshot] = useState(getInitialOverrides);
+  const overridesRef = useRef(cloneOverrides(overrideSnapshot));
+
+  const persistOverrides = useCallback((overrides) => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    try {
+      if (!overrides || Object.keys(overrides).length === 0) {
+        window.localStorage.removeItem(POOL_OVERRIDE_STORAGE_KEY);
+      } else {
+        window.localStorage.setItem(
+          POOL_OVERRIDE_STORAGE_KEY,
+          JSON.stringify(overrides)
+        );
+      }
+    } catch (storageError) {
+      // eslint-disable-next-line no-console
+      console.warn("Failed to persist pool overrides", storageError);
+    }
+  }, []);
 
   const mergeOverrides = useCallback((current, updates = {}) => {
-    if (!updates) {
-      return current || {};
-    }
-    const next = { ...(current || {}) };
-    if (updates.poolAccount) {
-      next.poolAccount = updates.poolAccount;
-    }
-    if (updates.lpTokenAccount) {
-      next.lpTokenAccount = updates.lpTokenAccount;
-    }
-    if (updates.tokenAddresses) {
-      next.tokenAddresses = {
-        ...(current?.tokenAddresses || {}),
-        ...updates.tokenAddresses,
-      };
-    }
-    return next;
+    return mergeOverrideObjects(current || {}, updates);
   }, []);
 
   const fetchPool = useCallback(async () => {
@@ -767,7 +858,9 @@ function usePoolState() {
         throw new Error(payload.error || "Failed to load pool");
       }
       setData(payload);
-      setOverrideSnapshot(overridesRef.current || {});
+      const snapshot = cloneOverrides(overridesRef.current || {});
+      setOverrideSnapshot(snapshot);
+      persistOverrides(snapshot);
       return true;
     } catch (err) {
       setError(err.message);
@@ -775,24 +868,28 @@ function usePoolState() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [persistOverrides]);
 
   const refresh = useCallback(
     async (nextOverrides) => {
       overridesRef.current = mergeOverrides(overridesRef.current, nextOverrides);
-      setOverrideSnapshot(overridesRef.current || {});
+      const snapshot = cloneOverrides(overridesRef.current || {});
+      setOverrideSnapshot(snapshot);
+      persistOverrides(snapshot);
       return fetchPool();
     },
-    [fetchPool, mergeOverrides]
+    [fetchPool, mergeOverrides, persistOverrides]
   );
 
   const setOverrides = useCallback(
     async (nextOverrides = {}) => {
-      overridesRef.current = nextOverrides || {};
-      setOverrideSnapshot(overridesRef.current);
+      overridesRef.current = mergeOverrideObjects(DEFAULT_POOL_OVERRIDES, nextOverrides);
+      const snapshot = cloneOverrides(overridesRef.current || {});
+      setOverrideSnapshot(snapshot);
+      persistOverrides(snapshot);
       return fetchPool();
     },
-    [fetchPool]
+    [fetchPool, persistOverrides]
   );
 
   useEffect(() => {
@@ -1524,7 +1621,16 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
   const [tokenBAddressInput, setTokenBAddressInput] = useState("");
   const [tokenBSelection, setTokenBSelection] = useState("");
   const [tokenConfigStatus, setTokenConfigStatus] = useState("");
+  const [poolAccountInput, setPoolAccountInput] = useState("");
+  const [lpTokenAccountInput, setLpTokenAccountInput] = useState("");
+  const [poolConfigStatus, setPoolConfigStatus] = useState("");
   const autoTokenStatusRef = useRef("");
+
+  useEffect(() => {
+    setPoolAccountInput(poolOverrides?.poolAccount || "");
+    setLpTokenAccountInput(poolOverrides?.lpTokenAccount || "");
+    setPoolConfigStatus("");
+  }, [poolOverrides?.poolAccount, poolOverrides?.lpTokenAccount]);
 
   const tokensInPool = useMemo(() => {
     if (!poolData) {
@@ -1644,8 +1750,17 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
   );
 
   useEffect(() => {
-    setTokenAAddressInput(tokenA?.address || "");
-  }, [tokenA?.address]);
+    if (!tokenA?.symbol) {
+      setTokenAAddressInput("");
+      return;
+    }
+    const symbolKey = tokenA.symbol.toUpperCase();
+    const overrideAddress =
+      poolOverrides?.tokenAddresses?.[symbolKey] ||
+      poolOverrides?.tokenAddresses?.[tokenA.symbol];
+    const next = overrideAddress || tokenA?.address || "";
+    setTokenAAddressInput(next);
+  }, [tokenA?.symbol, tokenA?.address, poolOverrides?.tokenAddresses]);
 
   useEffect(() => {
     setLiquidityMode("add");
@@ -1724,10 +1839,15 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
 
   useEffect(() => {
     const fallbackSymbol = tokenB?.symbol || tokenBSelection || baseToken?.symbol || "";
+    const symbolKey = fallbackSymbol ? fallbackSymbol.toUpperCase() : "";
+    const overrideAddress =
+      (symbolKey && poolOverrides?.tokenAddresses?.[symbolKey]) ||
+      (fallbackSymbol && poolOverrides?.tokenAddresses?.[fallbackSymbol]);
     const fallbackOption = tokenConfigOptions.find((item) => item.symbol === fallbackSymbol);
     const fallbackAddress =
       tokenB?.address || fallbackOption?.address || baseToken?.address || "";
-    setTokenBAddressInput(fallbackAddress);
+    const nextAddress = overrideAddress || fallbackAddress || "";
+    setTokenBAddressInput(nextAddress);
     setTokenBSelection((prev) => (prev ? prev : fallbackSymbol));
   }, [
     tokenB?.address,
@@ -1736,6 +1856,7 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
     tokenBSelection,
     baseToken?.address,
     baseToken?.symbol,
+    poolOverrides?.tokenAddresses,
   ]);
 
   const handleApplyTokenConfig = useCallback(async () => {
@@ -1771,6 +1892,36 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
     tokenBAddressInput,
     tokenBSelection,
     setAddStatus,
+  ]);
+
+  const handleApplyPoolConfig = useCallback(async () => {
+    const trimmedPool = (poolAccountInput || "").trim();
+    const trimmedLp = (lpTokenAccountInput || "").trim();
+    const currentPool = (poolOverrides?.poolAccount || "").trim();
+    const currentLp = (poolOverrides?.lpTokenAccount || "").trim();
+    if (trimmedPool === currentPool && trimmedLp === currentLp) {
+      setPoolConfigStatus("Pool configuration already up to date");
+      return;
+    }
+    const hasValues = Boolean(trimmedPool || trimmedLp);
+    setPoolConfigStatus(hasValues ? "Updating pool configuration..." : "Clearing pool overrides...");
+    const success = await refresh({
+      poolAccount: trimmedPool,
+      lpTokenAccount: trimmedLp,
+    });
+    if (success === false) {
+      setPoolConfigStatus(
+        "Failed to update pool configuration. Check the addresses and try again."
+      );
+    } else {
+      setPoolConfigStatus("Pool configuration updated");
+    }
+  }, [
+    poolAccountInput,
+    lpTokenAccountInput,
+    poolOverrides?.poolAccount,
+    poolOverrides?.lpTokenAccount,
+    refresh,
   ]);
 
   useEffect(() => {
@@ -1905,6 +2056,8 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
           tokenAddresses: tokenOverrides,
           tokenAAddress: tokenAAddressValue,
           tokenBAddress: tokenBAddressValue,
+          poolAccount: poolOverrides?.poolAccount || "",
+          lpTokenAccount: poolOverrides?.lpTokenAccount || "",
         }),
       });
       const payload = await response.json();
@@ -1954,6 +2107,8 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
           tokenAddresses: tokenOverrides,
           tokenAAddress: tokenAAddressValue,
           tokenBAddress: tokenBAddressValue,
+          poolAccount: poolOverrides?.poolAccount || "",
+          lpTokenAccount: poolOverrides?.lpTokenAccount || "",
         }),
       });
       const payload = await response.json();
@@ -2047,6 +2202,52 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
               ) : (
                 <p className="status">Pool unavailable</p>
               )}
+            </div>
+
+            <div className="swap-card pool-config-card">
+              <div className="swap-card-header">
+                <div className="swap-card-title">
+                  <h2>Pool configuration</h2>
+                  <span className="swap-chip">Keeta testnet</span>
+                </div>
+              </div>
+              <p className="config-hint">
+                Provide the pool and LP token accounts for the KTA/RIDE pair. The RIDE token override defaults to
+                {" "}
+                {formatAddress(RIDE_TOKEN_ADDRESS)}.
+              </p>
+              <div className="field-group">
+                <span className="field-label">Pool account</span>
+                <input
+                  value={poolAccountInput}
+                  onChange={(event) => {
+                    setPoolAccountInput(event.target.value);
+                    setPoolConfigStatus("");
+                  }}
+                  placeholder="Enter pool contract"
+                  type="text"
+                  spellCheck={false}
+                />
+              </div>
+              <div className="field-group">
+                <span className="field-label">LP token account</span>
+                <input
+                  value={lpTokenAccountInput}
+                  onChange={(event) => {
+                    setLpTokenAccountInput(event.target.value);
+                    setPoolConfigStatus("");
+                  }}
+                  placeholder="Enter LP token contract"
+                  type="text"
+                  spellCheck={false}
+                />
+              </div>
+              <div className="field-group">
+                <button type="button" className="ghost-cta full" onClick={handleApplyPoolConfig}>
+                  Apply pool accounts
+                </button>
+              </div>
+              {poolConfigStatus && <p className="status">{poolConfigStatus}</p>}
             </div>
 
             <div className="dual-card">
