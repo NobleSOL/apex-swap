@@ -34,7 +34,7 @@ async function executeAddLiquidity(client, context, params) {
   return { blocks, published };
 }
 
-async function handler(event) {
+async function addLiquidityHandler(event) {
   if (event.httpMethod && event.httpMethod.toUpperCase() === "OPTIONS") {
     return { statusCode: 204, body: "" };
   }
@@ -225,4 +225,4 @@ async function handler(event) {
   }
 }
 
-export const handler = withCors(handler);
+export const handler = withCors(addLiquidityHandler);
