@@ -339,6 +339,10 @@ body {
 
 .swap-card__popover {
   position: relative;
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
 }
 
 .swap-card__body {
@@ -475,9 +479,18 @@ body {
 
 .swap-card-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
+  flex-wrap: wrap;
+}
+
+.swap-card__summary {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1 1 280px;
+  min-width: 0;
 }
 
 .swap-card-title {
@@ -556,6 +569,71 @@ body {
   background: transparent;
   border: none;
   color: inherit;
+}
+
+
+.info-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: baseline;
+}
+
+.info-line code,
+.wallet-address {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.wallet-address {
+  display: inline-block;
+  max-width: 100%;
+}
+
+.wallet-balances {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.wallet-balances h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.wallet-balances ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wallet-balances li {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.wallet-balances .token-id,
+.wallet-balances .token-value {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  max-width: 100%;
+}
+
+.wallet-balances .token-id {
+  color: var(--text-secondary);
+}
+
+.wallet-balances .token-value {
+  margin-left: auto;
+  text-align: right;
+  font-weight: 500;
 }
 
 .swap-stack {
@@ -1107,5 +1185,19 @@ body {
   }
   .swap-input .token-trigger {
     padding: 8px 10px;
+  }
+
+  .swap-card-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .swap-card__summary {
+    flex: 1 1 100%;
+  }
+
+  .swap-card__popover {
+    width: 100%;
+    margin-left: 0;
   }
 }

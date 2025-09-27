@@ -1361,7 +1361,7 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
             <WalletControls wallet={wallet} onWalletChange={onWalletChange} />
             <div className="swap-card swap-card--panel">
               <div className="swap-card__header">
-                <div>
+                <div className="swap-card__summary">
                   <div className="swap-card__tabs" role="tablist" aria-label="Swap modes">
                     {[{ key: "swap", label: "Swap" }, { key: "limit", label: "Limit", disabled: true }, { key: "liquidity", label: "Liquidity", disabled: true }].map((tab) => (
                       <button
