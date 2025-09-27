@@ -10,6 +10,26 @@ import {
 
 const HEX_SEED_REGEX = /^[0-9a-f]{64}$/i;
 
+codex/update-addliquidity-and-removeliquidity-functions-no9t62
+const DEFAULT_WALLET_TIMEOUT_MS = (() => {
+  const candidates = [
+    process.env.KEETA_WALLET_TIMEOUT_MS,
+    process.env.KEETA_NETWORK_TIMEOUT_MS,
+  ];
+  for (const value of candidates) {
+    if (value === undefined || value === null || value === "") {
+      continue;
+    }
+    const numeric = Number(value);
+    if (Number.isFinite(numeric) && numeric > 0) {
+      return numeric;
+    }
+  }
+  return 5000;
+})();
+
+
+master
 function parseBody(body) {
   if (!body) return {};
   try {
@@ -31,6 +51,39 @@ function hashSeedForOffline(seed) {
   return hashed.padEnd(64, "0").slice(0, 64);
 }
 
+codex/update-addliquidity-and-removeliquidity-functions-no9t62
+async function attemptWithTimeout(operation, options = {}) {
+  const { label = "network operation", timeoutMs = DEFAULT_WALLET_TIMEOUT_MS } =
+    options;
+  let timeoutId;
+  const timeoutPromise = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new Error(`Timed out while waiting for ${label} after ${timeoutMs}ms`));
+    }, timeoutMs);
+  });
+
+  const operationPromise = (async () => operation())();
+
+  try {
+    const result = await Promise.race([operationPromise, timeoutPromise]);
+    return { ok: true, value: result };
+  } catch (error) {
+    console.warn(`Falling back after ${label} failed`, error);
+    operationPromise.catch((lateError) => {
+      if (lateError && lateError !== error) {
+        console.warn(`Suppressed late failure for ${label}`, lateError);
+      }
+    });
+    return { ok: false, error };
+  } finally {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+  }
+}
+
+
+master
 function deriveAccount(seed, accountIndex, allowOfflineFallback) {
   const normalizedSeed = normalizeSeed(seed);
   if (!normalizedSeed) {
@@ -53,7 +106,10 @@ function deriveAccount(seed, accountIndex, allowOfflineFallback) {
   };
 }
 
+codex/update-addliquidity-and-removeliquidity-functions-no9t62
+
 codex/update-addliquidity-and-removeliquidity-functions-ipb5ij
+master
 function parseOverrides(payload) {
   if (!payload || typeof payload !== "object") {
     return {};
@@ -76,7 +132,9 @@ function parseOverrides(payload) {
   return overrides;
 }
 
+codex/update-addliquidity-and-removeliquidity-functions-no9t62
 
+master
 master
 function parseAccountIndex(index) {
   if (index === undefined || index === null || index === "") {
@@ -189,7 +247,10 @@ async function walletHandler(event) {
 
   let client;
   try {
+codex/update-addliquidity-and-removeliquidity-functions-no9t62
+
 codex/update-addliquidity-and-removeliquidity-functions-ipb5ij
+master
     const payload = parseBody(event.body);
     const { seed, accountIndex: rawIndex } = payload;
     const accountIndex = parseAccountIndex(rawIndex);
@@ -208,6 +269,8 @@ codex/update-addliquidity-and-removeliquidity-functions-ipb5ij
         context: offlineContext,
         message: "Wallet details fetched from offline fixture",
       });
+
+codex/update-addliquidity-and-removeliquidity-functions-no9t62
 
     const { seed, accountIndex: rawIndex } = parseBody(event.body);
     const accountIndex = parseAccountIndex(rawIndex);
@@ -241,11 +304,82 @@ codex/update-addliquidity-and-removeliquidity-functions-ipb5ij
       };
 master
 
+master
       return {
         statusCode: 200,
         body: JSON.stringify(response),
       };
     }
+
+codex/update-addliquidity-and-removeliquidity-functions-no9t62
+    try {
+      client = KeetaNet.UserClient.fromNetwork(DEFAULT_NETWORK, account);
+      const [identifierLookup, baseTokenLookup, balanceLookup] = await Promise.all([
+        attemptWithTimeout(() => loadIdentifier(client, account), {
+          label: "wallet identifier lookup",
+        }),
+        attemptWithTimeout(() => loadBaseTokenDetails(client), {
+          label: "base token metadata lookup",
+        }),
+        attemptWithTimeout(() => client.balance(client.baseToken, { account }), {
+          label: "base token balance lookup",
+        }),
+      ]);
+
+      const identifierAddress = identifierLookup.ok
+        ? identifierLookup.value
+        : account.publicKeyString.get();
+
+      const baseTokenDetails = baseTokenLookup.ok
+        ? baseTokenLookup.value
+        : {
+            symbol: "KTA",
+            address: "",
+            decimals: 0,
+            metadata: {},
+            info: null,
+          };
+
+      const balanceRaw = balanceLookup.ok
+        ? BigInt(balanceLookup.value)
+        : 0n;
+
+      const response = {
+        seed: normalizedSeed,
+        accountIndex,
+        address: account.publicKeyString.get(),
+        identifier: identifierAddress,
+        network: DEFAULT_NETWORK,
+        baseToken: {
+          symbol: baseTokenDetails.symbol,
+          address: baseTokenDetails.address || "",
+          decimals: baseTokenDetails.decimals ?? 0,
+          metadata: baseTokenDetails.metadata || {},
+          balanceRaw: balanceRaw.toString(),
+          balanceFormatted: formatAmount(
+            balanceRaw,
+            baseTokenDetails.decimals ?? 0
+          ),
+        },
+      };
+
+      const fallbackReasons = [];
+      if (!identifierLookup.ok) {
+        fallbackReasons.push("identifier");
+      }
+      if (!baseTokenLookup.ok) {
+        fallbackReasons.push("base token metadata");
+      }
+      if (!balanceLookup.ok) {
+        fallbackReasons.push("base token balance");
+      }
+
+      if (fallbackReasons.length) {
+        response.message = `Wallet details returned with fallback values for ${fallbackReasons.join(
+          ", "
+        )}`;
+      }
+
 
 codex/update-addliquidity-and-removeliquidity-functions-ipb5ij
     try {
@@ -325,6 +459,7 @@ master
         },
       };
 
+master
       return {
         statusCode: 200,
         body: JSON.stringify(response),
@@ -357,10 +492,12 @@ master
     };
   } finally {
     if (client && typeof client.destroy === "function") {
-      try {
-        await client.destroy();
-      } catch (destroyErr) {
-        console.warn("Failed to destroy Keeta client", destroyErr);
+      const destroyResult = await attemptWithTimeout(
+        () => client.destroy(),
+        { label: "Keeta client cleanup" }
+      );
+      if (!destroyResult.ok) {
+        console.warn("Failed to destroy Keeta client", destroyResult.error);
       }
     }
   }
