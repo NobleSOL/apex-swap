@@ -392,6 +392,7 @@ body {
 
 .swap-input input {
   flex: 1;
+  min-width: 0;
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.04);
@@ -1081,5 +1082,24 @@ body {
   .ghost-cta {
     width: 100%;
     justify-content: center;
+  }
+
+  /* Keep token selector inline with amount field on narrow screens */
+  .swap-input {
+    gap: 10px;
+  }
+  .swap-input input {
+    font-size: 18px;
+    padding: 12px 14px;
+  }
+  .token-trigger-icon {
+    width: 20px;
+    height: 20px;
+  }
+  .token-trigger-symbol {
+    font-size: 14px;
+  }
+  .swap-input .token-trigger {
+    padding: 8px 10px;
   }
 }
