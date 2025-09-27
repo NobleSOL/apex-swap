@@ -11,7 +11,7 @@ import {
   formatAmount,
   toRawAmount,
 } from "./utils/tokenMath";
-import { TOKENS } from "./config/tokens";
+import { TOKENS, KTA_LOGO_DATA_URL } from "./config/tokens";
 
 const BRAND_LOGO = [
   "https://cdn.builder.io/api/v1/image/assets%2Fd70091a6f5494e0195b033a72f7e79ae%2F116ddd439df04721809dcdc66245",
@@ -25,7 +25,11 @@ const TOKEN_ICON_PATHS = {
   btc: "/tokens/btc.svg",
   kusd: "/tokens/kusd.svg",
   kta: TOKENS.KTA.logo,
+codex/identify-tasks-for-pools-and-swaps-setup-j06fdo
   ride: TOKENS.RIDE.logo,
+
+  sbck: TOKENS.SBCK?.logo || "/tokens/default.svg",
+master
   test: "/tokens/default.svg",
 };
 
@@ -352,19 +356,27 @@ const INITIAL_WALLET_STATE = {
 };
 
 function TokenBadge({ symbol, logo }) {
-  const [errored, setErrored] = useState(false);
-  useEffect(() => setErrored(false), [symbol, logo]);
-  const src = errored ? FALLBACK_TOKEN_ICON : logo || getTokenLogoSource(symbol);
+  const initialSrc = useMemo(() => logo || getTokenLogoSource(symbol), [symbol, logo]);
+  const [src, setSrc] = useState(initialSrc);
+  useEffect(() => {
+    setSrc(logo || getTokenLogoSource(symbol));
+  }, [symbol, logo]);
+  const handleError = () => {
+    const upper = String(symbol || "").toUpperCase();
+    if (upper === "KTA" && src !== KTA_LOGO_DATA_URL) {
+      setSrc(KTA_LOGO_DATA_URL);
+      return;
+    }
+    if (src !== FALLBACK_TOKEN_ICON) {
+      setSrc(FALLBACK_TOKEN_ICON);
+    }
+  };
   return (
     <img
       className="token-img"
       src={src}
       alt={symbol ? `${symbol} logo` : "Token logo"}
-      onError={() => {
-        if (!errored) {
-          setErrored(true);
-        }
-      }}
+      onError={handleError}
     />
   );
 }
@@ -1013,6 +1025,7 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
     };
 
     addOption(TOKENS.KTA);
+    addOption(TOKENS.SBCK);
 
     if (poolData?.baseToken) {
       addOption(poolData.baseToken);
@@ -1058,7 +1071,7 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
   const walletBaseTokenBalance = resolveBaseTokenBalance(walletBaseToken);
 
   const [fromToken, setFromToken] = useState(TOKENS.KTA);
-  const [toToken, setToToken] = useState(null);
+  const [toToken, setToToken] = useState(TOKENS.SBCK);
 
   const fromAsset = fromToken?.symbol || "";
   const toAsset = toToken?.symbol || "";
@@ -1096,7 +1109,7 @@ function SwapPage({ wallet, onWalletChange, onNavigate, poolState }) {
       }
     }
 
-    const prioritizedTo = [toAsset];
+    const prioritizedTo = [toAsset, TOKENS.SBCK?.symbol];
     let nextTo = null;
     for (const candidate of prioritizedTo) {
       if (!candidate) continue;
@@ -1621,7 +1634,7 @@ function PoolsPage({ wallet, onWalletChange, poolState }) {
   const [withdrawPreview, setWithdrawPreview] = useState(null);
   const [tokenAAddressInput, setTokenAAddressInput] = useState("");
   const [tokenBAddressInput, setTokenBAddressInput] = useState("");
-  const [tokenBSelection, setTokenBSelection] = useState("");
+  const [tokenBSelection, setTokenBSelection] = useState("SBCK");
   const [tokenConfigStatus, setTokenConfigStatus] = useState("");
   const [poolAccountInput, setPoolAccountInput] = useState("");
   const [lpTokenAccountInput, setLpTokenAccountInput] = useState("");
