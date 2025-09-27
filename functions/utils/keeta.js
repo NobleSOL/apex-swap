@@ -1,13 +1,32 @@
 /* global BigInt */
 import * as KeetaNet from "@keetanetwork/keetanet-client";
 
-const DEFAULT_NETWORK = process.env.KEETA_NETWORK || "test";
+const NETWORK_ALIASES = {
+  testnet: "test",
+};
+
+function normalizeNetworkName(network) {
+  if (!network) {
+    return "test";
+  }
+  const normalized = String(network).trim().toLowerCase();
+  if (!normalized) {
+    return "test";
+  }
+  return NETWORK_ALIASES[normalized] || normalized;
+}
+
+const DEFAULT_NETWORK = normalizeNetworkName(process.env.KEETA_NETWORK || "test");
 const DEFAULT_POOL_ACCOUNT =
   process.env.KEETA_POOL_ACCOUNT ||
   "keeta_atki2vx75726w2ez75dbl662t7rhlcbhhvgsps4srwymwzvldrydhzkrl4fng";
 const DEFAULT_LP_TOKEN_ACCOUNT =
   process.env.KEETA_LP_TOKEN_ACCOUNT ||
   "keeta_amdjie4di55jfnbh7vhsiophjo27dwv5s4qd5qf7p3q7rppgwbwowwjw6zsfs";
+
+const STATIC_TOKEN_ADDRESSES = {
+  RIDE: "keeta_anchh4m5ukgvnx5jcwe56k3ltgo4x4kppicdjgcaftx4525gdvknf73fotmdo",
+};
 
 const EXECUTE_TRANSACTIONS = /^1|true$/i.test(
   process.env.KEETA_EXECUTE_TRANSACTIONS || ""
@@ -16,7 +35,14 @@ const EXECUTE_TRANSACTIONS = /^1|true$/i.test(
 function getEnvTokenAddress(symbol) {
   if (!symbol) return null;
   const envKey = `KEETA_TOKEN_${symbol.toUpperCase()}`;
-  return process.env[envKey] || null;
+  if (process.env[envKey]) {
+    return process.env[envKey];
+  }
+  const staticKey = symbol.toUpperCase();
+  if (Object.prototype.hasOwnProperty.call(STATIC_TOKEN_ADDRESSES, staticKey)) {
+    return STATIC_TOKEN_ADDRESSES[staticKey];
+  }
+  return null;
 }
 
 function decodeMetadata(metadata) {
@@ -502,6 +528,7 @@ export {
   DEFAULT_POOL_ACCOUNT,
   DEFAULT_LP_TOKEN_ACCOUNT,
   EXECUTE_TRANSACTIONS,
+  normalizeNetworkName,
   calculateLiquidityMint,
   calculateSwapQuote,
   calculateWithdrawal,
