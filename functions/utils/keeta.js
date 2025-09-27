@@ -28,9 +28,7 @@ const STATIC_TOKEN_ADDRESSES = {
   RIDE: "keeta_anchh4m5ukgvnx5jcwe56k3ltgo4x4kppicdjgcaftx4525gdvknf73fotmdo",
 };
 
-const TOKEN_DECIMAL_OVERRIDES = {
-  RIDE: 5,
-};
+const TOKEN_DECIMAL_OVERRIDES = {};
 
 const EXECUTE_TRANSACTIONS = /^1|true$/i.test(
   process.env.KEETA_EXECUTE_TRANSACTIONS || ""
