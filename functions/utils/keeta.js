@@ -28,6 +28,10 @@ const STATIC_TOKEN_ADDRESSES = {
   RIDE: "keeta_anchh4m5ukgvnx5jcwe56k3ltgo4x4kppicdjgcaftx4525gdvknf73fotmdo",
 };
 
+const TOKEN_DECIMAL_OVERRIDES = {
+  RIDE: 5,
+};
+
 const EXECUTE_TRANSACTIONS = /^1|true$/i.test(
   process.env.KEETA_EXECUTE_TRANSACTIONS || ""
 );
@@ -43,6 +47,21 @@ function getEnvTokenAddress(symbol) {
     return STATIC_TOKEN_ADDRESSES[staticKey];
   }
   return null;
+}
+
+function resolveConfiguredDecimals(symbol, decimals) {
+  const key = typeof symbol === "string" ? symbol.toUpperCase() : "";
+  if (key && Object.prototype.hasOwnProperty.call(TOKEN_DECIMAL_OVERRIDES, key)) {
+    const override = Number(TOKEN_DECIMAL_OVERRIDES[key]);
+    if (Number.isFinite(override) && override >= 0) {
+      return override;
+    }
+  }
+  const numeric = Number(decimals);
+  if (Number.isFinite(numeric) && numeric >= 0) {
+    return numeric;
+  }
+  return 0;
 }
 
 function decodeMetadata(metadata) {
@@ -337,7 +356,8 @@ async function resolveTokenAccount(
 async function loadTokenDetails(client, account) {
   const accountInfo = await client.client.getAccountInfo(account);
   const metadata = decodeMetadata(accountInfo.info.metadata);
-  const decimals = metadata.decimalPlaces ?? metadata.decimals ?? 0;
+  const decimalsRaw = metadata.decimalPlaces ?? metadata.decimals ?? 0;
+  const decimals = Number.isFinite(Number(decimalsRaw)) ? Number(decimalsRaw) : 0;
   const symbol =
     metadata.symbol || accountInfo.info.name || account.publicKeyString.get();
   return {
@@ -413,13 +433,12 @@ async function loadPoolContext(client, overrides = {}) {
   );
 
   const baseTokenDetails = await loadTokenDetails(client, client.baseToken);
+  const baseSymbol =
+    baseTokenDetails.metadata.symbol || baseTokenDetails.info.name || "KTA";
   const baseToken = {
-    symbol:
-      baseTokenDetails.metadata.symbol ||
-      baseTokenDetails.info.name ||
-      "KTA",
+    symbol: baseSymbol,
     address: baseTokenDetails.address,
-    decimals: baseTokenDetails.decimals,
+    decimals: resolveConfiguredDecimals(baseSymbol, baseTokenDetails.decimals),
     info: baseTokenDetails.info,
     metadata: baseTokenDetails.metadata,
   };
@@ -458,7 +477,7 @@ async function loadPoolContext(client, overrides = {}) {
       tokenDetails.push({
         symbol,
         address: overrideAddress || metadataAddress || "",
-        decimals: tokenMetadataInfo.decimals,
+        decimals: resolveConfiguredDecimals(symbol, tokenMetadataInfo.decimals),
         info: null,
         metadata: tokenMetadataInfo.metadata || {},
         requiresConfiguration: true,
@@ -467,6 +486,7 @@ async function loadPoolContext(client, overrides = {}) {
     }
     const details = await loadTokenDetails(client, tokenAccount);
     details.symbol = symbol;
+    details.decimals = resolveConfiguredDecimals(symbol, details.decimals);
     tokenDetails.push(details);
   }
 
@@ -478,7 +498,7 @@ async function loadPoolContext(client, overrides = {}) {
 
   const formattedTokens = tokenDetails.map((token) => {
     const address = token.address || "";
-    const decimals = token.decimals ?? 0;
+    const decimals = resolveConfiguredDecimals(token.symbol, token.decimals);
     const raw = address ? reserveMap.get(address) || 0n : 0n;
     return {
       symbol: token.symbol,
