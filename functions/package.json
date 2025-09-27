@@ -2,6 +2,7 @@
   "name": "silverback-functions",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "dependencies": {
     "@keeta/sdk": "file:./vendor/keeta-sdk",
     "sharp": "^0.33.3"
