@@ -5,6 +5,7 @@ import {
   calculateLiquidityMint,
   createClient,
   formatAmount,
+  loadOfflinePoolContext,
   loadPoolContext,
   toRawAmount,
 } from "./utils/keeta.js";
@@ -81,12 +82,27 @@ async function addLiquidityHandler(event) {
         ? lpTokenAccount.trim()
         : undefined;
 
-    client = await createClient({ seed, accountIndex });
-    const context = await loadPoolContext(client, {
-      poolAccount: poolOverride,
-      lpTokenAccount: lpTokenOverride,
-      tokenAddresses: normalizedOverrides,
-    });
+    const overrides = {};
+    if (poolOverride) {
+      overrides.poolAccount = poolOverride;
+    }
+    if (lpTokenOverride) {
+      overrides.lpTokenAccount = lpTokenOverride;
+    }
+    if (Object.keys(normalizedOverrides).length > 0) {
+      overrides.tokenAddresses = normalizedOverrides;
+    }
+
+    const offlineContext = await loadOfflinePoolContext(overrides);
+    const usingOfflineContext = Boolean(offlineContext);
+
+    if (!usingOfflineContext) {
+      client = await createClient({ seed, accountIndex });
+    }
+
+    const context = usingOfflineContext
+      ? offlineContext
+      : await loadPoolContext(client, overrides);
 
     const findBySymbol = (symbol) =>
       context.tokens.find((item) => item.symbol === symbol);
@@ -138,16 +154,22 @@ async function addLiquidityHandler(event) {
 
     let execution = {};
     if (EXECUTE_TRANSACTIONS) {
-      try {
-        execution = await executeAddLiquidity(client, context, {
-          amountARaw,
-          amountBRaw,
-          mintedRaw: minted,
-          tokenA: tokenDetailsA,
-          tokenB: tokenDetailsB,
-        });
-      } catch (execError) {
-        execution = { error: execError.message };
+      if (usingOfflineContext) {
+        execution = {
+          error: "Transaction execution is unavailable when using offline fixtures",
+        };
+      } else {
+        try {
+          execution = await executeAddLiquidity(client, context, {
+            amountARaw,
+            amountBRaw,
+            mintedRaw: minted,
+            tokenA: tokenDetailsA,
+            tokenB: tokenDetailsB,
+          });
+        } catch (execError) {
+          execution = { error: execError.message };
+        }
       }
     }
 

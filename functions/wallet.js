@@ -4,6 +4,7 @@ import {
   DEFAULT_NETWORK,
   decodeMetadata,
   formatAmount,
+  loadOfflinePoolContext,
 } from "./utils/keeta.js";
 
 function parseBody(body) {
@@ -103,6 +104,36 @@ async function walletHandler(event) {
 
     const accountIndex = parseAccountIndex(rawIndex);
     const account = KeetaNet.lib.Account.fromSeed(normalizedSeed, accountIndex);
+    const offlineContext = await loadOfflinePoolContext();
+    if (offlineContext) {
+      const baseToken = offlineContext.baseToken || {};
+      const network = offlineContext.network || DEFAULT_NETWORK;
+      const address = account.publicKeyString.get();
+      const decimalsValue = Number(baseToken.decimals);
+      const decimals = Number.isFinite(decimalsValue) && decimalsValue >= 0 ? decimalsValue : 0;
+      const response = {
+        seed: normalizedSeed,
+        accountIndex,
+        address,
+        identifier: address,
+        network,
+        baseToken: {
+          symbol: baseToken.symbol || "KTA",
+          address: baseToken.address || "",
+          decimals,
+          metadata: baseToken.metadata || {},
+          balanceRaw: "0",
+          balanceFormatted: "0",
+        },
+        message: "Wallet details fetched from offline fixture",
+      };
+
+      return {
+        statusCode: 200,
+        body: JSON.stringify(response),
+      };
+    }
+
     client = KeetaNet.UserClient.fromNetwork(DEFAULT_NETWORK, account);
     const identifierAddress = await loadIdentifier(client, account);
 
